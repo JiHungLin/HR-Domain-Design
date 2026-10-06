@@ -8,8 +8,8 @@
 | 項目 | 內容 |
 |---|---|
 | 狀態 | 已同意（JiHungLin，2026-10-05） |
-| 最後更新 | 2026-10-05 |
-| 依據 | 名詞 33 個：現場資料 13、公開來源 16、推想 4。統計按每列最高一級的依據計（見 PLAN.md D-14）；33 個中有 15 個引用了推想草稿 |
+| 最後更新 | 2026-10-06 |
+| 依據 | 名詞 34 個：現場資料 14、公開來源 17、推想 3。統計按每列最高一級的依據計（見 PLAN.md D-14）；34 個中有 15 個引用了推想草稿 |
 
 ## 名詞
 
@@ -24,9 +24,10 @@
 | OrgUnit（組織單位） | 客戶內部的分公司、部門、團隊等單位；小團隊可以完全沒有 | core | 屬於 Tenant；有上一層 OrgUnit；Employment 隸屬於它；可以位於某個 WorkLocation；包含 Position | hire-employee、annual-leave-request、internal-transfer、second-country-hire | hire-employee | inputs/shared/範圍釐清_第一次.md（大有分公司、小沒有部門）；drafts/一般組織與法人結構.md | 草圖 |
 | WorkLocation（工作地點） | 員工實際提供勞務的地點，用來決定適用哪些 Jurisdiction 的規則 | shared | 位於 Jurisdiction；Employment 在此工作；Assignment 派往此處；套用 HolidayCalendar | hire-employee、shift-attendance、second-country-hire、assignment-leave、assignment-payroll、cross-border-transfer | hire-employee | inputs/research/勞動契約與年資.md（細則 §7 工作場所）、聯邦與紐約.md（紐約市 ESSTA 依工作地點適用） | 草圖 |
 | Employment（僱傭關係） | 一個人與一個雇主之間的一段僱傭關係，從到職到離職 | shared | 連結 Person 與 Employer；隸屬 OrgUnit；在 WorkLocation 工作；依據 EmploymentContract；有 Compensation、LeaveEntitlement、InsuranceEnrollment；可以有 Assignment；可以承接前一段 Employment（年資承認）；以 Separation 結束 | 全部 | hire-employee | inputs/shared/範圍釐清_P-02_產品形態.md、範圍釐清_P-04_P-09_P-14.md（D-08）、範圍釐清_試用期.md；research/勞動契約與年資.md（§2、§9、§10） | 草圖 |
-| EmploymentContract（勞動契約） | 雙方約定僱傭條件的契約，可為不定期或定期 | shared | Employment 依據它成立 | hire-employee、resignation、cross-border-transfer | hire-employee | inputs/research/勞動契約與年資.md（§9、細則 §7） | 草圖 |
+| EmploymentContract（勞動契約） | 雙方約定僱傭條件的契約，可為不定期或定期；定期契約有性質（臨時性、短期性、季節性、特定性）與起訖日 | shared | Employment 依據它成立；移工的契約期限和 WorkAuthorization 連動 | hire-employee、resignation、cross-border-transfer | hire-employee | inputs/shared/範圍釐清_P-18_移工定期契約.md；research/勞動契約與年資.md（§9、細則 §6、§7）、外國人聘僱.md（就服法 §46） | 草圖 |
 | SocialInsuranceScheme（社會保險制度） | 一個司法管轄區規定的強制保險或提撥制度（例：勞保、健保、勞工退休金） | domain | 由 Jurisdiction 訂定；InsuranceEnrollment 加入它 | hire-employee、social-insurance、hourly-payroll、resignation、second-country-hire、assignment-payroll | hire-employee | inputs/research/勞保就保職保.md、全民健康保險.md、勞工退休金.md | 草圖 |
 | InsuranceEnrollment（投保） | 一段僱傭關係在某個社會保險制度下，從加保到退保的期間 | domain | 屬於 Employment；加入 SocialInsuranceScheme；投保單位是 Employer；可以涵蓋眷屬（DependentRelation）；產生 PayItem | hire-employee、social-insurance、hourly-payroll、resignation、second-country-hire、assignment-payroll | hire-employee | inputs/research/勞保就保職保.md（勞保 §11、職保 §13）、全民健康保險.md（§15、§30）、勞工退休金.md（§18） | 草圖 |
+| InsuredSalary（投保薪資） | 一段投保在某段期間向某個社會保險制度申報的月投保薪資（勞退為月提繳工資），依該制度的分級表從月薪資總額決定，會隨薪資調整 | domain | 屬於 InsuranceEnrollment；依 SocialInsuranceScheme 的分級表；來自 Compensation | hire-employee、social-insurance、resignation、monthly-payroll | hire-employee | inputs/shared/範圍釐清_hire-employee_不做清單.md（第 3 點）；research/勞保就保職保.md（勞保 §14、職保 §17、#17～#19）、全民健康保險.md（§20）、勞工退休金.md（§14、#05） | 草圖 |
 | CompanyPolicy（公司規定） | 客戶在法令範圍內自訂、對員工更有利的規定（例：特休多給） | shared | 由 Tenant 或 Employer 訂定；調整某個 Jurisdiction 的法令規則；適用於全部或部分 Employment；可以定義 LeaveType、HolidayCalendar | annual-leave-grant、annual-leave-request、overtime、monthly-payroll、unpaid-leave-deduction、resignation、second-country-hire | annual-leave-grant | inputs/shared/範圍釐清_P-01_優於法令.md；research/勞動契約與年資.md（§1、§70 工作規則） | 草圖 |
 | LeaveType（假別） | 一種假（特休、病假、事假…），由法令或公司規定產生 | domain | 由 Jurisdiction 或 CompanyPolicy 定義；LeaveEntitlement、LeaveRequest 屬於某個假別 | annual-leave-grant、annual-leave-request、unpaid-leave-deduction、second-country-hire、assignment-leave | annual-leave-grant | inputs/research/請假.md | 草圖 |
 | LeaveEntitlement（請假權利） | 員工因年資、事件或規定取得的請假權利，有額度與有效期間 | domain | 屬於 Employment；屬於 LeaveType；來源是法令或 CompanyPolicy；被 LeaveOccurrence 扣用；離職時未用完的部分產生 PayItem | annual-leave-grant、annual-leave-request、unpaid-leave-deduction、resignation、second-country-hire、assignment-leave、cross-border-transfer | annual-leave-grant | inputs/shared/範圍釐清_P-15_P-16.md（D-15）；research/特別休假.md、聯邦與紐約.md（按工時累積的病假） | 草圖 |
@@ -46,8 +47,8 @@
 | PayItem（薪資項目） | 薪資單上的一行（底薪、加班費、請假扣款、保險自付額…） | domain | 屬於 Payslip；可以追溯到來源（AttendanceRecord、LeaveOccurrence、OvertimeRequest、InsuranceEnrollment、LeaveEntitlement） | monthly-payroll、social-insurance、unpaid-leave-deduction、hourly-payroll、resignation、second-country-hire、assignment-payroll | monthly-payroll | inputs/shared/範圍釐清_P-15_P-16.md（D-16）；research/工資與最低工資.md（細則 §14-1）；drafts/一般薪資結構與計薪流程.md | 草圖 |
 | DependentRelation（眷屬關係） | 一個人是另一個人的眷屬（例：健保依附加保） | shared | 連結兩個 Person；被 InsuranceEnrollment 涵蓋 | social-insurance | social-insurance | inputs/research/全民健康保險.md（§2） | 草圖 |
 | Evidence（佐證） | 支持一項申請或事實的文件（例：診斷證明） | core | 附於 LeaveRequest | unpaid-leave-deduction | unpaid-leave-deduction | inputs/research/請假.md（請假規則 §10） | 草圖 |
-| Separation（離職） | 僱傭關係結束這件事，包含原因與最後工作日 | shared | 結束 Employment；觸發 InsuranceEnrollment 退保、LeaveEntitlement 結算、最後一期 Payslip | resignation、cross-border-transfer | resignation | inputs/shared/範圍釐清_第一次.md（到職離職）；research/離職與資遣.md；drafts/一般離職流程.md | 草圖 |
-| WorkAuthorization（工作許可） | 一個人在某個司法管轄區合法工作的資格 | shared | 屬於 Person；針對 Jurisdiction；是成立 Employment 或 Assignment 的前提 | second-country-hire、assignment-leave、cross-border-transfer | second-country-hire | inputs/drafts/一般到職流程.md | 草圖 |
+| Separation（離職） | 僱傭關係結束這件事，包含原因與最後工作日 | shared | 結束 Employment；觸發 InsuranceEnrollment 退保、LeaveEntitlement 結算、最後一期 Payslip | hire-employee（只記錄結束日與原因，PLAN.md D-22）、resignation、cross-border-transfer | resignation | inputs/shared/範圍釐清_第一次.md（到職離職）；research/離職與資遣.md；drafts/一般離職流程.md | 草圖 |
+| WorkAuthorization（工作許可） | 一個人在某個司法管轄區合法工作的資格，有起訖日；可以由雇主申請（綁定某個雇主與工作類別），也可以由本人取得（永久居留等），有些人依身分免申請（與國人結婚獲准居留） | shared | 屬於 Person；針對 Jurisdiction；可以綁定 Employer；是成立 Employment 或 Assignment 的前提 | hire-employee、resignation、annual-leave-request、second-country-hire、assignment-leave、cross-border-transfer | hire-employee | inputs/shared/範圍釐清_hire-employee_不做清單.md（第 1 點）；research/外國人聘僱.md（就服法 §43、§48、§51、§52）；drafts/一般到職流程.md | 草圖 |
 | TaxWithholdingElection（扣繳申報資料） | 員工為了薪資所得扣繳而提供的申報資料（例：美國的 W-4 `[未核對]`） | domain | 屬於 Person；針對 Jurisdiction；影響 PayItem | second-country-hire、assignment-payroll | second-country-hire（待 P-13） | inputs/research/聯邦與紐約.md（W-4）、薪資所得扣繳.md（扣繳率標準 §2 由納稅義務人選定） | 草圖 |
 | Assignment（派駐） | 不結束原僱傭關係，員工被派到另一地工作的一段期間 | domain | 屬於 Employment；派往 WorkLocation；可能有當地的 Employer 參與 | assignment-leave、assignment-payroll、cross-border-transfer | assignment-leave | inputs/shared/範圍釐清_第一次.md（外派）；drafts/跨國派駐與轉任一般做法.md | 草圖 |
 
@@ -104,6 +105,14 @@ hire-employee 正式定義這些名詞時，要能支撐下列需求；做不到
 - **LeaveEntitlement 是權益帳（D-15）**：這一階段不做 token，但假的額度要能有多種來源（法令、年資、公司給的，以後可加專案貢獻），要能轉換（例：特休未休折算工資，產生 PayItem），並有守恆式。annual-leave-grant 定義時，不要把來源寫死成「年資」，也不要把「轉換」只當成離職時的特例。
 - **PayItem 用加法（D-16）**：請假不產生「扣款」項目，而是決定這段時間依多少比例計入應發；無薪假不計入。PayItem 要能追溯到產生它的日子與比例。全月在職時應發等於月薪，不分大小月；只有部分月份才依 ÷30 的日額計算（P-17）。
 
+### hire-employee 第 ① 步審查後的調整（2026-10-06）
+- **外籍員工從第一條切片起納入（PLAN.md D-20）**：Person 要能記錄國籍（可能多個）、在台戶籍、居留身分（居留證明、永久居留、與國人結婚獲准居留），因為就保、勞退、健保的適用都看這些（勞保就保職保#10、勞工退休金#01、全民健康保險#03 `[未核對]`）。這些身分會隨時間改變（例：取得永久居留後勞退從不適用變成適用），要有生效期間。
+- **WorkAuthorization 提前由 hire-employee 定義**：工作許可有起訖日、最長三年可展延，移工累計有上限（外國人聘僱#05 `[未核對]`）；可以由雇主申請，也可以由本人申請（#04），所以它屬於 Person，不屬於 Employment，但可以綁定某個 Employer。
+- **移工只能訂定期契約**（外國人聘僱#02 `[未核對]`）：EmploymentContract 要能表示契約類型與期限。P-18 已回覆（PLAN.md D-26）：hire-employee 就做定期契約，記錄性質與起訖日；一段 Employment 可能先後依據多份契約（續約），期滿、續約、視為不定期由 resignation 處理，hire-employee 定義時要留這個空間。
+- **InsuredSalary 是新名詞（PLAN.md D-21）**：同一位員工在勞保、職保、勞退的投保薪資可能不同（三張分級表上限 45,800／72,800／150,000 `[未核對]`），所以投保薪資掛在每一段 InsuranceEnrollment 上，而不是 Employment 上。分級表本身是依年度換版的規則參數（docs/03 P5），不是名詞。InsuredSalary 是否值得獨立成 Entity（或只是 InsuranceEnrollment 帶生效期間的屬性），由 hire-employee 第 ② 步判斷。
+- **Separation 可能提前由 hire-employee 定義（PLAN.md D-22）**：hire-employee 要記錄到職後立刻離開的結束日與原因。若第 ② 步判斷要用 Separation 表示，就改由 hire-employee 正式定義，resignation 擴充後果（退保、結算）；否則只在 Employment 記結束日。由第 ② 步決定並更新本表。
+- **年資合併的資料要保留（PLAN.md D-25）**：Employment 要能找到同一個 Person 先前的各段僱傭關係與起訖日，並預留「承認哪一段年資」的連結；這一階段不計算合併。
+
 ## 變更紀錄
 <!-- 只新增，最新的在最上面。每筆：
 ### <日期>　<事件>
@@ -113,6 +122,20 @@ hire-employee 正式定義這些名詞時，要能支撐下列需求；做不到
 - 影響：
 - 同意者：
 -->
+
+### 2026-10-06　P-18 已回覆：移工與定期契約
+- 改了什麼：EmploymentContract 的一句意思補上定期契約的性質與起訖日，主要關係加上和 WorkAuthorization 連動，依據加上新檔；「不確定的地方」移工一點改寫為答覆
+- 依據：使用者對話（2026-10-06），inputs/shared/範圍釐清_P-18_移工定期契約.md；PLAN.md D-26
+- 舊 → 新：EmploymentContract 依據 公開來源 → 現場資料；統計 現場 13、公開 18 → 現場 14、公開 17
+- 影響：hire-employee 第 ② 步定義 EmploymentContract 時要涵蓋定期契約與續約
+- 同意者：JiHungLin
+
+### 2026-10-06　hire-employee 第 ① 步審查：「不做」清單調整
+- 改了什麼：WorkAuthorization 正式定義於 second-country-hire → hire-employee，一句意思補上起訖日與申請方式，會用到的切片加上 hire-employee、resignation、annual-leave-request；新增 InsuredSalary（投保薪資）；Separation 會用到的切片加上 hire-employee；「不確定的地方」新增一節（外籍員工、工作許可、移工定期契約、投保薪資、Separation、年資資料保留）
+- 依據：使用者對話（2026-10-06），inputs/shared/範圍釐清_hire-employee_不做清單.md；inputs/research/外國人聘僱.md、勞保就保職保.md #16～#19、勞工退休金.md #05；PLAN.md D-20～D-25
+- 舊 → 新：名詞 33 → 34；統計 現場 13、公開 16、推想 4 → 現場 13、公開 18、推想 3（WorkAuthorization 由推想改為公開來源，InsuredSalary 為公開來源）
+- 影響：hire-employee 第 ② 步要定義的名詞增加 WorkAuthorization、InsuredSalary，可能加上 Separation
+- 同意者：JiHungLin（D-20～D-25 的選擇）
 
 ### 2026-10-05　P-04、P-09、P-14 已回覆
 - 改了什麼：LegalEntity（法人／雇主）改稱 Employer（雇主），一句意思加上「可以是公司法人、獨資或合夥商號、個人雇主」，全文 13 處同步改名（變更紀錄舊條目不改）；Person、Employment、Employer 的依據加上新檔；「不確定的地方」中 Person、Employment、Employer 三點改寫為答覆
