@@ -125,24 +125,23 @@
 
 ## UC-08 更正到職資料與註銷誤登
 - 對應草稿：US-D06
-- 參與者：人資、核准人；員工（經由個資請求，UC-14）
+- 參與者：人資、雇主（老闆，收到重大更正的通知）；員工（經由個資請求，UC-14）
 - 前提：資料已登錄
 - 主流程（值打錯）：
-  1. 人資提出更正，填理由與證據；系統試算影響（人數、保險適用、晚辦天數、許可是否發給這個雇主）
-  2. 有上述影響或更正到職日的，走核准申請（RequestApproval → ApproveRequest）；核准前資料與判定維持原狀（03_flows D-02）。沒有影響的，人資直接更正
-  3. 執行更正（CorrectRecord）：原值保留，記更正者、核准人、時間
-  4. 系統依更正後的資料重新判定各保險、期限、級距，以及依日期推導的狀態（例：證件期限打錯而被判到期，回到有效）；更正前、當時系統知道的判定仍查得到
-  5. 受影響的警告忽略紀錄依條件失效（LapseWarningOverride）；其他員工的判定有改變時，產生新的加保待辦（ProposeEnrollmentFiling）
-- 例外（整筆誤登，AnnulEntry，一律走核准申請）：
+  1. 人資更正登錄錯誤的值（CorrectRecord），填理由與證據；不需要另一人核准（03_flows D-02）
+  2. 原值保留，記更正者與時間
+  3. 系統依更正後的資料重新判定各保險、期限、級距，以及依日期推導的狀態（例：證件期限打錯而被判到期，回到有效）；更正前、當時系統知道的判定仍查得到
+  4. 受影響的警告忽略紀錄依條件失效（LapseWarningOverride）；其他員工的判定有改變時，產生新的加保待辦（ProposeEnrollmentFiling）
+  5. 更正改變了人數、保險適用、晚辦天數或工作許可是否發給這個雇主（重大更正）時，系統通知雇主並列入重大更正清單（NotifySignificantCorrection）
+- 例外（整筆誤登，AnnulEntry，一律算重大更正）：
   - 誤登到職（其實從未上班）→ 註銷到職（後面有到職後立刻離開的一起註銷），再登錄到職前取消；這段僱傭關係不計入人數、年資、勞工名卡；已加保的提醒向保險人處理 [待專家確認: EQ-017]
   - 誤登取消（其實已經到職）→ 註銷取消，錄用回到已錄用、契約依其餘事件重新推導，再登錄到職；已封存的個資由人資解除（UC-13）
   - 誤登到職後立刻離開 → 註銷，僱傭關係回到在職
   - 誤補登的既有員工 → 註銷補登
-  - 登錯雇主 → 註銷原本的到職或補登，再對正確的雇主登錄；登錯人 → 更正指向的人（要核准）
+  - 登錯雇主 → 註銷原本的到職或補登，再對正確的雇主登錄；登錯人 → 更正指向的人
   - 註銷錯了 → 撤銷註銷（RevokeAnnulment），原本那一段與掛在上面的紀錄恢復
-  - 核准人駁回 → 申請保留，資料不變
-- 用到的 Entity：Hire、Employment、EmploymentContract、Compensation、Person、IdentityDocument、WorkAuthorization、InsuranceEnrollment、InsuredSalary、WarningOverride、PersonalDataArchival、ApprovalRequest
-- 用到的事件：RequestApproval、ApproveRequest、RejectRequest、WithdrawRequest、CorrectRecord、AnnulEntry、RevokeAnnulment、StartEmployment、CancelHire、ProposeEnrollmentFiling、LapseWarningOverride、ReleaseArchival
+- 用到的 Entity：Hire、Employment、EmploymentContract、Compensation、Person、IdentityDocument、WorkAuthorization、InsuranceEnrollment、InsuredSalary、WarningOverride、PersonalDataArchival
+- 用到的事件：CorrectRecord、AnnulEntry、RevokeAnnulment、NotifySignificantCorrection、StartEmployment、CancelHire、ProposeEnrollmentFiling、LapseWarningOverride、ReleaseArchival
 - 規則：（第 ④ 步回填）
 
 ## UC-09 忽略法規警告，以及撤回
@@ -171,8 +170,8 @@
   3. 加保判定不變：到職日起的加保義務已發生，期限與生效日照常列出（01_scope D-12）
 - 例外：
   - 結束日早於到職日 → 阻擋（資料矛盾）
-  - 登錯了（其實仍在職）→ 走核准申請後註銷（UC-08）
-  - 更正結束日 → 會改變人數，走核准申請（UC-08）
+  - 登錯了（其實仍在職）→ 註銷（UC-08），算重大更正
+  - 更正結束日 → 會改變人數，算重大更正（UC-08）
 - 用到的 Entity：Employment、EmploymentContract
 - 用到的事件：RecordEarlyDeparture、VoidContract、AnnulEntry
 - 規則：（第 ④ 步回填）
@@ -180,7 +179,7 @@
 ## UC-11 補登客戶開始使用系統前就到職的員工
 - 對應草稿：（無，依 Q21）
 - 參與者：人資
-- 前提：這位員工在這個雇主開始由系統管理的日子之前就已到職；補登已結束的一段時，結束日也在這一天之前（03_flows D-09，這個日子的記錄方式待使用者決定，D-13）
+- 前提：這位員工在這個雇主開始由系統管理的日子（Employer.system_managed_from）之前就已到職；補登已結束的一段時，結束日也在這一天之前（03_flows D-09）
 - 主流程：
   1. 人資登錄人、證件，以及僱傭關係（RegisterExistingEmployment）：到職日、雇主、工作地點等，沒有錄用紀錄，標為補登資料
   2. 登錄目前的事實：約定薪資、目前的投保（實際加保日）與投保薪資（02 D-12）
@@ -227,11 +226,11 @@
   1. 員工提出，或人資代登錄書面、email、口頭的請求（ReceiveDataSubjectRequest）：種類、收到日期、收到管道
   2. 法定處理期限將到或已過時，系統提醒（PromptDataSubjectRequestDeadline）
   3. 人資執行：更正走 CorrectRecord；停止利用或刪除走 ArchivePersonalData（刪除的實際做法第 ⑤ 步依平台 P7 設計）；查詢、複製則提供資料
-  4. 人資完成請求（ResolveDataSubjectRequest），寫明結果；不接受時寫明法定理由，並先走核准申請（RequestApproval → ApproveRequest）
+  4. 人資完成請求（ResolveDataSubjectRequest），寫明結果；不接受時寫明法定理由，系統通知雇主（NotifySignificantCorrection）
 - 例外：員工撤回 → 記為完成，結果寫「當事人撤回」
 - 誰可以查看哪些個資（Q22 前半）是權限設定，不是流程：第 ④ 步寫規則、第 ⑤ 步依平台 P7 落實
-- 用到的 Entity：DataSubjectRequest、Person、PersonalDataArchival、ApprovalRequest
-- 用到的事件：ReceiveDataSubjectRequest、PromptDataSubjectRequestDeadline、RequestApproval、ApproveRequest、ResolveDataSubjectRequest、CorrectRecord、ArchivePersonalData
+- 用到的 Entity：DataSubjectRequest、Person、PersonalDataArchival
+- 用到的事件：ReceiveDataSubjectRequest、PromptDataSubjectRequestDeadline、ResolveDataSubjectRequest、NotifySignificantCorrection、CorrectRecord、ArchivePersonalData
 - 規則：（第 ④ 步回填）
 
 ## UC-15 查詢勞工名卡
