@@ -18,8 +18,11 @@
 
 ## 開始一個新 repo
 
+工具包資料夾**裡面的東西**要放在新 repo 的**最上層**，不是把 `domain-design-kit` 整個資料夾放進去，否則 Claude Code 讀不到 `CLAUDE.md` 和指令：
+
 ```bash
-cp -r domain-design-kit/ ~/projects/hr-domain-design   # 複製工具包（含隱藏的 .claude/、.gitignore）
+mkdir -p ~/projects/hr-domain-design
+cp -r domain-design-kit/. ~/projects/hr-domain-design/   # 結尾的 /. 會連隱藏的 .claude/、.gitignore 一起複製
 cd ~/projects/hr-domain-design
 rm build_kit.py                                       # 只在研究資料夾使用
 git init && git add . && git commit -m "Domain 設計工具包"
