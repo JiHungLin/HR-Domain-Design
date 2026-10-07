@@ -60,6 +60,7 @@
 | Employer.legal_name | 屬性 | 雇主名稱 | 名稱 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | Employer.employer_type | 屬性 | 雇主型態 | 雇主型態 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | Employer.registered_on | 屬性 | 依法辦理登記或設立稅籍的日期 | 登記或設稅籍日 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
+| Employer.system_managed_from | 屬性 | 這個雇主開始由系統管理的日子 | 開始由系統管理日 | 補登既有員工的界線 | [候選] | hire-employee（② @ hire-employee/02-v2） |
 | Employer.labor_standards_act_applicable | 屬性 | 是否適用勞動基準法 | 適用勞基法 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | InsuranceUnit.unit_code | 屬性 | 保險人核發的單位代號 | 投保單位代號 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | InsuranceUnit.established_on | 屬性 | 成立日 | 成立日 | | [候選] | hire-employee（② @ hire-employee/02-v1） |

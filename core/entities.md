@@ -75,7 +75,7 @@
 - 被引用：（無）
 
 ### Employer（雇主） [候選]
-- 出處：hire-employee（② @ hire-employee/02-v1）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
+- 出處：hire-employee（② @ hire-employee/02-v2）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
 - 層：core
 - 定義：以自己名義僱用員工、發薪、負擔投保義務的主體；可以是公司、獨資或合夥商號、個人雇主（PLAN.md D-18）
 - 身分：由系統指定編號；客戶內。有統一編號的以統一編號輔助辨識，個人雇主可以沒有
@@ -87,9 +87,10 @@
   - `legal_name`（名稱）
   - `employer_type`（雇主型態，分類值：公司、獨資商號、合夥、個人雇主；Q05）
   - `registered_on`（依法辦理登記或設立稅籍的日期；個人雇主可以沒有；職保適用看它，Q05）
+  - `system_managed_from`（這個雇主開始由系統管理的日子：之前就到職的員工用補登，之後的到職一律經過錄用；客戶之後才納入的雇主各自有自己的日子；Q21、D-31）
   - `labor_standards_act_applicable`（是否適用勞動基準法；會隨時間改變（例：行業之後才被指定適用），要保留期間；勞退適用看它，Q05、Q13）
   - `headcount_on(date)`（某一天的在職員工人數）[推導]：工作規則、其他國家依雇主規模分級的規則會用到（ENTITY_SKETCH「雇主規模會影響規則」）
-- 對應驗收問題：hire-employee:Q01、hire-employee:Q05、hire-employee:Q12、hire-employee:Q16（工作許可是否發給這個雇主）
+- 對應驗收問題：hire-employee:Q01、hire-employee:Q05、hire-employee:Q12、hire-employee:Q16（工作許可是否發給這個雇主）、hire-employee:Q21（補登的界線）
 - 備註：建立與維護屬 org-setup，本切片以固定資料提供 [靜態替代]
 - 被引用：（無）
 
