@@ -12,6 +12,20 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-07　（未凍結）　②　回頭修改（第 0 級）：依六問重跑
+- 改了什麼：依工具包更新（三問 → 六問、Entity 卡加「身分」、「不是 Entity」加事件與規則資料、平台約定 P11）重跑第 ②步：19 張卡都補上「身分」；新增 PersonalDataArchival；WarningOverride 曾改為事件（D-21），挑錯後改回 Entity（D-27）；Compensation、InsuredSalary、WorkAuthorization 的身分改為系統編號；pay_basis 移到 Compensation；InsuredSalary 加申報日與來源；Person 的戶籍、老年給付改成通用寫法、國籍加喪失日；拿掉年資承認的預留關係；「不是 Entity」補 7 列事件（共 11 個）與 4 類規則資料；新增「六問判斷紀錄」；檢查紀錄換成新範本（13 條）；新增 D-21～D-30（D-11、D-13、D-21 標為已取消）、X-13～X-21
+- 依據：工具包更新（commit 2dd2880）；使用者回答 P11（PLAN.md D-31，inputs/shared/範圍釐清_P11_識別範圍與資料性質.md）；第二輪 AI 挑錯
+- 舊 → 新：Entity 18 → 19；關係 38 → 39；詞彙對照表 128 → 137 列；「不是 Entity」27 → 37 項
+- 影響與回歸：名詞草圖新增 PersonalDataArchival、WarningOverride 恢復；第 ③ 步要定義 11 個事件；第 ④ 步要寫 4 類規則資料
+- 產出者：AI（Claude）；審查者：JiHungLin（審查中）
+
+## 2026-10-07　（未凍結）　②　回頭修改（第 0 級）：員工編號
+- 改了什麼：02_entities.md 的 Employment 加上 employee_number；新增 D-20（不另立 Employee）、X-12（審查者）；「不是 Entity」補員工編號、員工的理由；詞彙對照表加一列
+- 依據：審查者意見（使用者對話，2026-10-07），存為 inputs/shared/範圍釐清_員工編號.md
+- 舊 → 新：Employment 屬性 +1；名詞數不變
+- 影響與回歸：第 ④ 步要寫「在職者員工編號不重複」的規則，範圍待使用者決定
+- 產出者：AI（Claude）；審查者：JiHungLin（審查中）
+
 ## 2026-10-06　hire-employee/01-v1　①　凍結
 - 改了什麼：第 ① 步初版凍結。範圍：台灣雇主錄用全職月薪員工（本國籍或外國籍，含移工；不定期或定期契約）→ 到職 → 僱傭關係成立、各保險的適用與期限與生效日、到職時的投保薪資級距；業務結果 3 個（大小「太大」，使用者接受）；範圍外但會用到 4 列（皆靜態替代）；交給第 ② 步的觀察 9 點；草稿 US 19 個（例外 7，皆 AI）；驗收問題 22 條（P0 7 條；來源 法規 13、客戶端使用者 3、AI 6；全部標待專家確認）；決定 D-01～D-21
 - 依據：slices/PLAN.md（hire-employee 列、D-01～D-30）；inputs/shared/ 各檔（含 2026-10-06 新增 7 份）；inputs/research/（含新增 外國人聘僱.md、員工個人資料.md）；工具包 @ fdd7504

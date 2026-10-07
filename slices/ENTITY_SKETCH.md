@@ -8,8 +8,8 @@
 | 項目 | 內容 |
 |---|---|
 | 狀態 | 已同意（JiHungLin，2026-10-05） |
-| 最後更新 | 2026-10-06 |
-| 依據 | 名詞 34 個：現場資料 14、公開來源 17、推想 3。統計按每列最高一級的依據計（見 PLAN.md D-14）；34 個中有 15 個引用了推想草稿 |
+| 最後更新 | 2026-10-07 |
+| 依據 | 名詞 40 個：現場資料 17、公開來源 20、推想 3。統計按每列最高一級的依據計（見 PLAN.md D-14）；34 個中有 15 個引用了推想草稿 |
 
 ## 名詞
 
@@ -28,6 +28,12 @@
 | SocialInsuranceScheme（社會保險制度） | 一個司法管轄區規定的強制保險或提撥制度（例：勞保、健保、勞工退休金） | domain | 由 Jurisdiction 訂定；InsuranceEnrollment 加入它 | hire-employee、social-insurance、hourly-payroll、resignation、second-country-hire、assignment-payroll | hire-employee | inputs/research/勞保就保職保.md、全民健康保險.md、勞工退休金.md | 草圖 |
 | InsuranceEnrollment（投保） | 一段僱傭關係在某個社會保險制度下，從加保到退保的期間 | domain | 屬於 Employment；加入 SocialInsuranceScheme；投保單位是 Employer；可以涵蓋眷屬（DependentRelation）；產生 PayItem | hire-employee、social-insurance、hourly-payroll、resignation、second-country-hire、assignment-payroll | hire-employee | inputs/research/勞保就保職保.md（勞保 §11、職保 §13）、全民健康保險.md（§15、§30）、勞工退休金.md（§18） | 草圖 |
 | InsuredSalary（投保薪資） | 一段投保在某段期間向某個社會保險制度申報的月投保薪資（勞退為月提繳工資），依該制度的分級表從月薪資總額決定，會隨薪資調整 | domain | 屬於 InsuranceEnrollment；依 SocialInsuranceScheme 的分級表；來自 Compensation | hire-employee、social-insurance、resignation、monthly-payroll | hire-employee | inputs/shared/範圍釐清_hire-employee_不做清單.md（第 3 點）；research/勞保就保職保.md（勞保 §14、職保 §17、#17～#19）、全民健康保險.md（§20）、勞工退休金.md（§14、#05） | 草圖 |
+| IdentityDocument（身分證件） | 證明人的身分或居留資格的證件紀錄（國民身分證、居留證、永久居留證、護照） | shared | 屬於 Person；由 Jurisdiction 核發；可以是 WorkAuthorization 的依據 | hire-employee、social-insurance、second-country-hire、cross-border-transfer | hire-employee | slices/hire-employee/02_entities.md D-05；research/全民健康保險.md（§9）、勞動契約與年資.md（名卡） | 草圖 |
+| InsuranceUnit（投保單位） | 雇主在保險人登記、用來辦理加保的單位 | domain | 屬於 Employer；涵蓋 SocialInsuranceScheme；InsuranceEnrollment 經由它辦理 | hire-employee、social-insurance、resignation、org-setup | hire-employee | slices/hire-employee/02_entities.md D-02；research/勞保就保職保.md（§6） | 草圖 |
+| Hire（錄用） | 決定錄用到到職或取消之間的安排 | shared | 針對 Person、由 Employer 決定；到職後產生 Employment；可以帶到職前簽的 EmploymentContract 與 Compensation | hire-employee、second-country-hire、cross-border-transfer | hire-employee | inputs/shared/範圍釐清_hire-employee_不做清單.md（第 6 點：到職前取消與到職後離開分開）；research/勞保就保職保.md（§11 到職當日）；slices/hire-employee/02_entities.md D-18 | 草圖 |
+| WarningOverride（警告忽略紀錄） | 使用者看到法規警告後仍照樣存檔的紀錄 | core | 針對任何會被規則檢查的資料；引用規則與版本 | 全部 | hire-employee | inputs/shared/範圍釐清_法規警告不阻擋.md；PLAN.md D-27 | 草圖 |
+| DataSubjectRequest（個資請求） | 當事人依個資法提出的查詢、更正、刪除等請求 | core | 由 Person 提出 | hire-employee、resignation | hire-employee | inputs/research/員工個人資料.md（§3）；PLAN.md D-29 | 草圖 |
+| PersonalDataArchival（個資封存） | 對某人一部分個資的一次封存，可以部分或全部解除 | core | 屬於 Person | hire-employee、resignation | hire-employee | inputs/shared/範圍釐清_個資封存與去識別.md；research/員工個人資料.md（§11） | 草圖 |
 | CompanyPolicy（公司規定） | 客戶在法令範圍內自訂、對員工更有利的規定（例：特休多給） | shared | 由 Tenant 或 Employer 訂定；調整某個 Jurisdiction 的法令規則；適用於全部或部分 Employment；可以定義 LeaveType、HolidayCalendar | annual-leave-grant、annual-leave-request、overtime、monthly-payroll、unpaid-leave-deduction、resignation、second-country-hire | annual-leave-grant | inputs/shared/範圍釐清_P-01_優於法令.md；research/勞動契約與年資.md（§1、§70 工作規則） | 草圖 |
 | LeaveType（假別） | 一種假（特休、病假、事假…），由法令或公司規定產生 | domain | 由 Jurisdiction 或 CompanyPolicy 定義；LeaveEntitlement、LeaveRequest 屬於某個假別 | annual-leave-grant、annual-leave-request、unpaid-leave-deduction、second-country-hire、assignment-leave | annual-leave-grant | inputs/research/請假.md | 草圖 |
 | LeaveEntitlement（請假權利） | 員工因年資、事件或規定取得的請假權利，有額度與有效期間 | domain | 屬於 Employment；屬於 LeaveType；來源是法令或 CompanyPolicy；被 LeaveOccurrence 扣用；離職時未用完的部分產生 PayItem | annual-leave-grant、annual-leave-request、unpaid-leave-deduction、resignation、second-country-hire、assignment-leave、cross-border-transfer | annual-leave-grant | inputs/shared/範圍釐清_P-15_P-16.md（D-15）；research/特別休假.md、聯邦與紐約.md（按工時累積的病假） | 草圖 |
@@ -122,6 +128,27 @@ hire-employee 正式定義這些名詞時，要能支撐下列需求；做不到
 - 影響：
 - 同意者：
 -->
+
+### 2026-10-07　WarningOverride 恢復、新增 PersonalDataArchival
+- 改了什麼：WarningOverride 狀態 已取消 → 草圖（恢復）；新增 PersonalDataArchival（個資封存），由 hire-employee 定義
+- 依據：slices/hire-employee/02_entities.md D-27（忽略之後會失效或撤回，有狀態要追蹤）、D-29（封存有範圍、起訖、解除）；挑錯 X-13、X-19
+- 舊 → 新：名詞 39（已取消 1）→ 40；統計 現場 16 → 17
+- 影響：上一筆「WarningOverride 改為事件」作廢；resignation 要處理離職後的個資封存
+- 同意者：（第 ② 步凍結時一併確認）
+
+### 2026-10-07　WarningOverride 改為事件
+- 改了什麼：WarningOverride（警告忽略紀錄）狀態 草圖 → 已取消
+- 依據：工具包更新（commit 2dd2880）第 ② 步改為六問；第 0 問「發生的事」之後沒有狀態要追蹤者是事件（slices/hire-employee/02_entities.md D-21）
+- 舊 → 新：名詞 → 事件，交給 hire-employee 第 ③ 步；統計不變（保留已取消的一列）
+- 影響：所有切片的「忽略警告」改用第 ③ 步的事件記錄
+- 同意者：（第 ② 步凍結時一併確認）
+
+### 2026-10-06　hire-employee 第 ② 步：新增名詞
+- 改了什麼：新增 IdentityDocument、InsuranceUnit、Hire、WarningOverride、DataSubjectRequest 五個名詞（由 hire-employee 定義）；Compensation 由 hire-employee 建 [靜態替代] 卡，正式定義仍屬 monthly-payroll；Separation 維持由 resignation 定義
+- 依據：slices/hire-employee/02_entities.md D-02、D-05、D-11、D-14、D-17、D-18（三問判斷：這些名詞的結束時間都和人、雇主、僱傭關係不同）
+- 舊 → 新：名詞 34 → 39；統計 現場 14、公開 17、推想 3 → 現場 16、公開 20、推想 3
+- 影響：hire-employee 第 ② 步正式定義 18 個名詞（含 Compensation 靜態替代卡）；「不確定的地方」中投保單位、Separation 的問題由 02_entities.md D-02、D-07 回答
+- 同意者：（第 ② 步凍結時一併確認）
 
 ### 2026-10-06　P-18 已回覆：移工與定期契約
 - 改了什麼：EmploymentContract 的一句意思補上定期契約的性質與起訖日，主要關係加上和 WorkAuthorization 連動，依據加上新檔；「不確定的地方」移工一點改寫為答覆
