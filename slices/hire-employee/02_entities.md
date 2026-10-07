@@ -223,7 +223,7 @@
 - 主要屬性：
   - `code`（代碼，例：LABOR_INSURANCE）
   - `insurer`（保險人，分類值：勞保局、健保署）
-  - `effective_from`（施行日；系統上線前的歷史只記到能判定「無對應規則版本」為止，PLAN.md D-28）
+  - `effective_from`（施行日；到職日早於施行日時，判定為「不適用（制度尚未施行）」，不需要規則版本；PLAN.md D-28、D-33）
 - 對應驗收問題：Q02、Q05、Q06
 
 ### InsuranceEnrollment（投保）
