@@ -9,7 +9,7 @@
 |---|---|
 | 狀態 | 已同意（JiHungLin，2026-10-05） |
 | 最後更新 | 2026-10-07 |
-| 依據 | 名詞 40 個：現場資料 17、公開來源 20、推想 3。統計按每列最高一級的依據計（見 PLAN.md D-14）；34 個中有 15 個引用了推想草稿 |
+| 依據 | 名詞 42 個：現場資料 17、公開來源 22、推想 3。統計按每列最高一級的依據計（見 PLAN.md D-14）；34 個中有 15 個引用了推想草稿 |
 
 ## 名詞
 
@@ -57,6 +57,8 @@
 | WorkAuthorization（工作許可） | 一個人在某個司法管轄區合法工作的資格，有起訖日；可以由雇主申請（綁定某個雇主與工作類別），也可以由本人取得（永久居留等），有些人依身分免申請（與國人結婚獲准居留） | shared | 屬於 Person；針對 Jurisdiction；可以綁定 Employer；是成立 Employment 或 Assignment 的前提 | hire-employee、resignation、annual-leave-request、second-country-hire、assignment-leave、cross-border-transfer | hire-employee | inputs/shared/範圍釐清_hire-employee_不做清單.md（第 1 點）；research/外國人聘僱.md（就服法 §43、§48、§51、§52）；drafts/一般到職流程.md | 草圖 |
 | TaxWithholdingElection（扣繳申報資料） | 員工為了薪資所得扣繳而提供的申報資料（例：美國的 W-4 `[未核對]`） | domain | 屬於 Person；針對 Jurisdiction；影響 PayItem | second-country-hire、assignment-payroll | second-country-hire（待 P-13） | inputs/research/聯邦與紐約.md（W-4）、薪資所得扣繳.md（扣繳率標準 §2 由納稅義務人選定） | 草圖 |
 | Assignment（派駐） | 不結束原僱傭關係，員工被派到另一地工作的一段期間 | domain | 屬於 Employment；派往 WorkLocation；可能有當地的 Employer 參與 | assignment-leave、assignment-payroll、cross-border-transfer | assignment-leave | inputs/shared/範圍釐清_第一次.md（外派）；drafts/跨國派駐與轉任一般做法.md | 草圖 |
+| DisciplinaryRecord（獎懲紀錄） | 員工受到的一次獎勵或懲處，勞工名卡要登記 | domain | 屬於 Employment；依據工作規則（CompanyPolicy） | personnel-record | personnel-record | inputs/research/勞動契約與年資.md（#03 §7、#10 §70） | 草圖 |
+| InjuryIllnessRecord（傷病紀錄） | 員工的一次傷病（含職業災害），勞工名卡要登記 | domain | 屬於 Employment；可能關聯 LeaveRequest（病假、公傷病假）、Evidence | personnel-record | personnel-record | inputs/research/勞動契約與年資.md（#03 §7、#10 §70） | 草圖 |
 
 ## 不確定的地方
 
@@ -128,6 +130,13 @@ hire-employee 正式定義這些名詞時，要能支撐下列需求；做不到
 - 影響：
 - 同意者：
 -->
+
+### 2026-10-07　新增 DisciplinaryRecord、InjuryIllnessRecord
+- 改了什麼：新增獎懲紀錄、傷病紀錄兩個名詞，由新切片 personnel-record 定義
+- 依據：PLAN.md D-32；hire-employee 02_entities D-16
+- 舊 → 新：名詞 40 → 42；統計 公開來源 20 → 22
+- 影響：勞工名卡的 12 項都有切片負責
+- 同意者：JiHungLin（2026-10-07，對話中同意）
 
 ### 2026-10-07　WarningOverride 恢復、新增 PersonalDataArchival
 - 改了什麼：WarningOverride 狀態 已取消 → 草圖（恢復）；新增 PersonalDataArchival（個資封存），由 hire-employee 定義
