@@ -165,7 +165,7 @@
 - 被引用：（無）
 
 ### Employment（僱傭關係） [候選]
-- 出處：hire-employee（② @ hire-employee/02-v1）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
+- 出處：hire-employee（② @ hire-employee/02-v4）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
 - 層：shared
 - 定義：一個人與一個雇主之間的一段僱傭關係，從員工開始提供勞務（到職日）起，到僱傭關係結束為止
 - 身分：由系統指定編號；員工編號不是身分，因為不同時期可以重用（D-20）
@@ -180,6 +180,7 @@
   - `probation_until`（試用期到哪一天，沒有試用期則空；Q08）
   - `ended_on`（僱傭關係結束日，在職中為空；Q18）
   - `end_reason`（結束原因，分類值；Q18）
+  - `public_or_military_insurance_covered`（這個職務是否依法應參加公教人員保險或軍人保險，例：私立學校的專任教職員；人資登錄，會改變時保留期間；就保適用看它，D-37）
   - `historical_basis_note`（當時依據說明：既有員工補登時，到職當時依據的文字說明，例：「當時適用勞退舊制」；供人工查證，系統不依它判定；Q21、D-12）
   - `seniority`（年資）[推導]：本切片只由本段到職日算；承認前段年資時，以做年資合併的切片定義的「年資承認」為準（D-28）
 - 對應驗收問題：hire-employee:Q01、hire-employee:Q04、hire-employee:Q08、hire-employee:Q11、hire-employee:Q12、hire-employee:Q18、hire-employee:Q21

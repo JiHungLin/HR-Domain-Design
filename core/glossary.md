@@ -83,6 +83,7 @@
 | Employment.probation_until | 屬性 | 試用期到哪一天 | 試用期屆滿日 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | Employment.ended_on | 屬性 | 僱傭關係結束日 | 結束日 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | Employment.end_reason | 屬性 | 結束原因 | 結束原因 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
+| Employment.public_or_military_insurance_covered | 屬性 | 這個職務是否依法應參加公教人員保險或軍人保險 | 應參加公教或軍保 |  | [候選] | hire-employee（② @ hire-employee/02-v4） |
 | Employment.historical_basis_note | 屬性 | 既有員工補登時，到職當時依據的文字說明 | 當時依據說明 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | Employment.seniority | 屬性 | 年資（推導） | 年資 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | EmploymentContract.contract_type | 屬性 | 契約類型 | 契約類型 | | [候選] | hire-employee（② @ hire-employee/02-v1） |

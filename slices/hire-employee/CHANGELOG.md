@@ -12,6 +12,14 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-14　hire-employee/02-v4、03-v4、04-v3、05-v3　②③④⑤　凍結
+- 改了什麼：依實作回報 signoff.md #13～#17 回頭修改後，四步一起重新凍結（內容見下一筆）。02-v4：Employment 新增 public_or_military_insurance_covered（D-37）。03-v4：加保待辦的預估、待人判斷的決定、逾期不能忽略（D-19）。04-v3：R24 改看新屬性、R24 與 R39 的待人判斷、R36 改為判定、錄用時的判定日（D-15～D-18），新分類值 APPLICABILITY.NEEDS_DECISION。05-v3：對照表、api.yaml 0.3.0、schema.mongo.js 同步（D-20、D-21）
+- 依據：02-v3、03-v3、04-v2、05-v2；signoff.md #13～#17
+- 審查方式：使用者說「直接通過吧」，各條未逐條說明
+- 合併進 core/：entities.md Employment 卡；glossary.md 新增 1 列；flows.md 事件 ProposeEnrollmentFiling；rules.md R24、R36、R39、ALLOWANCE_CATEGORY.OTHER 更新，新增 APPLICABILITY.NEEDS_DECISION；皆 [候選]
+- 待處理：實作（impl/hire-employee）依新 tag 修改，受影響的測試重跑
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-14，通過）
+
 ## 2026-10-14　（未凍結）　②③④⑤　回頭修改（第 0 級）：實作發現的設計問題 signoff.md #13～#17
 - 改了什麼：② 02_entities.md Employment 新增 public_or_military_insurance_covered（D-37），狀態 → 待檢查。③ 03_flows.md、03_use_cases.md 加保待辦補：錄用時為預估、待人判斷的決定記在待辦上、逾期不能忽略（D-19），UC-02 同步，狀態 → 待檢查。④ 04_rules.md：R24 改看新屬性（D-15）；R24 擇一、R39「其他」類輸出新分類值 APPLICABILITY.NEEDS_DECISION（D-16）；R36 由提醒改為判定（D-17）；判定日補錄用時的做法（D-18）；X-30～X-33；狀態 → 待檢查。⑤ 05_mapping.md：欄位、可更正欄位、API、規則落實位置、第六區同步；D-20（版本欄「—」的規則以 04 凍結版本為版本）、D-21；X-19～X-23；api.yaml 0.3.0（新增 `POST /enrollment-proposals/{id}/decisions`，共 37 支、79 個 schema）；schema.mongo.js 加欄位；狀態 → 待檢查。四份的檢查紀錄審查者確認清空。06_evidence/signoff.md 由實作分支取回（impl/hire-employee @ a35400b），#13～#17 的處理欄改寫
 - 依據：實作回報 signoff.md #13～#17（impl/hire-employee @ c7f2176）；domain-change 判斷為第 0 級；使用者同意（2026-10-14：「都照建議」，含 #15 改變 R36 的性質）
