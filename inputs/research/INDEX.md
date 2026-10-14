@@ -12,9 +12,9 @@
 | 特別休假 | 特別休假.md | TW | 人資／人事、人資／請假 | 4 | 0 | 0 | 全國法規資料庫 | 2026-10-05 | resignation、annual-leave-grant、annual-leave-request |
 | 請假 | 請假.md | TW | 人資／請假、人資／薪資 | 16 | 0 | 0 | 全國法規資料庫 | 2026-10-05 | unpaid-leave-deduction、monthly-payroll、annual-leave-request |
 | 離職與資遣 | 離職與資遣.md | TW | 人資／人事、人資／出勤 | 7 | 0 | 0 | 全國法規資料庫 | 2026-10-05 | resignation、shift-attendance |
-| 勞保就保職保 | 勞保就保職保.md | TW | 人資／人事、人資／薪資 | 19 | 0 | 0 | 全國法規資料庫、勞動部勞工保險局、勞動部 | 2026-10-06 | hire-employee、resignation、social-insurance |
-| 全民健康保險 | 全民健康保險.md | TW | 人資／人事、人資／薪資 | 12 | 0 | 0 | 全國法規資料庫 | 2026-10-05 | social-insurance、hire-employee、resignation、monthly-payroll |
-| 勞工退休金 | 勞工退休金.md | TW | 人資／人事、人資／薪資 | 5 | 0 | 0 | 全國法規資料庫、勞動部勞工保險局 | 2026-10-06 | hire-employee、social-insurance、resignation |
+| 勞保就保職保 | 勞保就保職保.md | TW | 人資／人事、人資／薪資 | 25 | 0 | 0 | 全國法規資料庫、勞動部勞工保險局、勞動部 | 2026-10-14 | hire-employee、resignation、social-insurance |
+| 全民健康保險 | 全民健康保險.md | TW | 人資／人事、人資／薪資 | 13 | 0 | 0 | 全國法規資料庫 | 2026-10-14 | social-insurance、hire-employee、resignation、monthly-payroll |
+| 勞工退休金 | 勞工退休金.md | TW | 人資／人事、人資／薪資 | 6 | 0 | 0 | 全國法規資料庫、勞動部勞工保險局 | 2026-10-14 | hire-employee、social-insurance、resignation |
 | 薪資所得扣繳 | 薪資所得扣繳.md | TW | 人資／薪資、人資／跨國任用 | 3 | 0 | 0 | 全國法規資料庫 | 2026-10-05 | assignment-payroll、social-insurance、second-country-hire |
 | 聯邦與紐約 | 聯邦與紐約.md | US、US-NY、US-NY-NYC | 人資／薪資、人資／跨國任用 | 9 | 0 | 0 | Cornell LII、紐約州勞工廳、紐約州政府、紐約市消費者與勞工保護局、紐約州政府 Paid Family Leave、美國國稅局、紐約州稅務局 | 2026-10-05 | second-country-hire、hourly-payroll、assignment-payroll |
 | 外國人聘僱 | 外國人聘僱.md | TW | 人資／人事 | 6 | 0 | 0 | 全國法規資料庫 | 2026-10-06 | hire-employee、resignation、annual-leave-request、shift-attendance |
