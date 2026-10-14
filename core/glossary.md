@@ -181,7 +181,7 @@
 | CancelHire | 事件 | 到職前取消錄用 | 到職前取消 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | PromptStartConfirmation | 事件 | 約定到職日到了，提醒確認到職 | 提醒確認到職 | 建議層 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | StartEmployment | 事件 | 這個人開始提供勞務，僱傭關係成立 | 到職 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
-| RegisterExistingEmployment | 事件 | 補登客戶開始使用系統前就到職的員工 | 補登既有員工 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| RegisterExistingEmployment | 事件 | 補登雇主開始由系統管理前就到職的員工 | 補登既有員工 |  | [候選] | hire-employee（③ @ hire-employee/03-v3） |
 | RecordEarlyDeparture | 事件 | 到職後立刻離開，記錄結束日與原因 | 到職後立刻離開 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | SignContract | 事件 | 簽訂勞動契約 | 簽訂勞動契約 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | ContractTermStarts | 事件 | 契約起日到達 | 契約起日到達 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
@@ -192,6 +192,7 @@
 | ProposeAuthorizationReview | 事件 | 免申請者依據的身分證件改變，提醒確認許可 | 提醒確認許可 | 建議層 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | EndWorkAuthorization | 事件 | 人資確認許可依據的身分已消失 | 登錄許可失效 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | RecordIdentityDocument | 事件 | 登錄員工出示的身分證件 | 登錄身分證件 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| RecordPersonPeriod | 事件 | 登錄人的國籍、戶籍或居住登記、老年給付的新期間 | 登錄人的身分期間 |  | [候選] | hire-employee（③ @ hire-employee/03-v3） |
 | ExpireIdentityDocument | 事件 | 證件有效期限屆滿 | 證件到期 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | ProposeEnrollmentFiling | 事件 | 依判定產生加保待辦 | 產生加保待辦 | 建議層 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | RecordInsuranceFiling | 事件 | 登錄實際向保險人辦理加保的結果 | 登錄實際辦理加保 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |

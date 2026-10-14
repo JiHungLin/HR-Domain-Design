@@ -12,6 +12,14 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-14　hire-employee/03-v3　③　凍結
+- 改了什麼：第 ③ 步回頭修改後重新凍結。相對 03-v2：新增事件 RecordPersonPeriod（事件 34 → 35），ProposeEnrollmentFiling 的觸發來源、UC-02 同步；RegisterExistingEmployment 的定義與 UC-11 標題改為「雇主開始由系統管理前」；新增 D-18
+- 依據：03-v2；05_mapping.md D-14、X-06、X-15；使用者決定（2026-10-14）
+- 反例處理：起因是第 ⑤ 步挑錯，本步沒有另外的反例
+- 審查方式：使用者說「3 步直接通過」，各條未逐條說明
+- 合併進 core/：flows.md 事件 2 列（新增 RecordPersonPeriod、更新 ProposeEnrollmentFiling）；glossary.md 新增 1 列、修改 1 列；皆 [候選]
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-14，通過）
+
 ## 2026-10-14　（未凍結）　③　回頭修改（第 0 級）：新增 RecordPersonPeriod、修正補登的舊說法
 - 改了什麼：03_flows.md、03_use_cases.md 狀態 已凍結 → 待檢查。① 新增事件 RecordPersonPeriod（登錄人的身分期間：國籍、戶籍或居住登記、老年給付的新期間；發生層；不改變狀態），事件表、詞彙對照表、ProposeEnrollmentFiling 的觸發來源、「不需要狀態機的東西」Person 那一列、UC-02 同步；② RegisterExistingEmployment 的定義與 UC-11 標題由「客戶開始使用系統前」改為「雇主開始由系統管理前」；新增 D-18；檢查紀錄審查者確認清空、AI 自評更新數字
 - 依據：05_mapping.md D-14、X-06、X-15（第 ⑤ 步挑錯）；使用者決定（2026-10-14：「D-14 A」「上游順便改」）；D-09（補登界線早已改為雇主開始由系統管理的日子）
