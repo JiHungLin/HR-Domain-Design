@@ -12,6 +12,13 @@
 - 同意者：
 -->
 
+### 2026-10-14　PLAN、SKETCH　人的特殊身分：新增切片 quota-employment
+- 改了什麼：地圖新增候選切片 quota-employment（定額進用，建議順序 18）、待釐清 P-19（問 HC：到職時是否蒐集特殊身分）、P-20（先蒐集定額進用與歲時祭儀的法規原文）、決定 D-34；草圖新增 IndigenousStatus（原住民身分）、DisabilityCertificate（身心障礙證明），「不確定的地方」記下待 quota-employment 第 ② 步決定的事
+- 依據：使用者審查 hire-employee 第 ③ 步時提出（inputs/shared/範圍釐清_特殊身分員工.md），選擇 A＋C
+- 舊 → 新：切片 17 → 18 條；名詞 42 → 44 個；已凍結的 hire-employee 不變
+- 影響：之後的請假切片（歲時祭儀假）、social-insurance（保費補助）引用 quota-employment 定義的名詞；到職表單在 hire-employee 第 ⑤ 步可預留這些欄位，由 quota-employment 定義
+- 同意者：JiHungLin（2026-10-14，對話中同意）
+
 ### 2026-10-07　PLAN、SKETCH　變更紀錄搬移
 - 改了什麼：依工具包更新（規劃文件的變更紀錄改成獨立檔案），把 PLAN.md「變更紀錄」區 36 筆與最後 6 行早期的一行式紀錄、ENTITY_SKETCH.md「變更紀錄」區 16 筆，依日期合併搬到本檔；內容原文照搬，只在標題加上來源（PLAN 或 SKETCH）；同一天的紀錄保留各自原本的先後，PLAN 在前；早期的一行式紀錄原本接在 PLAN 最舊一筆的後面，搬成獨立的一筆放在最底；兩份文件刪除「變更紀錄」區（含範本註解）
 - 依據：工具包 @ de81bc9（docs/02「規劃的變更紀錄」、domain-plan「舊格式的紀錄要搬移」）；使用者同意（2026-10-07，對話：「同步，然後更新一下slices的內容」）

@@ -8,8 +8,8 @@
 | 項目 | 內容 |
 |---|---|
 | 狀態 | 已同意（JiHungLin，2026-10-05） |
-| 最後更新 | 2026-10-07 |
-| 依據 | 名詞 42 個：現場資料 17、公開來源 22、推想 3。統計按每列最高一級的依據計（見 PLAN.md D-14）；34 個中有 15 個引用了推想草稿 |
+| 最後更新 | 2026-10-14 |
+| 依據 | 名詞 44 個：現場資料 19、公開來源 22、推想 3。統計按每列最高一級的依據計（見 PLAN.md D-14）；34 個中有 15 個引用了推想草稿 |
 
 ## 名詞
 
@@ -59,8 +59,12 @@
 | Assignment（派駐） | 不結束原僱傭關係，員工被派到另一地工作的一段期間 | domain | 屬於 Employment；派往 WorkLocation；可能有當地的 Employer 參與 | assignment-leave、assignment-payroll、cross-border-transfer | assignment-leave | inputs/shared/範圍釐清_第一次.md（外派）；drafts/跨國派駐與轉任一般做法.md | 草圖 |
 | DisciplinaryRecord（獎懲紀錄） | 員工受到的一次獎勵或懲處，勞工名卡要登記 | domain | 屬於 Employment；依據工作規則（CompanyPolicy） | personnel-record | personnel-record | inputs/research/勞動契約與年資.md（#03 §7、#10 §70） | 草圖 |
 | InjuryIllnessRecord（傷病紀錄） | 員工的一次傷病（含職業災害），勞工名卡要登記 | domain | 屬於 Employment；可能關聯 LeaveRequest（病假、公傷病假）、Evidence | personnel-record | personnel-record | inputs/research/勞動契約與年資.md（#03 §7、#10 §70） | 草圖 |
+| IndigenousStatus（原住民身分） | 一個人依法認定的原住民身分與族別，可以取得、喪失、回復 | shared | 屬於 Person；影響假別（歲時祭儀）與定額進用的計算 | quota-employment、annual-leave-request（歲時祭儀假，待確認） | quota-employment | inputs/shared/範圍釐清_特殊身分員工.md | 草圖 |
+| DisabilityCertificate（身心障礙證明） | 一個人持有的身心障礙證明：類別、等級、有效期限，會重新鑑定 | shared | 屬於 Person；影響定額進用的計算與保費補助 | quota-employment、social-insurance（保費補助，待確認） | quota-employment | inputs/shared/範圍釐清_特殊身分員工.md | 草圖 |
 
 ## 不確定的地方
+
+- **人的特殊身分（PLAN.md D-34）**：原住民身分、身心障礙證明由 quota-employment 定義，hire-employee 不收。待 quota-employment 第 ② 步決定：原住民身分是 Person 的屬性加期間，還是獨立的名詞；身心障礙證明是否併入 IdentityDocument（它也有證號、核發機關、有效期限）。身心障礙證明涉及健康資訊，可能是特種個資 `[未核對]`，蒐集要有法律依據或同意。之後可能還有其他特殊身分（例：中高齡、二度就業婦女的僱用獎勵），先不列
 
 ### 被很多切片用到的名詞：後面的切片需要它們具備什麼
 hire-employee 正式定義這些名詞時，要能支撐下列需求；做不到的寫進該切片的「不做」並在這裡註明。
