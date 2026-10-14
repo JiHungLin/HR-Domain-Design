@@ -12,6 +12,7 @@ from app.rules import versions
 from app.seed import EI, LI, LP, NHI, OAI
 
 MANDATORY, VOLUNTARY, NA = "APPLICABILITY.MANDATORY", "APPLICABILITY.VOLUNTARY", "APPLICABILITY.NOT_APPLICABLE"
+NEEDS_DECISION = "APPLICABILITY.NEEDS_DECISION"                               # 待人判斷（04_rules D-16）
 NOT_YET, NO_RULE, INSUFFICIENT = "APPLICABILITY.NOT_YET_IN_FORCE", "APPLICABILITY.NO_RULE_VERSION", "APPLICABILITY.INSUFFICIENT_DATA"
 ROC = "TW"
 SCHEME_ORDER = (LI, EI, OAI, NHI, LP)
@@ -31,6 +32,11 @@ class Subject:
     start_date: date
     hire_id: object | None = None
     employment: dict | None = None
+    estimated: bool = False
+
+    @property
+    def public_or_military(self):
+        return (self.employment or {}).get("public_or_military_insurance_covered")
 
     @classmethod
     def of_employment(cls, e: dict) -> "Subject":
@@ -38,8 +44,23 @@ class Subject:
 
     @classmethod
     def of_hire(cls, h: dict) -> "Subject":
-        # 暫時：錄用時（還沒到職）的判定以約定到職日當到職日，判定日也用約定到職日（signoff.md #17）
-        return cls(h["tenant_id"], h["person_id"], h["employer_id"], to_date(h["planned_start_date"]), h["_id"])
+        """錄用時（還沒到職）以約定到職日為預計到職日與判定日，結果是預估（04_rules D-18）。"""
+        return cls(h["tenant_id"], h["person_id"], h["employer_id"], to_date(h["planned_start_date"]), h["_id"], estimated=True)
+
+
+@dataclass
+class Decisions:
+    """加保待辦上記下的人的決定（04_rules D-16）：新的判定沿用。"""
+    employment_insurance: str | None = None          # JOIN／NOT_JOIN
+    allowances: dict[str, str] = field(default_factory=dict)   # 固定給付名稱 → INCLUDED／EXCLUDED
+
+    @classmethod
+    def of_proposal(cls, p: dict | None) -> "Decisions":
+        if not p:
+            return cls()
+        ei = [d for it in p["items"] if it["scheme_code"] == EI for d in it.get("decisions", [])]
+        return cls(employment_insurance=ei[-1]["result"] if ei else None,
+                   allowances={d["allowance_name"]: d["result"] for d in p.get("allowance_decisions", [])})
 
 
 @dataclass
@@ -53,6 +74,8 @@ class Facts:
     headcount: int
     schemes: dict[str, dict]
     tw_id: object
+    other_employers: int = 0
+    decisions: Decisions = field(default_factory=Decisions)
 
     @property
     def data_refs(self) -> dict:
@@ -71,7 +94,8 @@ def _ver(doc):
     return {"entity_id": doc["entity_id"], "revision": doc["revision"]}
 
 
-def load_facts(db, subj: Subject, on: date, as_of: datetime | None = None, session=None) -> Facts:
+def load_facts(db, subj: Subject, on: date, as_of: datetime | None = None, session=None,
+               decisions: Decisions | None = None) -> Facts:
     t = subj.tenant_id
     persons = versions.snapshot(db, "persons", {"entity_id": subj.person_id}, as_of, session)
     return Facts(
@@ -83,7 +107,20 @@ def load_facts(db, subj: Subject, on: date, as_of: datetime | None = None, sessi
         headcount=headcount(db, t, subj.employer_id, on, as_of, session),
         schemes={s["code"]: s for s in db.social_insurance_schemes.find({}, session=session)},
         tw_id=db.jurisdictions.find_one({"code": "TW"}, session=session)["_id"],
+        other_employers=other_employers(db, subj, on, as_of, session),
+        decisions=decisions or Decisions(),
     )
+
+
+def other_employers(db, subj: Subject, on: date, as_of=None, session=None) -> int:
+    """判定日同一人在其他雇主的在職僱傭關係數（R24 受僱於兩個以上雇主）。
+
+    暫時：只看得到同一客戶內的僱傭關係，客戶以外的兼職沒有資料（signoff.md #20）。
+    """
+    d = to_dt(on)
+    emps = versions.snapshot(db, "employments", {"tenant_id": subj.tenant_id, "person_id": subj.person_id}, as_of, session)
+    return len({e["employer_id"] for e in emps if e["employer_id"] != subj.employer_id and not e.get("annulled")
+                and e["start_date"] <= d and (e.get("ended_on") is None or e["ended_on"] >= d)})
 
 
 def compensation_on(db, subj: Subject, on: date, as_of=None, session=None) -> dict | None:
@@ -156,6 +193,7 @@ class Item:
     pending: list[str] = field(default_factory=list)
     rules: list[dict] = field(default_factory=list)
     missing: list[str] = field(default_factory=list)
+    underlying: str | None = None    # 標成待人判斷之前的適用結果（signoff.md #18）
 
     def to_doc(self) -> dict:
         """加保待辦 items[] 的一列（05_mapping 1.2）。"""
@@ -164,14 +202,15 @@ class Item:
             "filing_deadline": to_dt(self.filing_deadline), "legal_effective_date": to_dt(self.legal_effective_date),
             "expected_grade": self.expected_grade}.items() if v is not None}
 
-    def to_api(self, days_late: int | None = None) -> dict:
+    def to_api(self, days_late: int | None = None, days_overdue: int | None = None, decisions=None) -> dict:
         """ApplicabilityItem（api.yaml）。"""
         return {k: v for k, v in {
-            "scheme_code": self.scheme_code, "applicability": self.applicability,
+            "scheme_code": self.scheme_code, "applicability": self.applicability, "decisions": decisions or None,
             "filing_deadline": iso(self.filing_deadline), "legal_effective_date": iso(self.legal_effective_date),
             "expected_grade": self.expected_grade,
             "expected_amount": str(self.expected_amount) if self.expected_amount is not None else None,
-            "days_late": days_late, "pending": self.pending or None, "rule_versions": self.rules}.items()
+            "days_late": days_late, "days_overdue": days_overdue, "pending": self.pending or None,
+            "rule_versions": self.rules}.items()
             if v is not None}
 
 
@@ -189,6 +228,17 @@ def determine(db, facts: Facts, on: date, as_of=None, session=None) -> list[Item
             _grade(db, facts, item, as_of, session)
         items.append(item)
     return items
+
+
+def days_overdue(applicability: str, filing_deadline, today: date, closed: bool) -> int | None:
+    """R36：強制保險的應辦理期限已過、還沒登錄實際辦理 → 逾期天數（判定，不是警告；04_rules D-17）。
+
+    applicability 傳標成待人判斷之前的結果（signoff.md #18）。
+    """
+    deadline = to_date(filing_deadline)
+    if applicability != MANDATORY or closed or deadline is None or today <= deadline:
+        return None
+    return (today - deadline).days
 
 
 # ---------------- 適用（R22～R28、R60） ----------------
@@ -231,8 +281,6 @@ def _applicability(db, facts: Facts, code: str, on: date, as_of, session) -> Ite
             item.pending.append("EQ-004")
 
     elif code == EI:                                                           # R24
-        # 暫時：「依法應參加公教人員保險或軍人保險者」不適用的條件，02 沒有屬性可以判斷，未檢查（signoff.md #13）
-        # 暫時：受僱於兩個以上雇主時擇一參加（交給人判斷），判定結果沒有欄位表達，未偵測（signoff.md #14）
         missing = [n for n, v in (("Person.birth_date", age), ("Person.nationalities", national)) if v is None]
         if missing:
             return insufficient(*missing)
@@ -242,10 +290,15 @@ def _applicability(db, facts: Facts, code: str, on: date, as_of, session) -> Ite
             return item
         if person.get("old_age_benefits_received"):
             return item
+        if value_on(facts.subject.public_or_military, on):                    # 應參加公教或軍保（04_rules D-15）
+            return item
         if value_on(employer.get("registration_exempt"), on) and not value_on(employer.get("tax_assessed_or_invoice_permit"), on):
             return item
         if national or residence_bases(facts, on) & set(p["residence_basis"]):
             item.applicability = MANDATORY
+            if facts.other_employers:                                          # 受僱於兩個以上雇主得擇一參加（D-16）
+                choice = facts.decisions.employment_insurance
+                item.applicability = {"JOIN": MANDATORY, "NOT_JOIN": NA}.get(choice, NEEDS_DECISION)
 
     elif code == OAI:                                                          # R25
         regs = {r["kind"] for r in employer.get("registrations") or [] if to_date(r["registered_on"]) <= on}
@@ -312,18 +365,23 @@ def _deadlines(db, facts: Facts, item: Item, as_of, session) -> None:
 
 # ---------------- 應申報級距（R39～R44） ----------------
 
-def wage_bases(db, comp: dict | None, on: date, as_of=None, session=None):
-    """R39：三種薪資基礎。回傳 ({基礎名稱: 金額}, 規則版本)；沒有約定薪資回 (None, …)。"""
+def wage_bases(db, comp: dict | None, on: date, as_of=None, session=None, decisions: "Decisions | None" = None):
+    """R39：三種薪資基礎。回傳 ({基礎名稱: 金額}, 規則版本, 待人判斷的固定給付名稱)；沒有約定薪資或待人判斷時金額為 None。"""
     rv = versions.rule(db, "R39", on, as_of, session)
     if comp is None or rv is None:
-        return None, rv
+        return None, rv, []
     base = Decimal(str(comp["monthly_base_salary"].to_decimal()))
+    decided = (decisions or Decisions()).allowances
+    undecided = [a["name"] for a in comp.get("fixed_monthly_allowances") or []
+                 if a["category"] in rv["params"].get("needs_decision", []) and a["name"] not in decided]
+    if undecided:
+        return None, rv, undecided                                             # 「其他」類待人判斷（04_rules D-16）
     out = {}
     for name, spec in rv["params"]["bases"].items():
-        # 類別「其他」由人判斷算不算入（04_rules 分類值表）；判定結果沒有欄位表達，暫時不算入（signoff.md #14）
         out[name] = base + sum((a["amount"].to_decimal() for a in comp.get("fixed_monthly_allowances") or []
-                                if a["category"] in spec["included_allowances"]), Decimal(0))
-    return out, rv
+                                if a["category"] in spec["included_allowances"]
+                                or decided.get(a["name"]) == "INCLUDED"), Decimal(0))
+    return out, rv, []
 
 
 def base_for(r39: dict, scheme_code: str) -> str:
@@ -332,7 +390,13 @@ def base_for(r39: dict, scheme_code: str) -> str:
 
 def _grade(db, facts: Facts, item: Item, as_of, session) -> None:
     table_day = facts.subject.start_date                                      # R44：預設依到職日的分級表
-    bases, r39 = wage_bases(db, facts.compensation, table_day, as_of, session)
+    bases, r39, undecided = wage_bases(db, facts.compensation, table_day, as_of, session, facts.decisions)
+    if undecided:
+        # 暫時：「其他」類固定給付未決定時，把需要級距的項目標成待人判斷，原本的適用結果另存 underlying，
+        # 期限與法定生效日照樣給（signoff.md #18）
+        item.underlying, item.applicability = item.applicability, NEEDS_DECISION
+        item.rules.append(versions.ref(r39))
+        return
     if bases is None:
         item.missing.append("Compensation")                                    # R60：級距算不出來
         return

@@ -78,8 +78,8 @@ def grading_tables() -> dict[str, list[dict]]:
 
 
 D2026 = date(2026, 1, 1)
-# 04_rules 版本欄為「—」的規則，Warning 仍要求 rule_version：暫時以 04_rules 的凍結版本當版本（signoff.md #16）
-RULE_SET = "04-v2"
+# 04_rules 版本欄為「—」的規則，以規則所在的 04 凍結版本為版本、修訂 1（05_mapping D-20）
+RULE_SET = "hire-employee/04-v3"
 
 
 def rules() -> list[tuple]:
@@ -93,7 +93,7 @@ def rules() -> list[tuple]:
         ("R14", RULE_SET, date(1900, 1, 1), None, {}, "就業服務法 §43、§48、§51 [未核對]"),
         ("R15", RULE_SET, date(1900, 1, 1), None, {}, "就業服務法 §43 [未核對]"),
         ("R21", RULE_SET, date(1900, 1, 1), None, {}, "業務需求（02 的關係 agreedFor、governs）"),
-        ("R36", RULE_SET, date(1900, 1, 1), None, {}, "由 R31～R34 推導；PLAN.md D-27"),
+        ("R36", RULE_SET, date(1900, 1, 1), None, {}, "由 R31～R34 推導；判定，不是警告（04_rules D-17）"),
         ("R45", RULE_SET, date(1900, 1, 1), None, {}, "由 R40～R43 推導；勞保就保職保#19"),
         ("R61", RULE_SET, date(1900, 1, 1), None, {"pending": "EQ-005"}, "業務需求；勞工保險條例 §11 [未核對]"),
         ("R22", "2026-10-05", date(1960, 2, 24), None,
@@ -131,7 +131,7 @@ def rules() -> list[tuple]:
              "MONTHLY_PAYROLL_TOTAL": {"schemes": [LI, EI, OAI], "included_allowances": ALLOWANCES},
              "MONTHLY_WAGE": {"schemes": [LP], "included_allowances": ALLOWANCES},
              "SALARY_INCOME": {"schemes": [NHI], "included_allowances": ALLOWANCES}},
-          "pending": "EQ-012"},
+          "needs_decision": ["ALLOWANCE_CATEGORY.OTHER"], "pending": "EQ-012"},
          "勞工保險條例 §14、職保法 §17、勞退條例 §14、健保法 §20 [未核對]；算入的類別是 EQ-012 回覆前的假設（signoff.md #7）"),
         ("R40", "v2026", D2026, None, {"schemes": [LI, EI], "grades": t["R40"]}, "勞保就保職保#17 [未核對]"),
         ("R41", "v2026", D2026, None, {"schemes": [OAI], "grades": t["R41"]}, "勞保就保職保#18 [未核對]"),

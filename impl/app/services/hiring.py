@@ -224,6 +224,9 @@ def start_employment(db, actor: Actor, hire_id: str, body: dict) -> dict:
             "start_date": to_dt(start), "employee_number": number,
             "employee_category": [{"code": "EMPLOYEE_CATEGORY.FULL_TIME", "from": to_dt(start)}],
             "probation_until": to_dt(D(body.get("probation_until"))),
+            # 02 D-37：這個職務是否依法應參加公教或軍保（帶期間）；就保 R24
+            "public_or_military_insurance_covered": [{"value": body["public_or_military_insurance_covered"], "from": to_dt(start)}]
+            if "public_or_military_insurance_covered" in body else None,
             "org_unit_assignments": [{"org_unit_id": oid(org_unit_id), "from": to_dt(start)}] if org_unit_id else None,
             "work_locations": [{"work_location_id": wl["_id"], "from": to_dt(start)}],
             "status": "Active", "annulled": False,

@@ -89,7 +89,9 @@ def declare_insured_salary(db, actor: Actor, enrollment_id: str, body: dict) -> 
         warn = []
         if table and source != "INSURED_SALARY_SOURCE.INSURER_ADJUSTED":
             comp = ap.compensation_on(db, ap.Subject.of_employment(emp), on, session=s)
-            bases, r39 = ap.wage_bases(db, comp, on, session=s)
+            current = db.enrollment_proposals.find_one({"tenant_id": t, "employment_id": emp["entity_id"],
+                                                        "superseded_by": {"$exists": False}}, session=s)
+            bases, r39, _ = ap.wage_bases(db, comp, on, session=s, decisions=ap.Decisions.of_proposal(current))
             if bases:
                 expected = ap.lookup_grade(table["params"], bases[ap.base_for(r39, scheme["code"])])
                 if expected["grade"] != body["grade"]:

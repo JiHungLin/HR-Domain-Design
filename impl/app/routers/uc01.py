@@ -1,5 +1,5 @@
 """UC-01～UC-03 的 API。請求、回應格式與 x- 欄位直接取自 api.yaml（app/spec.py）。"""
-from datetime import datetime
+from datetime import date, datetime
 
 from fastapi import APIRouter, Body, Depends, Query
 
@@ -59,15 +59,19 @@ def list_enrollment_proposals(employment_id: str | None = Query(None, pattern="^
                               hire_id: str | None = Query(None, pattern="^[0-9a-f]{24}$"),
                               open: bool | None = None, actor: Actor = Depends(current_actor)):
     actor.require("HR", "EMPLOYER")
-    return proposals.list_proposals(database(), actor.tenant_id, employment_id, hire_id, open)
+    return proposals.list_proposals(database(), actor.tenant_id, employment_id, hire_id, open, date.today())
+
+
+@_post("/enrollment-proposals/{id}/decisions", "recordProposalDecision")
+def record_proposal_decision(id: str, body: dict = Body(...), actor: Actor = Depends(hr)):
+    return proposals.record_decision(database(), actor, id, validate_request("recordProposalDecision", body))
 
 
 @_get("/employments/{id}/applicability", "getApplicability")
 def get_applicability(id: str, on: str = Query(...), as_of: str | None = None, actor: Actor = Depends(hr)):
-    from datetime import date
     try:
         d = date.fromisoformat(on)
         a = datetime.fromisoformat(as_of.replace("Z", "+00:00")) if as_of else None
     except ValueError as e:
         raise RequestInvalid([f"on／as_of：{e}"])
-    return proposals.applicability_on(database(), actor.tenant_id, oid(id), d, a)
+    return proposals.applicability_on(database(), actor.tenant_id, oid(id), d, a, date.today())
