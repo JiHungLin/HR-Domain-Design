@@ -12,6 +12,20 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-14　hire-employee/03-v1　③　凍結（補記：審查期間的修改）
+- 改了什麼：不改交付物，只補記紀錄。03_flows.md、03_use_cases.md 送審（2026-10-07，09ae001）後到第一次凍結（03-v1）之間，有下列改變設計的修改，依新的 CHANGELOG 規則應逐筆記而當時沒有記：
+  1. 依使用者選擇 A（更正不需核准），刪除 ApprovalRequest（核准申請）的狀態機與 RequestApproval、ApproveRequest、RejectRequest、WithdrawRequest 四個事件，詞彙對照表刪除對應 9 列
+  2. 新增建議層事件 NotifySignificantCorrection（通知重大更正）與決策流程六「重大更正」
+  3. 改寫 D-02（從「依效果決定是否需要第二個人核准」改為「不需核准、重大更正通知雇主並列入清單」）、D-09（補登界線改為雇主開始由系統管理的日子）、D-13（只剩回頭新增 Employer.system_managed_from）
+  4. X-18 由「接受，已修改」改為「拒絕」；X-06、X-17 的處理改寫
+  5. UC-08、UC-10、UC-11、UC-14 改為不走核准申請
+  6. 回頭修改第 ② 步（02-v2，雇主新增開始由系統管理的日子）
+  整理性修改：檢查紀錄的欄位錯位修正、自評數字更新（狀態 31 → 27、事件 36 → 33、建議層 6 個）
+- 依據：inputs/shared/範圍釐清_更正不需核准.md；工具包 @ 6e32697（CHANGELOG 規則：第一次凍結前，送審後改變設計的修改要逐筆記，凍結那一筆加「審查期間的修改」）
+- 舊 → 新：03-v1 凍結紀錄缺「審查期間的修改」→ 由本筆補上
+- 影響與回歸：無，交付物與 core/ 不變
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-14，同意補記）
+
 ## 2026-10-14　hire-employee/03-v1　③　凍結
 - 改了什麼：第 ③ 步初版凍結（03_flows.md、03_use_cases.md）。狀態機 11 個、事件 33 個（建議層 6 個）、決策流程 6 個、更正方式（CorrectRecord、AnnulEntry、RevokeAnnulment，不需核准、重大更正通知雇主）、正式 UC 15 個；決定 D-01～D-14；草稿 US 19 個與驗收問題 Q01～Q22 都有 UC 涵蓋
 - 依據：01_scope.md @ hire-employee/01-v1；02_entities.md @ hire-employee/02-v2；inputs/shared/範圍釐清_更正不需核准.md
