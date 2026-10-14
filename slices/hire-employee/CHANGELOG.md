@@ -12,6 +12,13 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-14　（未凍結）　③　回頭修改（第 0 級）：新增 RecordPersonPeriod、修正補登的舊說法
+- 改了什麼：03_flows.md、03_use_cases.md 狀態 已凍結 → 待檢查。① 新增事件 RecordPersonPeriod（登錄人的身分期間：國籍、戶籍或居住登記、老年給付的新期間；發生層；不改變狀態），事件表、詞彙對照表、ProposeEnrollmentFiling 的觸發來源、「不需要狀態機的東西」Person 那一列、UC-02 同步；② RegisterExistingEmployment 的定義與 UC-11 標題由「客戶開始使用系統前」改為「雇主開始由系統管理前」；新增 D-18；檢查紀錄審查者確認清空、AI 自評更新數字
+- 依據：05_mapping.md D-14、X-06、X-15（第 ⑤ 步挑錯）；使用者決定（2026-10-14：「D-14 A」「上游順便改」）；D-09（補登界線早已改為雇主開始由系統管理的日子）
+- 舊 → 新：事件 34 → 35；詞彙對照表 +1 列；決定 D-01～D-17 → D-01～D-18
+- 影響與回歸：④ 規則不受影響（R26、R29 等判定本來就依判定日的期間值）；⑤ 對照表加 `POST /v1/persons/{id}/periods`；core/flows.md、glossary.md 在重新凍結（hire-employee/03-v3）時更新
+- 產出者：AI（Claude）；審查者：JiHungLin（待審查）
+
 ## 2026-10-14　hire-employee/04-v1　④　凍結
 - 改了什麼：第 ④ 步初版凍結（04_rules.md）。規則 R01～R63 共 63 條（R54 已取消）：資料一致性 10、錄用與工作許可與契約 14、保險適用 9、期限與晚辦 9、投保薪資 7、更正與註銷 6、個資 8；違反時「擋下」為資料矛盾、流程規則與 R52、R55，其餘法規只提醒；分類值 77 個；守恆式無（D-07）；決定 D-01～D-12；03_flows、03_use_cases 的規則欄已回填
 - 依據：02_entities.md @ hire-employee/02-v3；03_flows.md、03_use_cases.md @ hire-employee/03-v2；inputs/research/ 8 份主題檔（含 2026-10-14 新增的員工個人資料#08、#09 與期間計算#01～#04）；inputs/shared/範圍釐清_擋下的範圍.md、員工資料法定保存年限與拒絕刪除.md；工具包 @ d7899f2（新格式）

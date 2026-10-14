@@ -7,7 +7,7 @@
 | 狀態 | 草稿 |
 | 版本 | （凍結後填 tag，例：hire-employee/05-v1） |
 | 產出者 | AI（Claude）＋ |
-| 讀取的輸入 | 02_entities.md @ hire-employee/02-v3；03_flows.md、03_use_cases.md @ hire-employee/03-v2；04_rules.md @ hire-employee/04-v1；docs/03 平台架構約定（P4、P5、P10 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31） |
+| 讀取的輸入 | 02_entities.md @ hire-employee/02-v3；03_flows.md、03_use_cases.md @ hire-employee/03-v2（回頭修改中：D-18，新增 RecordPersonPeriod）；04_rules.md @ hire-employee/04-v1；docs/03 平台架構約定（P4、P5、P10 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31） |
 
 <!-- 資料庫為 MongoDB（PLAN.md D-35），本文件的「表」是集合（collection），「欄位」是文件的欄位。
      概念 ID 寫 core/ 的英文識別名稱；技術欄位標 [技術]（P8）。本步先只產出這份對照表，經人確認後才產生 schema.mongo.js 與 api.yaml。 -->
@@ -115,7 +115,7 @@
 
 | 概念 | 表 | 欄位 | 備註 |
 |---|---|---|---|
-| 事件名稱 | `events` | `type`（例：`StartEmployment`） | 03_flows 事件表的 34 個事件 |
+| 事件名稱 | `events` | `type`（例：`StartEmployment`） | 03_flows 事件表的 35 個事件 |
 | 主體 | `events` | `subject`：`collection`、`id` | |
 | 發生時間、得知時間、生效時間 | `events` | `occurred_at`、`recorded_at`、`effective_from` | 依 03_flows 事件表「有意義的時間」，不需要的留空（P4） |
 | 誰做的 | `events` | `actor`：`user_id`、`role` | 時間或條件觸發的寫 `system` |
@@ -144,6 +144,7 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | RecordWorkAuthorization | `POST /v1/work-authorizations`（第一次）；`POST /v1/work-authorizations/{id}/approvals`（展延） | 人資 |
 | EndWorkAuthorization | `POST /v1/work-authorizations/{id}/end` | 人資；只用於免申請者 |
 | RecordIdentityDocument | `POST /v1/persons/{id}/identity-documents` | 人資 |
+| RecordPersonPeriod | `POST /v1/persons/{id}/periods` | 人資；產生新版本的 `persons` 並觸發加保待辦 |
 | RecordInsuranceFiling | `POST /v1/insurance-enrollments` | 人資；R50 擋下（回執或標示無回執） |
 | DeclareInsuredSalary | `POST /v1/insurance-enrollments/{id}/insured-salaries` | 人資 |
 | OverrideWarning | `POST /v1/warning-overrides` | 人資；R09、R10 擋下 |
@@ -204,7 +205,7 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | `insured_salaries` | `declared_amount`、`grade`、`declared_on`、`effective_from` | 同上 |
 | `data_subject_requests` | `request_kind`、`requested_categories`、`received_via` | `received_on` 不能改：處理期限由它起算（R53） |
 
-新增一段國籍、戶籍期間（例：歸化、出國除籍）不是更正，是登錄新的事實；03 沒有對應的事件，待使用者決定（D-14）。
+新增一段國籍、戶籍期間（例：歸化、出國除籍）不是更正，是登錄新的事實，走 RecordPersonPeriod（`POST /v1/persons/{id}/periods`，D-14）。
 
 ## 三、規則 → 落實位置
 <!-- db constraint／db trigger／service／人工；MongoDB 沒有 trigger，「db constraint」指集合的驗證規則與唯一索引（PLAN.md D-35） -->
@@ -295,19 +296,19 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | D-01a | API 用 REST＋OpenAPI 3.1；交付物 `schema.sql` 改為 `schema.mongo.js` | GraphQL；維持 `schema.sql` 檔名 | MongoDB 沒有 SQL schema；REST 的動作式路徑對應 03 的事件 | 同上 | AI／JiHungLin（2026-10-14） |
 | D-02 | 一個 Entity 一個集合；只屬於它、不會被別處指到的子項目嵌入（工作許可的每次核准、個資請求的延長紀錄、帶期間的屬性） | 子項目也拆成集合 | 嵌入的子項目跟著主體一起讀寫，交易較單純；它們沒有被別處指到 | PLAN.md D-35 | AI／JiHungLin（2026-10-14） |
 | D-03 | 有名字的事件都寫進 `events`，狀態欄位由事件推出，API 不提供直接改狀態（P1） | 只更新狀態欄位，不留事件 | 03 的註銷、撤銷註銷要能找到原事件並依其餘事件重新推導 | P1；03_flows D-03 | AI／JiHungLin（2026-10-14，P1「照建議即可」） |
-| D-04 | 加保待辦存成 `enrollment_proposals`（每種保險各自結案或被拒絕），可作廢的 4 種建議共用 `proposals` | 全部放 `events` | 加保待辦有自己的內容且會被取代或結案，要能列出未結案的；其他建議只需要提醒與作廢紀錄 | 03_flows X-22；PLAN.md D-35（P3）；X-02、X-11 | AI／待確認 |
-| D-05 | 人在 DecideHire、RegisterExistingEmployment 的同一交易建立，不另設 API；人的屬性除聯絡方式外一律經 CorrectRecord 更正（會判斷重大更正、重新產生加保待辦）；聯絡方式直接改 | 建立人、改勞工名卡項目當作 P1 的單純欄位直接改（初稿） | 03 更正方式寫明勞工名卡項目走 CorrectRecord 並通知重大更正；出生日期、國籍改變保險適用，直接改會繞過通知與加保待辦（X-06） | 03_flows 更正方式；P1；X-06 | AI／待確認 |
-| D-06 | 所有 API 檢查每個 ref 屬於同一客戶、存在且為目前版本；CorrectRecord 只能改白名單上的欄位（2.2），狀態、誰與何時、事件、通知、規則版本不能改；AnnulEntry 只接受白名單上的事件類型 | 更正 API 不限欄位（初稿） | 不限欄位時，人資可以改個資請求的收到日來逃避期限、改狀態繞過 P1、指到別的客戶的資料（X-01） | P1；03_flows D-14；R47、R49；X-01 | AI／待確認 |
-| D-07 | 重大更正通知獨立成 `significant_corrections`，沒有作廢或修改的 API | 和其他建議共用 `proposals`（初稿） | 03 拿掉更正核准，補償就是通知與清單；做更正的人不能把通知作廢（X-02） | 03_flows D-02、事件表；X-02 | AI／待確認 |
-| D-08 | P7 的遮蔽：新增 `POST /v1/personal-data-erasures` 與 `erasure_records`；保存期間以同一人在該客戶最後一段僱傭關係的結束日起算；`change_log`、`events`、`enrollment_proposals`、`warning_overrides`、`outbox` 不存個資明文，只存參照，遮蔽時才處理得完整。**請使用者決定** | 只遮蔽主體欄位（初稿）；遮蔽時逐一掃描所有集合改寫 | 個資複本散在變更紀錄、事件證據、判定依據與外送訊息，只遮蔽主體等於沒遮蔽；同一個人在同客戶另一家公司仍在職時不能遮蔽（X-05）。03 已把依法刪除的做法交給第 ⑤ 步依 P7 設計 | P7；03_flows 個資的說明；X-05；EQ-022 | AI／待確認 |
-| D-09 | 系統使用者帳號用 `user_accounts` 對應到 Person（可空），員工提出個資請求、查自己的資料時以此確認本人；已離職、到職前取消的人怎麼取得帳號由平台決定。**請使用者決定** | 員工不能自己提出，一律由人資代登錄 | 02 寫明 Person 不是系統使用者帳號；03 允許員工自己提出（X-14） | 02 Person；03_flows DataSubjectRequest；X-14 | AI／待確認 |
-| D-10 | 引用一律指 `entity_id`；只新增的集合每次寫入產生新版本文件，`is_current` 加唯一索引保證只有一份目前版本 | 引用指 `_id`；以 `superseded_at` 為空判斷目前版本（初稿） | 換版後 `_id` 會變，掛在上面的投保、契約、警告忽略會指到舊版本；03 D-03 要求身分不變（X-03） | 03_flows D-03；X-03 | AI／待確認 |
-| D-11 | `events` 只新增，註銷不回寫原事件；被註銷的文件以快取欄位 `annulled` 標示，所有判定與計數排除 | 原事件記 `annulled_by_event_id`（初稿） | 註銷可以來回多次，單一欄位會被蓋掉；被註銷的到職若仍是 Active，會佔住員工編號、被算進人數（X-04） | 03_flows D-03、D-14；X-04 | AI／待確認 |
-| D-12 | 時間或條件觸發的事件標 `derived`，依據的日期被更正時標為失效並重新推導；各集合的 `status` 是快取，由有效的事件重算 | 時間觸發的事件也當成不可動的事實（初稿） | 03 D-12 要求期限更正後狀態回到正確的值；這類事件是推導的，又不能註銷（X-08） | 03_flows D-12、D-14；P3；X-08 | AI／待確認 |
-| D-13 | 回任時以證件找人：只有人資能查，只回傳是否存在與 Person 編號，查詢留稽核紀錄；證件索引不唯一 | 一般查詢 API 用證號篩選（初稿） | 任何登入者都能用身分證號確認某人是否曾在公司，還會看到已封存的資料（X-07） | 02 Person、IdentityDocument、D-05；R52；X-07 | AI／待確認 |
-| D-14 | 新增一段國籍、戶籍期間（歸化、出國除籍、新設籍）在 03 沒有對應的事件，但 03 D-17 把它列為加保待辦的觸發來源。**請使用者決定**：A. 回頭修改第 ③ 步，新增事件「登錄人的身分期間」（第 0 級）；B. 先用 CorrectRecord 處理，事件類型標「新增期間」 | — | 這是新的事實，不是更正；用 CorrectRecord 會混淆「登錯」與「真的改變」，重大更正的判斷也會不準 | 03_flows D-17；X-06 | AI／待確認 |
-| D-15 | R04 的同時寫入保護：交易中更新 `employment_locks` 讓同時的交易衝突 | 只在 service 讀取後檢查（初稿） | MongoDB 交易是快照隔離，兩個交易各自讀到「沒有重疊」、各自新增不同文件時不會衝突（X-12） | R04；X-12 | AI／待確認 |
-| D-16 | `persons` 改為只新增（A），聯絡方式拆到 `person_contacts` 直接覆寫 | 人的資料用 B（初稿） | 國籍、戶籍、老年給付在 03 標「需要重建當時」，且決定保險適用（法規），依使用者選的規則應為 A（X-13） | 03_flows 不需要狀態機的東西；PLAN.md D-35（P2）；X-13 | AI／待確認 |
+| D-04 | 加保待辦存成 `enrollment_proposals`（每種保險各自結案或被拒絕），可作廢的 4 種建議共用 `proposals` | 全部放 `events` | 加保待辦有自己的內容且會被取代或結案，要能列出未結案的；其他建議只需要提醒與作廢紀錄 | 03_flows X-22；PLAN.md D-35（P3）；X-02、X-11 | AI／JiHungLin（2026-10-14） |
+| D-05 | 人在 DecideHire、RegisterExistingEmployment 的同一交易建立，不另設 API；人的屬性除聯絡方式外一律經 CorrectRecord 更正（會判斷重大更正、重新產生加保待辦）；聯絡方式直接改 | 建立人、改勞工名卡項目當作 P1 的單純欄位直接改（初稿） | 03 更正方式寫明勞工名卡項目走 CorrectRecord 並通知重大更正；出生日期、國籍改變保險適用，直接改會繞過通知與加保待辦（X-06） | 03_flows 更正方式；P1；X-06 | AI／JiHungLin（2026-10-14） |
+| D-06 | 所有 API 檢查每個 ref 屬於同一客戶、存在且為目前版本；CorrectRecord 只能改白名單上的欄位（2.2），狀態、誰與何時、事件、通知、規則版本不能改；AnnulEntry 只接受白名單上的事件類型 | 更正 API 不限欄位（初稿） | 不限欄位時，人資可以改個資請求的收到日來逃避期限、改狀態繞過 P1、指到別的客戶的資料（X-01） | P1；03_flows D-14；R47、R49；X-01 | AI／JiHungLin（2026-10-14） |
+| D-07 | 重大更正通知獨立成 `significant_corrections`，沒有作廢或修改的 API | 和其他建議共用 `proposals`（初稿） | 03 拿掉更正核准，補償就是通知與清單；做更正的人不能把通知作廢（X-02） | 03_flows D-02、事件表；X-02 | AI／JiHungLin（2026-10-14） |
+| D-08 | P7 的遮蔽：新增 `POST /v1/personal-data-erasures` 與 `erasure_records`；保存期間以同一人在該客戶最後一段僱傭關係的結束日起算；`change_log`、`events`、`enrollment_proposals`、`warning_overrides`、`outbox` 不存個資明文，只存參照，遮蔽時才處理得完整（使用者照建議） | 只遮蔽主體欄位（初稿）；遮蔽時逐一掃描所有集合改寫 | 個資複本散在變更紀錄、事件證據、判定依據與外送訊息，只遮蔽主體等於沒遮蔽；同一個人在同客戶另一家公司仍在職時不能遮蔽（X-05）。03 已把依法刪除的做法交給第 ⑤ 步依 P7 設計 | P7；03_flows 個資的說明；X-05；EQ-022 | AI／JiHungLin（2026-10-14） |
+| D-09 | 系統使用者帳號用 `user_accounts` 對應到 Person（可空），員工提出個資請求、查自己的資料時以此確認本人；已離職、到職前取消的人怎麼取得帳號由平台決定（使用者選 A） | 員工不能自己提出，一律由人資代登錄 | 02 寫明 Person 不是系統使用者帳號；03 允許員工自己提出（X-14） | 02 Person；03_flows DataSubjectRequest；X-14 | AI／JiHungLin（2026-10-14） |
+| D-10 | 引用一律指 `entity_id`；只新增的集合每次寫入產生新版本文件，`is_current` 加唯一索引保證只有一份目前版本 | 引用指 `_id`；以 `superseded_at` 為空判斷目前版本（初稿） | 換版後 `_id` 會變，掛在上面的投保、契約、警告忽略會指到舊版本；03 D-03 要求身分不變（X-03） | 03_flows D-03；X-03 | AI／JiHungLin（2026-10-14） |
+| D-11 | `events` 只新增，註銷不回寫原事件；被註銷的文件以快取欄位 `annulled` 標示，所有判定與計數排除 | 原事件記 `annulled_by_event_id`（初稿） | 註銷可以來回多次，單一欄位會被蓋掉；被註銷的到職若仍是 Active，會佔住員工編號、被算進人數（X-04） | 03_flows D-03、D-14；X-04 | AI／JiHungLin（2026-10-14） |
+| D-12 | 時間或條件觸發的事件標 `derived`，依據的日期被更正時標為失效並重新推導；各集合的 `status` 是快取，由有效的事件重算 | 時間觸發的事件也當成不可動的事實（初稿） | 03 D-12 要求期限更正後狀態回到正確的值；這類事件是推導的，又不能註銷（X-08） | 03_flows D-12、D-14；P3；X-08 | AI／JiHungLin（2026-10-14） |
+| D-13 | 回任時以證件找人：只有人資能查，只回傳是否存在與 Person 編號，查詢留稽核紀錄；證件索引不唯一 | 一般查詢 API 用證號篩選（初稿） | 任何登入者都能用身分證號確認某人是否曾在公司，還會看到已封存的資料（X-07） | 02 Person、IdentityDocument、D-05；R52；X-07 | AI／JiHungLin（2026-10-14） |
+| D-14 | 新增一段國籍、戶籍期間（歸化、出國除籍、新設籍）在 03 沒有對應的事件，但 03 D-17 把它列為加保待辦的觸發來源。使用者選 A：回頭修改第 ③ 步，新增事件 RecordPersonPeriod（登錄人的身分期間，03_flows D-18） | 用 CorrectRecord 處理，事件類型標「新增期間」 | 這是新的事實，不是更正；用 CorrectRecord 會混淆「登錯」與「真的改變」，重大更正的判斷也會不準 | 03_flows D-17；X-06 | AI／JiHungLin（2026-10-14） |
+| D-15 | R04 的同時寫入保護：交易中更新 `employment_locks` 讓同時的交易衝突 | 只在 service 讀取後檢查（初稿） | MongoDB 交易是快照隔離，兩個交易各自讀到「沒有重疊」、各自新增不同文件時不會衝突（X-12） | R04；X-12 | AI／JiHungLin（2026-10-14） |
+| D-16 | `persons` 改為只新增（A），聯絡方式拆到 `person_contacts` 直接覆寫 | 人的資料用 B（初稿） | 國籍、戶籍、老年給付在 03 標「需要重建當時」，且決定保險適用（法規），依使用者選的規則應為 A（X-13） | 03_flows 不需要狀態機的東西；PLAN.md D-35（P2）；X-13 | AI／JiHungLin（2026-10-14） |
 
 ### 反例處理
 
@@ -317,8 +318,8 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | X-02 | 重大更正通知放在可作廢的 proposals，做更正的人能把通知作廢 | AI 挑錯 | 接受，已修改 | D-07：獨立成 significant_corrections，沒有作廢 API |
 | X-03 | 只新增換版後 _id 會變，引用會指到舊版本；狀態變化是改原文件還是開新版本沒寫 | AI 挑錯 | 接受，已修改 | D-10：引用指 entity_id；每次寫入都開新版本，is_current 唯一索引 |
 | X-04 | 註銷用單一欄位，來回多次會被蓋掉；被註銷的到職仍是 Active，佔住員工編號、算進人數 | AI 挑錯 | 接受，已修改 | D-11：註銷不回寫；annulled 快取；判定與計數排除 |
-| X-05 | 遮蔽只做在主體欄位，複本留在變更紀錄、事件證據、判定依據、outbox；同一人在同客戶另一家公司仍在職會被誤遮；沒有遮蔽的 API 與紀錄 | AI 挑錯 | 接受，做法待使用者決定（D-08） | 第四節 P7 列出所有複本位置與遮蔽方式；新增遮蔽 API 與 erasure_records |
-| X-06 | D-05 讓人的資料直接修改，繞過重大更正通知與加保待辦；新增國籍、戶籍期間沒有事件 | AI 挑錯 | 接受，已修改；一部分待使用者決定（D-14） | D-05 改寫：除聯絡方式外一律經 CorrectRecord；新增期間的事件待決定 |
+| X-05 | 遮蔽只做在主體欄位，複本留在變更紀錄、事件證據、判定依據、outbox；同一人在同客戶另一家公司仍在職會被誤遮；沒有遮蔽的 API 與紀錄 | AI 挑錯 | 接受，已修改 | 第四節 P7 列出所有複本位置與遮蔽方式；新增遮蔽 API 與 erasure_records |
+| X-06 | D-05 讓人的資料直接修改，繞過重大更正通知與加保待辦；新增國籍、戶籍期間沒有事件 | AI 挑錯 | 接受，已修改 | D-05 改寫：除聯絡方式外一律經 CorrectRecord；新增期間的事件待決定 |
 | X-07 | 以證號查人沒有權限、會查到已封存的人；證件索引若做成唯一會擋下同證號的第二筆 | AI 挑錯 | 接受，已修改 | D-13：只有人資能查，只回傳存在與編號，留稽核；索引不唯一 |
 | X-08 | 時間觸發的事件存成不可動的事實，日期更正後狀態推不回來；status 的資料身分沒寫；org-setup 的變化怎麼觸發加保待辦沒寫 | AI 挑錯 | 接受，已修改 | D-12：derived 與失效標記，status 為快取；org-setup 的變化透過 outbox 觸發，寫在第五節 outbox |
 | X-09 | 封存的解除只能記一次，部分解除會讓全部類別可見；連到的紀錄沒檢查是不是同一人 | AI 挑錯 | 接受，已修改 | releases[] 每次一筆，status 依剩下的類別推出；R57 檢查同一人、同一客戶 |
@@ -326,8 +327,8 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | X-11 | 加保待辦標 A 卻要回寫；結案、拒絕只記一個值，撐不住多種保險 | AI 挑錯 | 接受，已修改 | 結案與拒絕移到 items[] 每一列；保存方式改 B |
 | X-12 | 同時送出的補登可以繞過期間不重疊（快照隔離的寫入偏斜） | AI 挑錯 | 接受，已修改 | D-15：employment_locks |
 | X-13 | 查不到「當時系統知道的判定」；人的國籍、戶籍、老年給付用 B 和使用者選的規則不符 | AI 挑錯 | 接受，已修改 | applicability 加 as_of；D-16：persons 改 A |
-| X-14 | 員工自己提出個資請求認不出本人；查閱、複製沒有 API；請求沒記涉及哪些類別 | AI 挑錯 | 接受，已修改；帳號對應待使用者決定（D-09） | 補 GET 進度、匯出 API；加 requested_categories、category_outcomes |
-| X-15 | D-01 的提出者寫錯；D-03 使用者已同意；tenant_id 的說明包含共用集合；UC-11 標題沿用舊的補登界線說法 | AI 挑錯 | 接受，已修改 | D-01 拆成 D-01、D-01a；D-03 寫同意；第五節改寫；UC-11 改用新說法。上游 03_use_cases UC-11 標題與 03_flows 詞彙表 RegisterExistingEmployment 的定義仍是舊說法，請使用者決定要不要回頭修正（已凍結的第 ③ 步） |
+| X-14 | 員工自己提出個資請求認不出本人；查閱、複製沒有 API；請求沒記涉及哪些類別 | AI 挑錯 | 接受，已修改 | 補 GET 進度、匯出 API；加 requested_categories、category_outcomes |
+| X-15 | D-01 的提出者寫錯；D-03 使用者已同意；tenant_id 的說明包含共用集合；UC-11 標題沿用舊的補登界線說法 | AI 挑錯 | 接受，已修改 | D-01 拆成 D-01、D-01a；D-03 寫同意；第五節改寫；UC-11 改用新說法；上游 03_use_cases UC-11 標題與 03_flows 詞彙表的舊說法，使用者同意回頭修正（03_flows D-18） |
 
 <!-- 來源：AI 挑錯／審查者／專家／其他切片。處理：接受，已修改／拒絕（理由必填）／轉問專家（填 EQ 編號） -->
 
