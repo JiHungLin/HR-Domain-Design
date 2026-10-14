@@ -5,9 +5,9 @@
 | 切片 | hire-employee |
 | 步驟 | ⑤ 投影到實作 |
 | 狀態 | 已凍結 |
-| 版本 | hire-employee/05-v1 |
+| 版本 | hire-employee/05-v2 |
 | 產出者 | AI（Claude）＋ |
-| 讀取的輸入 | 02_entities.md @ hire-employee/02-v3；03_flows.md、03_use_cases.md @ hire-employee/03-v3；04_rules.md @ hire-employee/04-v1；docs/03 平台架構約定（P4、P5、P10 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31） |
+| 讀取的輸入 | 02_entities.md @ hire-employee/02-v3；03_flows.md、03_use_cases.md @ hire-employee/03-v3；04_rules.md @ hire-employee/04-v2；docs/03 平台架構約定（P4、P5、P10 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31） |
 
 <!-- 資料庫為 MongoDB（PLAN.md D-35），本文件的「表」是集合（collection），「欄位」是文件的欄位。
      概念 ID 寫 core/ 的英文識別名稱；技術欄位標 [技術]（P8）。本步先只產出這份對照表，經人確認後才產生 schema.mongo.js 與 api.yaml。 -->
@@ -288,6 +288,49 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | `outbox` | [技術] 平台表：事件發布給其他服務 |
 | `x-concept`（OpenAPI）、集合驗證規則的 `description` | [技術] P8：標出對應的概念 ID |
 
+## 六、Use Case 走一遍
+<!-- 照每個正式 Use Case 的步驟依序對到 API。從哪裡來：使用者輸入／登入身分／第 n 步回應的 <欄位>／查詢 <API>；
+     來自回應的欄位，api.yaml 該 API 的回應格式要有 -->
+
+| Use Case | 步驟 | API | 需要的輸入 | 從哪裡來 |
+|---|---|---|---|---|
+| UC-01 | 2（含 1） | `POST /v1/hires` | person（新的人：姓名等）、employer_id、decided_on、planned_start_date、planned_work_location_id、compensation、contract | 使用者輸入；employer_id、planned_work_location_id 查 org-setup（雇主、工作地點清單）；回任時 person.person_id 來自 UC-12 `GET /persons/lookup` 回應的 `person_id` |
+| UC-01 | 1 | `POST /v1/persons/{id}/identity-documents` | {id}＝person_id；document_kind、issuing_jurisdiction_id、document_number、valid_from | person_id：第 2 步回應的 `person_id`；其餘使用者輸入；issuing_jurisdiction_id 查參考資料 |
+| UC-01 | 3 | （第 2 步的回應） | — | 最低工資警告在第 2 步回應的 `warnings`（R11）；要忽略時走 UC-09 |
+| UC-01 | 4 | `GET /v1/enrollment-proposals?hire_id=` | hire_id | 第 2 步回應的 `hire_id` |
+| UC-01 | 5 | `GET /v1/proposals` → `POST /v1/hires/{id}/start` | {id}＝hire_id；start_date、work_location_id、org_unit_id、employee_number、probation_until | hire_id：第 2 步回應的 `hire_id`，或提醒（PromptStartConfirmation）的 `subject.id`；其餘使用者輸入 |
+| UC-01 | 6、7 | （第 5 步的回應） | — | 管轄區由工作地點推出；試用期在第 5 步的 probation_until |
+| UC-01 | 8 | 見 UC-03 | employment_id | 第 5 步回應的 `employment_id` |
+| UC-02 | 1～6 | 系統產生；`GET /v1/employments/{id}/applicability?on=`、`GET /v1/enrollment-proposals?employment_id=` | employment_id、判定日 | employment_id：UC-01 第 5 步回應；判定日：使用者輸入或今天 |
+| UC-03 | 1 | `POST /v1/insurance-enrollments` | employment_id、scheme_id、insurance_unit_id、filed_on、voluntary、effective_from、receipt_ref 或 no_receipt | employment_id：UC-01 第 5 步回應或加保待辦的 `employment_id`；scheme_id 查參考資料（保險制度）；insurance_unit_id 查 org-setup；其餘使用者依保險人回執輸入 |
+| UC-03 | 2 | `POST /v1/insurance-enrollments/{id}/insured-salaries` | {id}＝enrollment_id；declared_amount、grade、declared_on、effective_from | enrollment_id：第 1 步回應的 `enrollment_id`；應報級距可參考加保待辦 items 的 `expected_grade` |
+| UC-03 | 3 | `GET /v1/employments/{id}/applicability` | employment_id | 晚辦天數 `days_late`、級距不符的警告在第 2 步回應的 `warnings`（R45） |
+| UC-04 | 1 | `POST /v1/persons/{id}/identity-documents` | person_id、居留證資料 | person_id：UC-01 第 2 步回應 |
+| UC-04 | 2 | `POST /v1/work-authorizations` | person_id、jurisdiction_id、authorization_basis、work_category、employer_id、approval 或 valid_from、based_on_document_id | person_id：UC-01 第 2 步回應；based_on_document_id：第 1 步回應的 `identity_document_id`；其餘使用者依許可函輸入 |
+| UC-04 | 2（展延） | `POST /v1/work-authorizations/{id}/approvals` | {id}＝work_authorization_id；permit_number、valid_from、valid_until | 第 2 步回應的 `work_authorization_id` |
+| UC-04 | 3、4 | 同 UC-01 第 2、5 步 | — | 許可相關警告在 `POST /hires/{id}/start` 回應的 `warnings`（R14～R16） |
+| UC-04 | 例外 | `POST /v1/work-authorizations/{id}/end`；`GET /v1/proposals` | work_authorization_id | 提醒（ProposeAuthorizationReview）的 `subject.id` |
+| UC-05 | 1～3 | `POST /v1/hires/{id}/reschedule` | hire_id、planned_start_date、reason | hire_id：UC-01 第 2 步回應；新的警告在回應的 `warnings`；改期紀錄由 change_log 查 |
+| UC-06 | 1～2 | `POST /v1/hires/{id}/cancel` | hire_id、cancelled_on、cancellation_reason | hire_id：UC-01 第 2 步回應 |
+| UC-06 | 3 | `GET /v1/proposals` → UC-13 | person_id | 封存建議（ProposeArchival）的 `subject.id` |
+| UC-07 | 1 | `POST /v1/employment-contracts` | employment_id 或 hire_id、契約資料 | employment_id：UC-01 第 5 步回應；或 hire_id：UC-01 第 2 步回應；也可在 `POST /hires` 的 contract 一併登錄 |
+| UC-07 | 2、3 | （第 1 步的回應） | — | 期間上限、書面的警告在 `warnings`；契約生效由系統依起日推出 |
+| UC-08 | 1～2 | `POST /v1/corrections` | subject（collection、id）、field、new_value、reason、evidence | subject.id：被更正的那一筆，來自當初建立它的回應（例：employment_id）；field 只限 2.2 |
+| UC-08 | 註銷 | `POST /v1/annulments`、`POST /v1/annulments/{id}/revoke` | target_event_id；annulment_event_id | target_event_id：當初動作回應的 `event_id`；annulment_event_id：註銷回應的 `annulment_event_id` |
+| UC-08 | 3～5 | `GET /v1/employments/{id}/applicability?as_of=`、`GET /v1/significant-corrections` | employment_id、as_of | as_of：更正前的時間；重大更正在更正回應的 `significant_correction_id` |
+| UC-09 | 1～2 | `POST /v1/warning-overrides` | rule_ref、subject_ref、warned_value、hire_id 或 employment_id、reason | rule_ref、subject_ref、warned_value：觸發警告的那個回應的 `warnings[]`；hire_id 或 employment_id：同一個回應 |
+| UC-09 | 撤回 | `POST /v1/warning-overrides/{id}/withdraw` | warning_override_id | 第 1 步回應的 `warning_override_id` |
+| UC-10 | 1～3 | `POST /v1/employments/{id}/early-departure` | employment_id、ended_on、end_reason | employment_id：UC-01 第 5 步回應 |
+| UC-11 | 1～4 | `POST /v1/employments/backfill` | person、employer_id、start_date、ended_on、work_location_id、historical_basis_note、compensation、contract、enrollments（含 insured_salary） | 使用者輸入；回應給 employment_id、person_id、compensation_id、contract_id、enrollment_ids、insured_salary_ids；證件用 UC-01 第 1 步的 API，person_id 取這個回應 |
+| UC-12 | 1 | `GET /v1/persons/lookup` | document_kind、document_number | 使用者輸入；回應 `person_id` 帶入 UC-01 第 2 步的 person.person_id |
+| UC-12 | 2～3 | UC-13 解除；UC-01 | person_id | 第 1 步回應的 `person_id` |
+| UC-13 | 1～3 | `GET /v1/proposals` → `POST /v1/personal-data-archivals`；`POST /v1/personal-data-archivals/{id}/release` | person_id、data_categories；archival_id、categories、link | person_id：封存建議的 `subject.id`；archival_id：封存回應的 `archival_id`；link：新的錄用（UC-01 第 2 步回應的 `hire_id`）、個資請求或註銷 |
+| UC-14 | 1 | `POST /v1/data-subject-requests` | request_kind、requested_categories、received_on、received_via；人資代登錄時 person_id | 員工本人：person_id 由登入身分對應（user_accounts）；人資代登錄：查人或 UC-01 回應的 person_id |
+| UC-14 | 2 | `GET /v1/data-subject-requests/{id}`、`POST /v1/data-subject-requests/{id}/extensions` | data_subject_request_id、extended_deadline、reason、notified_on | 第 1 步回應的 `data_subject_request_id`；期限在 `GET` 回應的 `deadline` |
+| UC-14 | 3 | `POST /v1/corrections`、`POST /v1/personal-data-archivals`、`GET /v1/persons/{id}/personal-data-export` | 依請求種類 | person_id：第 1 步的請求 |
+| UC-14 | 4 | `POST /v1/data-subject-requests/{id}/resolve` | result、outcome、category_outcomes、refusal_basis | data_subject_request_id：第 1 步回應；被 R55 擋下時 refusal_basis 由系統帶入 |
+| UC-15 | 1～3 | `GET /v1/employments/{id}/labor-roster` | employment_id | UC-01 第 5 步回應的 `employment_id`，或查詢員工清單（本切片未設計，見 D-19） |
+
 ## 決定與理由
 
 | # | 決定 | 考慮過的替代做法 | 理由 | 依據 | 提出／同意 |
@@ -309,6 +352,9 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | D-14 | 新增一段國籍、戶籍期間（歸化、出國除籍、新設籍）在 03 沒有對應的事件，但 03 D-17 把它列為加保待辦的觸發來源。使用者選 A：回頭修改第 ③ 步，新增事件 RecordPersonPeriod（登錄人的身分期間，03_flows D-18） | 用 CorrectRecord 處理，事件類型標「新增期間」 | 這是新的事實，不是更正；用 CorrectRecord 會混淆「登錯」與「真的改變」，重大更正的判斷也會不準 | 03_flows D-17；X-06 | AI／JiHungLin（2026-10-14） |
 | D-15 | R04 的同時寫入保護：交易中更新 `employment_locks` 讓同時的交易衝突 | 只在 service 讀取後檢查（初稿） | MongoDB 交易是快照隔離，兩個交易各自讀到「沒有重疊」、各自新增不同文件時不會衝突（X-12） | R04；X-12 | AI／JiHungLin（2026-10-14） |
 | D-16 | `persons` 改為只新增（A），聯絡方式拆到 `person_contacts` 直接覆寫 | 人的資料用 B（初稿） | 國籍、戶籍、老年給付在 03 標「需要重建當時」，且決定保險適用（法規），依使用者選的規則應為 A（X-13） | 03_flows 不需要狀態機的東西；PLAN.md D-35（P2）；X-13 | AI／JiHungLin（2026-10-14） |
+| D-17 | `POST /hires` 可以一併帶約定薪資（compensation）與勞動契約（contract），同一交易建立；回應給所有建立項目的編號 | 約定薪資只能錄用後另外呼叫 `POST /compensations` | 03_flows DecideHire 本來就寫「有到職前簽的契約、約定薪資時一起掛上」，初版 api.yaml 漏了（實作回報問題 2）；分開呼叫時 R11 的最低工資警告在錄用當下判斷不了 | 03_flows 事件表 DecideHire；X-17 | AI／JiHungLin（2026-10-14） |
+| D-18 | api.yaml 的請求與回應寫到欄位層級：必填、巢狀物件；同一個動作建立的每個項目，回應都給編號（例：錄用回 `hire_id`、`person_id`、`compensation_id`、`contract_id`） | 回應只給 `entity_id`、`event_id`（初版） | 實作時錄用拿不到 person_id，下一步登錄證件做不下去（實作回報問題 1）；請求只寫 object，實作只好自己定必填與結構（問題 4）；工具包 @ ee24004 新增第六區與欄位層級的要求 | docs/01 ⑤；X-16、X-18 | AI／JiHungLin（2026-10-14） |
+| D-19 | 員工清單查詢（例：依雇主列出在職員工）本切片不設計，UC-15 從前一步回應或其他切片的清單取得 employment_id | 本切片新增清單 API | 03 沒有清單相關的 UC；列表與搜尋屬一般查詢，等需要它的切片（例：組織、出勤）再設計 | 第六區 UC-15 | AI／JiHungLin（2026-10-14） |
 
 ### 反例處理
 
@@ -329,6 +375,9 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | X-13 | 查不到「當時系統知道的判定」；人的國籍、戶籍、老年給付用 B 和使用者選的規則不符 | AI 挑錯 | 接受，已修改 | applicability 加 as_of；D-16：persons 改 A |
 | X-14 | 員工自己提出個資請求認不出本人；查閱、複製沒有 API；請求沒記涉及哪些類別 | AI 挑錯 | 接受，已修改 | 補 GET 進度、匯出 API；加 requested_categories、category_outcomes |
 | X-15 | D-01 的提出者寫錯；D-03 使用者已同意；tenant_id 的說明包含共用集合；UC-11 標題沿用舊的補登界線說法 | AI 挑錯 | 接受，已修改 | D-01 拆成 D-01、D-01a；D-03 寫同意；第五節改寫；UC-11 改用新說法；上游 03_use_cases UC-11 標題與 03_flows 詞彙表的舊說法，使用者同意回頭修正（03_flows D-18） |
+| X-16 | 錄用的回應沒有 person_id，下一步登錄證件拿不到人的編號 | 審查者（實作回報，impl/hire-employee @ b88a209） | 接受，已修改 | D-18：api.yaml 回應給所有建立項目的編號；第六區逐步寫出輸入來源 |
+| X-17 | 錄用的請求帶不進約定薪資 | 審查者（實作回報） | 接受，已修改 | 查 03：DecideHire 本來就帶約定薪資，問題在 api.yaml（D-17）；不是 R11 的套用對象 |
+| X-18 | api.yaml 太寬鬆：請求只寫 object、沒有必填與巢狀結構，實作只好自己定 | 審查者（實作回報） | 接受，已修改 | D-18：api.yaml 改寫到欄位層級（77 個 schema） |
 
 <!-- 來源：AI 挑錯／審查者／專家／其他切片。處理：接受，已修改／拒絕（理由必填）／轉問專家（填 EQ 編號） -->
 
@@ -338,16 +387,17 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 <!-- CHECKLIST:START -->
 | 完成標準 | AI 自評 | 審查者確認 |
 |---|---|---|
-| 每個 Entity 都有對應的表，或寫明「不落地」「由靜態參數產生」與理由 | ✓ 19 個 Entity 都有集合（1.1）；org-setup 提供的 5 個標 [靜態替代]；推導屬性（年齡、年資、人數、晚辦天數、月薪資總額）寫明不落地（AI 比對 02 的卡片） | ✓（JiHungLin 於對話中確認，2026-10-14：「第五步直接通過吧」） |
-| 每張業務表、每支 API、每個業務欄位都指得回概念，沒有「多出來、說不出代表什麼」的表；主鍵、建立時間等技術欄位與平台需要的表，標明「技術」即可（平台 P8） | ✓ 1.2 每個欄位列出對應的概念；schema.mongo.js 每個集合的 description、api.yaml 每支 API 的 x-concept 都寫了概念；技術欄位與平台表列在第五節（AI 比對）。P7 的 erasure_records、user_accounts 是平台約定 P7 與 D-09 的需要，不是 03 的概念，已寫明依據 | ✓（JiHungLin 於對話中確認，2026-10-14：「第五步直接通過吧」） |
-| ② 標為推導值的東西，都已依平台 P3 決定身分 | ✓ 第四節：各保險的適用、期限、級距、晚辦天數、年齡、年資、人數、月薪資總額、移工契約實際期限、法規警告、勞工名卡都標「不存，現算」；狀態與 annulled 標快取（AI 比對 02「不是 Entity」的推導值） | ✓（JiHungLin 於對話中確認，2026-10-14：「第五步直接通過吧」） |
-| ③ 標出的歷史需求，都已依平台 P2 決定保存方式 | ✓ 第四節逐項：需要重建當時者為 A（Person、證件、僱傭關係、約定薪資、工作許可、投保、投保薪資）；需要軌跡者為 B；聯絡方式為 C（AI 比對 03 的 12 個狀態機與「不需要狀態機的東西」） | ✓（JiHungLin 於對話中確認，2026-10-14：「第五步直接通過吧」） |
-| ③ 的每個動作與狀態變更都有對應的 API，且符合平台 P1 | ✓ 第二節：35 個事件中，人觸發的 24 個有 API，時間或條件觸發與建議層的由系統產生並有查詢 API；狀態只由事件改變，CorrectRecord 不能改狀態（2.2）（AI 比對 03 事件表） | ✓（JiHungLin 於對話中確認，2026-10-14：「第五步直接通過吧」） |
-| ④ 的每條規則都已決定落實位置（平台 P6） | ✓ 第三節涵蓋 R01～R63（R54 已取消不列）：db constraint 4 條、人工 2 條、其餘 service（AI 比對 04 規則表） | ✓（JiHungLin 於對話中確認，2026-10-14：「第五步直接通過吧」） |
-| 每個正式 Use Case 都能用一組 API 完成 | ✓ 2.1 列出 UC-01～UC-15 用到的 API；UC-08 的「當時系統知道的判定」用 applicability 的 as_of 參數 | ✓（JiHungLin 於對話中確認，2026-10-14：「第五步直接通過吧」） |
-| 已做紙上驗證：每筆黃金案例依設計推演的結果與人工預期一致；不一致的已回頭修改 | ✓ 使用者選用 GC01～GC03 並填預期結果；AI 依設計推演後比對：GC01 一致；GC02、GC03 初次共 3 處不一致，使用者複核後都是預期結果需更正（勞保生效日翌日、移工時間差不警告、健保期限始日不算入），設計不需回頭修改。結果仍有前提待專家確認：EQ-003（健保、勞退生效日）、EQ-012（伙食津貼算不算入） | ✓（JiHungLin 於對話中確認，2026-10-14：「第五步直接通過吧」） |
+| 每個 Entity 都有對應的表，或寫明「不落地」「由靜態參數產生」與理由 | ✓ 19 個 Entity 都有集合（1.1）；org-setup 提供的 5 個標 [靜態替代]；推導屬性（年齡、年資、人數、晚辦天數、月薪資總額）寫明不落地（AI 比對 02 的卡片） | ✓（JiHungLin 於對話中確認，2026-10-14：「一起補，④⑤ 補完再一起通過」） |
+| 每張業務表、每支 API、每個業務欄位都指得回概念，沒有「多出來、說不出代表什麼」的表；主鍵、建立時間等技術欄位與平台需要的表，標明「技術」即可（平台 P8） | ✓ 1.2 每個欄位列出對應的概念；schema.mongo.js 每個集合的 description、api.yaml 每支 API 的 x-concept 都寫了概念；技術欄位與平台表列在第五節（AI 比對）。P7 的 erasure_records、user_accounts 是平台約定 P7 與 D-09 的需要，不是 03 的概念，已寫明依據 | ✓（JiHungLin 於對話中確認，2026-10-14：「一起補，④⑤ 補完再一起通過」） |
+| ② 標為推導值的東西，都已依平台 P3 決定身分 | ✓ 第四節：各保險的適用、期限、級距、晚辦天數、年齡、年資、人數、月薪資總額、移工契約實際期限、法規警告、勞工名卡都標「不存，現算」；狀態與 annulled 標快取（AI 比對 02「不是 Entity」的推導值） | ✓（JiHungLin 於對話中確認，2026-10-14：「一起補，④⑤ 補完再一起通過」） |
+| ③ 標出的歷史需求，都已依平台 P2 決定保存方式 | ✓ 第四節逐項：需要重建當時者為 A（Person、證件、僱傭關係、約定薪資、工作許可、投保、投保薪資）；需要軌跡者為 B；聯絡方式為 C（AI 比對 03 的 12 個狀態機與「不需要狀態機的東西」） | ✓（JiHungLin 於對話中確認，2026-10-14：「一起補，④⑤ 補完再一起通過」） |
+| ③ 的每個動作與狀態變更都有對應的 API，且符合平台 P1 | ✓ 第二節：35 個事件中，人觸發的 24 個有 API，時間或條件觸發與建議層的由系統產生並有查詢 API；狀態只由事件改變，CorrectRecord 不能改狀態（2.2）（AI 比對 03 事件表） | ✓（JiHungLin 於對話中確認，2026-10-14：「一起補，④⑤ 補完再一起通過」） |
+| ④ 的每條規則都已決定落實位置（平台 P6） | ✓ 第三節涵蓋 R01～R63（R54 已取消不列）：db constraint 4 條、人工 2 條、其餘 service（AI 比對 04 規則表） | ✓（JiHungLin 於對話中確認，2026-10-14：「一起補，④⑤ 補完再一起通過」） |
+| 每個正式 Use Case 都已在對照表走一遍：每一步的輸入都拿得到；來自前一步回應的，`api.yaml` 該回應有這個欄位 | ✓ 第六區 15 個 UC 逐步對到 API，每一步的輸入都寫出來源；來自回應的欄位（hire_id、person_id、employment_id、enrollment_id、work_authorization_id、identity_document_id、warning_override_id、data_subject_request_id、archival_id、annulment_event_id 等）都在 api.yaml 該 API 的回應格式中（AI 比對）。UC-15 的 employment_id 來自前一步回應或其他切片的清單（D-19） | ✓（JiHungLin 於對話中確認，2026-10-14：「一起補，④⑤ 補完再一起通過」） |
+| `api.yaml` 每支 API 的請求與回應都寫到欄位層級，業務欄位對得回對照表第一區；說明（summary）提到的欄位都在格式裡 | ✓ 36 支 API 的請求與回應都是具名 schema（77 個），有 required、巢狀物件的欄位、additionalProperties: false；業務欄位與第一區一致（AI 比對）；summary 提到的約定薪資、契約、建立項目的編號都在格式中 | ✓（JiHungLin 於對話中確認，2026-10-14：「一起補，④⑤ 補完再一起通過」） |
+| 已做紙上驗證：每筆黃金案例依設計推演的結果與人工預期一致；不一致的已回頭修改 | ✓ 使用者選用 GC01～GC03 並填預期結果；AI 依設計推演後比對：GC01 一致；GC02、GC03 初次共 3 處不一致，使用者複核後都是預期結果需更正（勞保生效日翌日、移工時間差不警告、健保期限始日不算入），設計不需回頭修改。結果仍有前提待專家確認：EQ-003（健保、勞退生效日）、EQ-012（伙食津貼算不算入） | ✓（JiHungLin 於對話中確認，2026-10-14：「一起補，④⑤ 補完再一起通過」） |
 <!-- CHECKLIST:END -->
 
 - 審查者（非產出者）：JiHungLin
 - 日期：2026-10-14
-- 結論：通過（JiHungLin 於對話中確認，2026-10-14：「第五步直接通過吧」；對照表已逐項確認（2026-10-14「對照表確認」），schema.mongo.js、api.yaml 與各條完成標準未逐條說明）
+- 結論：通過（JiHungLin 於對話中確認，2026-10-14：「一起補，④⑤ 補完再一起通過」；本次為依實作回報回頭修改後重新凍結，api.yaml 與第六區未逐條說明）

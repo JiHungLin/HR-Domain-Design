@@ -2,6 +2,11 @@
 
 <!-- 只新增，最新的在最上面。記錄：切片項目以 [候選] 合併、升為 [已驗證]、套用變更提案、平行切片撞號重編。格式同切片 CHANGELOG.md -->
 
+## 2026-10-14　hire-employee/04-v2　④　凍結（回頭修改）
+- 改了什麼：rules.md 的 R22、R24、R25、R26 改寫為寫出所有結果（含不適用、可自願），R42 的來源補上勞退分級表全表；出處改為 04-v2；仍為 [候選]
+- 依據：slices/hire-employee/04_rules.md @ hire-employee/04-v2（D-13、D-14；起因是實作回報）
+- 產出者：AI（Claude）；審查者：JiHungLin；核心負責人：待審閱
+
 ## 2026-10-14　hire-employee/03-v3　③　凍結（回頭修改）
 - 改了什麼：flows.md 事件表新增 RecordPersonPeriod、更新 ProposeEnrollmentFiling 的觸發來源，出處改為 03-v3；glossary.md 新增 RecordPersonPeriod、修改 RegisterExistingEmployment 的定義；仍為 [候選]
 - 依據：slices/hire-employee/03_flows.md @ hire-employee/03-v3（D-18）
