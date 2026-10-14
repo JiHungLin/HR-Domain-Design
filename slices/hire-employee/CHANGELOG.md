@@ -12,6 +12,13 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-14　（未凍結）　③　回頭修改（第 0 級）：第 ④ 步回填規則編號
+- 改了什麼：03_flows.md 33 個狀態轉換的「規則」欄、03_use_cases.md 15 個 UC 的「規則」，由「（第 ④ 步回填）」改為 04_rules.md 的規則編號；狀態、事件、流程不變
+- 依據：04_rules.md（草稿）；docs/01 ④「回填 03_flows.md 狀態轉換的規則編號、03_use_cases.md 的規則欄」
+- 舊 → 新：規則欄空白 → R01～R57 的編號（無對應規則的轉換填「—」）
+- 影響與回歸：第 ④ 步凍結時，core/flows.md 的「規則」欄一併更新；第 ④ 步挑錯若改動規則編號，回填同步調整
+- 產出者：AI（Claude）；審查者：JiHungLin（隨第 ④ 步審查）
+
 ## 2026-10-14　hire-employee/03-v1　③　凍結（補記：審查期間的修改）
 - 改了什麼：不改交付物，只補記紀錄。03_flows.md、03_use_cases.md 送審（2026-10-07，09ae001）後到第一次凍結（03-v1）之間，有下列改變設計的修改，依新的 CHANGELOG 規則應逐筆記而當時沒有記：
   1. 依使用者選擇 A（更正不需核准），刪除 ApprovalRequest（核准申請）的狀態機與 RequestApproval、ApproveRequest、RejectRequest、WithdrawRequest 四個事件，詞彙對照表刪除對應 9 列

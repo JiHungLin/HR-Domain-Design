@@ -29,10 +29,10 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Hired | DecideHire | 人資 | 人已登錄（新的人或同客戶內既有的人，Q11）；有雇主與約定到職日 | |
-| Hired | Hired | RescheduleStart | 人資 | 新的到職日和原本不同；原本的到職日保留（Q14） | |
-| Hired | Started | StartEmployment | 人資 | 這個人已經實際開始提供勞務（01_scope D-07）；到職日不早於決定錄用日 | |
-| Hired | Cancelled | CancelHire | 人資 | 還沒開始提供勞務；到職日當天沒來也屬這一種（01_scope D-12） | |
+| （無） | Hired | DecideHire | 人資 | 人已登錄（新的人或同客戶內既有的人，Q11）；有雇主與約定到職日 | R11、R14 |
+| Hired | Hired | RescheduleStart | 人資 | 新的到職日和原本不同；原本的到職日保留（Q14） | R11、R13 |
+| Hired | Started | StartEmployment | 人資 | 這個人已經實際開始提供勞務（01_scope D-07）；到職日不早於決定錄用日 | R01、R11、R14、R15、R16、R21 |
+| Hired | Cancelled | CancelHire | 人資 | 還沒開始提供勞務；到職日當天沒來也屬這一種（01_scope D-12） | — |
 
 註銷誤登：註銷 CancelHire（其實已經到職）→ 錄用回到 Hired，再登錄 StartEmployment（發生時間為實際到職日）；註銷 StartEmployment（其實從未上班）→ 錄用回到 Hired，再登錄 CancelHire。原本的事件都保留並標為已註銷。
 
@@ -42,10 +42,10 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Active | StartEmployment | 人資 | 來自一筆 Hired 的錄用 | |
-| （無） | Active | RegisterExistingEmployment | 人資 | 到職日早於這個雇主開始由系統管理的日子（D-09）；沒有錄用紀錄（02 D-12） | |
-| （無） | Ended | RegisterExistingEmployment | 人資 | 補登已結束的先前一段（例：回任時要找得到，Q11）；到職日與結束日都早於這個雇主開始由系統管理的日子（D-09） | |
-| Active | Ended | RecordEarlyDeparture | 人資 | 結束日不早於到職日；本切片只處理到職後立刻離開（01_scope D-12），一般離職由 resignation 定義觸發事件 | |
+| （無） | Active | StartEmployment | 人資 | 來自一筆 Hired 的錄用 | R04、R05、R06 |
+| （無） | Active | RegisterExistingEmployment | 人資 | 到職日早於這個雇主開始由系統管理的日子（D-09）；沒有錄用紀錄（02 D-12） | R04、R05、R08 |
+| （無） | Ended | RegisterExistingEmployment | 人資 | 補登已結束的先前一段（例：回任時要找得到，Q11）；到職日與結束日都早於這個雇主開始由系統管理的日子（D-09） | R08 |
+| Active | Ended | RecordEarlyDeparture | 人資 | 結束日不早於到職日；本切片只處理到職後立刻離開（01_scope D-12），一般離職由 resignation 定義觸發事件 | R02 |
 
 註銷誤登：註銷建立這段僱傭關係的 StartEmployment 或 RegisterExistingEmployment → 這段僱傭關係視為不存在：不計入人數門檻、年資、勞工名卡（Q12、Q18），紀錄保留並標為已註銷；掛在它上面的契約、投保見下方各狀態機。前提是它後面沒有還沒註銷、又依賴它的事件（例：之後的到職後立刻離開），有的話依相反順序一起註銷（D-03）。同一人在同一雇主不能同時有兩段在職的僱傭關係（第 ④ 步規則，資料矛盾，阻擋）。
 
@@ -57,11 +57,11 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Signed | SignContract | 人資 | 掛在錄用上（到職前簽，02 D-18）或僱傭關係上 | |
-| Signed | InForce | StartEmployment | 系統（隨到職） | 契約起日不晚於到職日；生效時間取契約起日與到職日較晚者 | |
-| Signed | InForce | ContractTermStarts | 系統 | 僱傭關係仍為 Active，且契約起日到達（起日晚於到職日、或續約的新契約） | |
-| Signed | Voided | VoidContract | 系統（隨錄用取消或僱傭關係結束） | 契約掛在被取消的錄用上；或契約起日還沒到，僱傭關係就結束 | |
-| InForce | Ended | RecordEarlyDeparture | 系統（隨僱傭關係結束） | — | |
+| （無） | Signed | SignContract | 人資 | 掛在錄用上（到職前簽，02 D-18）或僱傭關係上 | R03、R18、R19、R20 |
+| Signed | InForce | StartEmployment | 系統（隨到職） | 契約起日不晚於到職日；生效時間取契約起日與到職日較晚者 | — |
+| Signed | InForce | ContractTermStarts | 系統 | 僱傭關係仍為 Active，且契約起日到達（起日晚於到職日、或續約的新契約） | — |
+| Signed | Voided | VoidContract | 系統（隨錄用取消或僱傭關係結束） | 契約掛在被取消的錄用上；或契約起日還沒到，僱傭關係就結束 | — |
+| InForce | Ended | RecordEarlyDeparture | 系統（隨僱傭關係結束） | — | — |
 
 註銷誤登：註銷造成 Voided 或 Ended 的事件（例：誤登取消），契約依其餘事件回到 Signed 或 InForce。定期契約到期、續約、視為不定期契約都不在本切片（01_scope 不做），到期的轉換由 resignation 定義。
 
@@ -71,10 +71,10 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Valid | RecordWorkAuthorization | 人資 | 依主管機關核發的許可函登錄；免申請者依身分證件登錄（02 D-06） | |
-| Valid | Expired | ExpireWorkAuthorization | 系統 | 登錄的期限屆滿，且沒有已登錄的展延 | |
-| Valid | Expired | EndWorkAuthorization | 人資 | 免申請者依據的身分已消失，經人資確認（D-08）；許可被廢止的登錄不在本切片 | |
-| Expired | Valid | RecordWorkAuthorization | 人資 | 登錄期限屆滿前已核准、但較晚才登錄的展延；仍是同一筆，文號留歷史（02 WorkAuthorization 卡），生效時間為原期限的次日 | |
+| （無） | Valid | RecordWorkAuthorization | 人資 | 依主管機關核發的許可函登錄；免申請者依身分證件登錄（02 D-06） | R03、R16、R17 |
+| Valid | Expired | ExpireWorkAuthorization | 系統 | 登錄的期限屆滿，且沒有已登錄的展延 | — |
+| Valid | Expired | EndWorkAuthorization | 人資 | 免申請者依據的身分已消失，經人資確認（D-08）；許可被廢止的登錄不在本切片 | — |
+| Expired | Valid | RecordWorkAuthorization | 人資 | 登錄期限屆滿前已核准、但較晚才登錄的展延；仍是同一筆，文號留歷史（02 WorkAuthorization 卡），生效時間為原期限的次日 | R03、R17 |
 
 說明：要重建「到職日那天許可是否有效、發給哪個雇主」（Q16）；展延晚登錄後，到期與恢復兩筆轉換都保留，依發生與得知時間分得出「當時系統以為已失效」和「實際一直有效」（D-10）。申請、廢止、轉換雇主不在本切片（01_scope 不做）。
 
@@ -84,9 +84,9 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Valid | RecordIdentityDocument | 人資 | 依員工出示的證件登錄（不代管證件，01_scope D-20） | |
-| Valid | Superseded | RecordIdentityDocument | 人資 | 換發、展延，或居留事由改變而另記一筆（02 D-05）；生效時間為新證件的生效日 | |
-| Valid | Expired | ExpireIdentityDocument | 系統 | 有效期限屆滿 | |
+| （無） | Valid | RecordIdentityDocument | 人資 | 依員工出示的證件登錄（不代管證件，01_scope D-20） | R03 |
+| Valid | Superseded | RecordIdentityDocument | 人資 | 換發、展延，或居留事由改變而另記一筆（02 D-05）；生效時間為新證件的生效日 | R03 |
+| Valid | Expired | ExpireIdentityDocument | 系統 | 有效期限屆滿 | — |
 
 說明：健保、就保、勞退的適用看「某一天」的居留身分（Q06）。居留證展延是新的一份（02 IdentityDocument 卡），所以晚登錄的展延是新的一筆 Valid，前一筆維持 Expired，期間依生效日接續。
 
@@ -96,7 +96,7 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Agreed | AgreeCompensation | 人資 | 掛在錄用上（到職前約定）或僱傭關係上 | |
+| （無） | Agreed | AgreeCompensation | 人資 | 掛在錄用上（到職前約定）或僱傭關係上 | R11 |
 
 說明：本切片只有到職時的一筆（02 D-01）；調薪後的版本由 monthly-payroll 定義狀態機。最低工資與投保薪資級距都要依到職日當時的約定判定，所以標「需要重建當時」。
 
@@ -106,8 +106,8 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Enrolled | RecordInsuranceFiling | 人資 | 依實際向保險人辦理的結果登錄實際辦理日；保險人核定的生效日可以另外輸入；附申報回執，沒有時標示「無回執」（D-02） | |
-| Enrolled | Terminated | （由 resignation 定義：退保） | 人資 | 不在本切片 | |
+| （無） | Enrolled | RecordInsuranceFiling | 人資 | 依實際向保險人辦理的結果登錄實際辦理日；保險人核定的生效日可以另外輸入；附申報回執，沒有時標示「無回執」（D-02） | R07、R31、R32、R50 |
+| Enrolled | Terminated | （由 resignation 定義：退保） | 人資 | 不在本切片 | — |
 
 說明：
 - Terminated 在本切片走不到，由 resignation 定義觸發事件；先列出，避免 resignation 另立一套（D-06）。
@@ -121,8 +121,8 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Effective | DeclareInsuredSalary | 人資 | 屬於一筆 Enrolled 的投保；記錄依據的分級表版本 | |
-| Effective | Superseded | （由 social-insurance 定義：調整投保薪資、保險人逕調） | 人資；保險人 | 不在本切片 | |
+| （無） | Effective | DeclareInsuredSalary | 人資 | 屬於一筆 Enrolled 的投保；記錄依據的分級表版本 | R40、R41、R42、R43、R45 |
+| Effective | Superseded | （由 social-insurance 定義：調整投保薪資、保險人逕調） | 人資；保險人 | 不在本切片 | — |
 
 ### WarningOverride（警告忽略紀錄）（歷史需求：需要軌跡，依 Q20）
 狀態：Active（有效）→ Lapsed（失效：警告已不成立或內容已改變）／Withdrawn（已撤回）
@@ -130,9 +130,9 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Active | OverrideWarning | 人資 | 有一個成立中的法規警告；理由可不填（PLAN.md D-27） | |
-| Active | Lapsed | LapseWarningOverride | 系統 | 它針對的警告不再成立（資料已改正），或警告內容改變：被警告的值和 warned_value 不同，或**適用於被警告事實的**規則版本或修訂不同（例：實際到職日落在新版最低工資的期間、規則有新的修訂）。對已判定的事實，之後才生效的新版本不影響（D-11） | |
-| Active | Withdrawn | WithdrawWarningOverride | 人資 | — | |
+| （無） | Active | OverrideWarning | 人資 | 有一個成立中的法規警告；理由可不填（PLAN.md D-27） | R09、R10 |
+| Active | Lapsed | LapseWarningOverride | 系統 | 它針對的警告不再成立（資料已改正），或警告內容改變：被警告的值和 warned_value 不同，或**適用於被警告事實的**規則版本或修訂不同（例：實際到職日落在新版最低工資的期間、規則有新的修訂）。對已判定的事實，之後才生效的新版本不影響（D-11） | R51 |
+| Active | Withdrawn | WithdrawWarningOverride | 人資 | — | — |
 
 說明：
 - 失效後如果警告仍成立（例：月薪改了但仍低於最低工資），會重新列為「未處理的警告」，要再次忽略就是新的一筆。
@@ -145,8 +145,8 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Archived | ArchivePersonalData | 人資 | 保存目的消失（例：到職前取消的人；離職後保存期間屆滿，屬 resignation）；寫明封存的個資類別 | |
-| Archived | Released | ReleaseArchival | 人資 | 連到一筆需要這些個資的紀錄：新的錄用（回任，Q11）、個資請求，或註銷誤登的取消；可以只解除部分類別 | |
+| （無） | Archived | ArchivePersonalData | 人資 | 保存目的消失（例：到職前取消的人；離職後保存期間屆滿，屬 resignation）；寫明封存的個資類別 | R56 |
+| Archived | Released | ReleaseArchival | 人資 | 連到一筆需要這些個資的紀錄：新的錄用（回任，Q11）、個資請求，或註銷誤登的取消；可以只解除部分類別 | R57 |
 
 說明：依法刪除（不只是封存）的做法在第 ⑤ 步依平台 P7 設計（01_scope D-20），本切片不定義刪除的狀態。誰可以查看哪些個資（Q22 前半）是權限設定，不是流程，在第 ④ 步寫規則、第 ⑤ 步依 P7 落實。
 
@@ -156,9 +156,9 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Received | ReceiveDataSubjectRequest | 員工（自己提出）；人資（代登錄書面、email、口頭的請求，記收到管道） | 請求來自當事人本人 | |
-| Received | Completed | ResolveDataSubjectRequest | 人資 | 已執行請求的內容（例：更正走 CorrectRecord、停止利用或刪除走 ArchivePersonalData）；部分接受也算完成，結果寫明；員工撤回也記為完成，結果寫「當事人撤回」（D-07） | |
-| Received | Rejected | ResolveDataSubjectRequest | 人資 | 有法定的拒絕理由（例：依業務必要不刪除），寫明理由；拒絕會通知雇主（老闆）（D-02） | |
+| （無） | Received | ReceiveDataSubjectRequest | 員工（自己提出）；人資（代登錄書面、email、口頭的請求，記收到管道） | 請求來自當事人本人 | R54 |
+| Received | Completed | ResolveDataSubjectRequest | 人資 | 已執行請求的內容（例：更正走 CorrectRecord、停止利用或刪除走 ArchivePersonalData）；部分接受也算完成，結果寫明；員工撤回也記為完成，結果寫「當事人撤回」（D-07） | R53、R55 |
+| Received | Rejected | ResolveDataSubjectRequest | 人資 | 有法定的拒絕理由（例：依業務必要不刪除），寫明理由；拒絕會通知雇主（老闆）（D-02） | R46、R55 |
 
 ### 不需要狀態機的東西
 

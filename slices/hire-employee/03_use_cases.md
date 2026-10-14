@@ -28,7 +28,7 @@
   - 到職日當天就來上班（US-D19）：步驟 2 與步驟 5 可以在同一天完成，事件仍分開記
 - 用到的 Entity：Person、IdentityDocument、Hire、Employment、EmploymentContract、Compensation、Employer、OrgUnit、WorkLocation、InsuranceUnit、Jurisdiction
 - 用到的事件：RecordIdentityDocument、DecideHire、AgreeCompensation、SignContract、PromptStartConfirmation、StartEmployment、ProposeEnrollmentFiling、RescheduleStart、CancelHire
-- 規則：（第 ④ 步回填）
+- 規則：R01、R04、R05、R06、R11、R12、R13、R21、R30、R38
 
 ## UC-02 判定各保險的適用、期限、生效日與投保薪資級距
 - 對應草稿：US-D01、US-D05、US-D07、US-D09、US-D14、US-D15、US-D16、US-D17、US-D18
@@ -47,7 +47,7 @@
   - 員工到職前在別處投保（US-D07）→ 判定照常；原投保情形只記錄說明，對本雇主加保的影響 [待專家確認: EQ-010]
 - 用到的 Entity：Person、IdentityDocument、Employer、InsuranceUnit、Employment、Compensation、SocialInsuranceScheme、Jurisdiction、Hire
 - 用到的事件：ProposeEnrollmentFiling
-- 規則：（第 ④ 步回填）
+- 規則：R22～R44
 
 ## UC-03 登錄實際辦理加保與投保薪資
 - 對應草稿：US-D04
@@ -63,7 +63,7 @@
   - 登錄錯誤 → UC-08
 - 用到的 Entity：InsuranceEnrollment、InsuredSalary、Employment、InsuranceUnit、SocialInsuranceScheme
 - 用到的事件：RecordInsuranceFiling、DeclareInsuredSalary
-- 規則：（第 ④ 步回填）
+- 規則：R07、R31～R36、R40～R45、R50
 
 ## UC-04 錄用外籍員工（含移工）
 - 對應草稿：US-D08、US-D11、US-D12
@@ -80,7 +80,7 @@
   - 許可展延已核准但較晚才登錄 → 許可從已失效回到有效，仍是同一筆
 - 用到的 Entity：Person、IdentityDocument、WorkAuthorization、Hire、Employment、EmploymentContract、Employer
 - 用到的事件：RecordIdentityDocument、RecordWorkAuthorization、DecideHire、StartEmployment、ExpireWorkAuthorization、ExpireIdentityDocument、ProposeAuthorizationReview、EndWorkAuthorization
-- 規則：（第 ④ 步回填）
+- 規則：R14～R18、R24、R26、R27
 
 ## UC-05 到職前改期
 - 對應草稿：US-D03
@@ -93,7 +93,7 @@
 - 例外：已經提早辦了加保 → 處理方式 [待專家確認: EQ-005]
 - 用到的 Entity：Hire
 - 用到的事件：RescheduleStart、ProposeEnrollmentFiling
-- 規則：（第 ④ 步回填）
+- 規則：R11、R13
 
 ## UC-06 到職前取消錄用
 - 對應草稿：US-D03
@@ -108,7 +108,7 @@
   - 已經提早辦了加保 → [待專家確認: EQ-005]
 - 用到的 Entity：Hire、EmploymentContract、PersonalDataArchival
 - 用到的事件：CancelHire、VoidContract、ProposeArchival
-- 規則：（第 ④ 步回填）
+- 規則：R56
 
 ## UC-07 登錄勞動契約並檢查定期契約的期間
 - 對應草稿：US-D12、US-D13
@@ -121,7 +121,7 @@
 - 例外：期間超過上限（US-D13）→ 警告，人資可改正或照樣存檔（UC-09）
 - 用到的 Entity：EmploymentContract、Hire、Employment、WorkAuthorization
 - 用到的事件：SignContract、ContractTermStarts、StartEmployment
-- 規則：（第 ④ 步回填）
+- 規則：R03、R18、R19、R20
 
 ## UC-08 更正到職資料與註銷誤登
 - 對應草稿：US-D06
@@ -142,7 +142,7 @@
   - 註銷錯了 → 撤銷註銷（RevokeAnnulment），原本那一段與掛在上面的紀錄恢復
 - 用到的 Entity：Hire、Employment、EmploymentContract、Compensation、Person、IdentityDocument、WorkAuthorization、InsuranceEnrollment、InsuredSalary、WarningOverride、PersonalDataArchival
 - 用到的事件：CorrectRecord、AnnulEntry、RevokeAnnulment、NotifySignificantCorrection、StartEmployment、CancelHire、ProposeEnrollmentFiling、LapseWarningOverride、ReleaseArchival
-- 規則：（第 ④ 步回填）
+- 規則：R02、R03、R46～R50
 
 ## UC-09 忽略法規警告，以及撤回
 - 對應草稿：US-D11、US-D13
@@ -158,7 +158,7 @@
   - 資料本身矛盾（例：結束日早於到職日）→ 阻擋，不能忽略
 - 用到的 Entity：WarningOverride、Hire、Employment
 - 用到的事件：OverrideWarning、LapseWarningOverride、WithdrawWarningOverride
-- 規則：（第 ④ 步回填）
+- 規則：R09、R10、R51
 
 ## UC-10 到職後立刻離開
 - 對應草稿：US-D10
@@ -174,7 +174,7 @@
   - 更正結束日 → 會改變人數，算重大更正（UC-08）
 - 用到的 Entity：Employment、EmploymentContract
 - 用到的事件：RecordEarlyDeparture、VoidContract、AnnulEntry
-- 規則：（第 ④ 步回填）
+- 規則：R02、R37
 
 ## UC-11 補登客戶開始使用系統前就到職的員工
 - 對應草稿：（無，依 Q21）
@@ -188,7 +188,7 @@
 - 例外：補登已離職的先前一段（回任時要找得到）→ 直接登錄為 Ended
 - 用到的 Entity：Person、IdentityDocument、Employment、Compensation、InsuranceEnrollment、InsuredSalary
 - 用到的事件：RecordIdentityDocument、RegisterExistingEmployment、RecordInsuranceFiling、DeclareInsuredSalary、AgreeCompensation
-- 規則：（第 ④ 步回填）
+- 規則：R08、R28
 
 ## UC-12 同一個人再次被錄用（回任）
 - 對應草稿：（無，依 Q11）
@@ -201,7 +201,7 @@
 - 例外：證件號碼換了（例：外籍員工的舊式統一證號換新式）→ 人資確認是同一人後沿用 [待專家確認: EQ-015]
 - 用到的 Entity：Person、IdentityDocument、Hire、Employment、PersonalDataArchival
 - 用到的事件：DecideHire、StartEmployment、ReleaseArchival
-- 規則：（第 ④ 步回填）
+- 規則：R04、R57
 
 ## UC-13 封存與解除封存個資
 - 對應草稿：（無，依 Q22）
@@ -216,7 +216,7 @@
   - 人資決定暫不封存 → 在這筆建議上記錄處置與理由
 - 用到的 Entity：PersonalDataArchival、Person
 - 用到的事件：ProposeArchival、ArchivePersonalData、ReleaseArchival
-- 規則：（第 ④ 步回填）
+- 規則：R55、R56、R57
 
 ## UC-14 處理員工的個資請求
 - 對應草稿：（無，依 Q22）
@@ -231,7 +231,7 @@
 - 誰可以查看哪些個資（Q22 前半）是權限設定，不是流程：第 ④ 步寫規則、第 ⑤ 步依平台 P7 落實
 - 用到的 Entity：DataSubjectRequest、Person、PersonalDataArchival
 - 用到的事件：ReceiveDataSubjectRequest、PromptDataSubjectRequestDeadline、ResolveDataSubjectRequest、NotifySignificantCorrection、CorrectRecord、ArchivePersonalData
-- 規則：（第 ④ 步回填）
+- 規則：R46、R53、R54、R55
 
 ## UC-15 查詢勞工名卡
 - 對應草稿：（無，依 Q10）
@@ -244,7 +244,7 @@
 - 例外：外籍員工沒有本籍與身分證統一編號 → 顯示國籍與統一證號
 - 用到的 Entity：Person、IdentityDocument、Employment、Compensation、InsuranceEnrollment
 - 用到的事件：（查詢，不改變狀態）
-- 規則：（第 ④ 步回填）
+- 規則：R52、R55
 
 ## 驗收問題涵蓋
 
