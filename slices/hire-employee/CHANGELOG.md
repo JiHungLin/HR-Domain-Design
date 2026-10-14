@@ -12,6 +12,17 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-14　hire-employee/05-v1　⑤　凍結
+- 改了什麼：第 ⑤ 步初版凍結。05_mapping.md：19 個 Entity 對到 MongoDB 集合（另有事件紀錄、加保待辦、重大更正、規則版本、多語標籤、遮蔽紀錄、帳號對應與 6 個技術表）；35 個事件對到 36 支 API 或系統排程；62 條規則的落實位置（R54 已取消）；推導值與歷史需求的儲存方式；可更正的欄位清單；決定 D-01～D-16。schema.mongo.js：32 個集合的驗證規則與索引。api.yaml：OpenAPI 3.1，36 支 API。06_evidence/golden_cases.md：選用 GC01～GC03，紙上驗證一致
+- 依據：02_entities.md @ 02-v3；03_flows.md、03_use_cases.md @ 03-v3；04_rules.md @ 04-v1；PLAN.md D-31、D-35；inputs/shared/範圍釐清_平台約定_第五步.md
+- 反例處理：AI 挑錯 15 項（X-01～X-15），全部接受並修改；過程中回頭修改第 ③ 步一次（03-v3，新增 RecordPersonPeriod）
+- 紙上驗證：GC01 一致；GC02、GC03 初次共 3 處不一致，使用者複核後都是預期結果更正，設計不需回頭修改；結果仍以 EQ-003、EQ-012 為前提
+- 審查期間的修改：對照表初稿（cb31356）到送審（8c0426e）之間：處理挑錯 15 項（b155c32）；使用者確認對照表與 D-08、D-09、D-14 的決定（fa1a4fe）；產生 schema.mongo.js、api.yaml（4cd28f7）；黃金案例登錄與複核更正（7ac79d5、bd518db、fb75e4f、8c0426e）。這一步沒有凍結過，以上不逐筆記
+- 凍結前檢查：tools/lint.py --freeze 紅燈 1 項「規則 62 個不在詞彙對照表」，同第 ④ 步的處理（流程更新後不登錄，工具包尚未包含），照樣凍結
+- 審查方式：使用者說「第五步直接通過吧」；對照表在送審前已逐項確認
+- 新增專家問題：EQ-022（保存期滿後哪些要真的刪除）
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-14，通過）
+
 ## 2026-10-14　hire-employee/03-v3　③　凍結
 - 改了什麼：第 ③ 步回頭修改後重新凍結。相對 03-v2：新增事件 RecordPersonPeriod（事件 34 → 35），ProposeEnrollmentFiling 的觸發來源、UC-02 同步；RegisterExistingEmployment 的定義與 UC-11 標題改為「雇主開始由系統管理前」；新增 D-18
 - 依據：03-v2；05_mapping.md D-14、X-06、X-15；使用者決定（2026-10-14）

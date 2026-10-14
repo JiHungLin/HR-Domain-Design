@@ -12,6 +12,13 @@
 - 同意者：
 -->
 
+### 2026-10-14　PLAN　hire-employee 設計完成
+- 改了什麼：切片 hire-employee 的狀態 進行中 → 設計完成（待驗證）
+- 依據：hire-employee 第 ⑤ 步凍結（hire-employee/05-v1）
+- 舊 → 新：進行中 → 設計完成（待驗證）；第 ⑥ 步等有系統時再做
+- 影響：可以開始下一條切片；依建議順序，下一條是 annual-leave-grant（依賴 hire-employee）
+- 同意者：JiHungLin（2026-10-14，對話中同意）
+
 ### 2026-10-14　PLAN　第 ⑤ 步需要的平台約定
 - 改了什麼：地圖新增決定 D-35（資料庫 MongoDB、API 形式，以及平台約定 P1、P2、P3、P6、P7、P8 的做法）
 - 依據：hire-employee 進入第 ⑤ 步時，docs/03 的 P1～P8 未填；inputs/shared/範圍釐清_平台約定_第五步.md
