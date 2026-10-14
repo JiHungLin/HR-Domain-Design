@@ -59,7 +59,10 @@
 | Jurisdiction.level | 屬性 | 層級 | 層級 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | Employer.legal_name | 屬性 | 雇主名稱 | 名稱 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | Employer.employer_type | 屬性 | 雇主型態 | 雇主型態 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
-| Employer.registered_on | 屬性 | 依法辦理登記或設立稅籍的日期 | 登記或設稅籍日 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
+| Employer.registrations | 屬性 | 依法辦理的登記（種類、日期） | 登記紀錄 | 公司登記、商業登記、設立稅籍、執業證照 | [候選] | hire-employee（② @ hire-employee/02-v3） |
+| Employer.registration_exempt | 屬性 | 是否依法免辦登記 | 依法免辦登記 | 台灣專屬 | [候選] | hire-employee（② @ hire-employee/02-v3） |
+| Employer.tax_assessed_or_invoice_permit | 屬性 | 是否有核定課稅或統一發票購票證 | 核定課稅或購票證 | 台灣專屬 | [候選] | hire-employee（② @ hire-employee/02-v3） |
+| Employer.labor_insurance_industry_category | 屬性 | 勞工保險條例 §6 第 1 項屬哪一款 | 勞保行業類別 | 台灣專屬；其他管轄區不用 | [候選] | hire-employee（② @ hire-employee/02-v3） |
 | Employer.system_managed_from | 屬性 | 這個雇主開始由系統管理的日子 | 開始由系統管理日 | 補登既有員工的界線 | [候選] | hire-employee（② @ hire-employee/02-v2） |
 | Employer.labor_standards_act_applicable | 屬性 | 是否適用勞動基準法 | 適用勞基法 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | InsuranceUnit.unit_code | 屬性 | 保險人核發的單位代號 | 投保單位代號 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
@@ -85,19 +88,19 @@
 | EmploymentContract.contract_type | 屬性 | 契約類型 | 契約類型 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | EmploymentContract.fixed_term_nature | 屬性 | 定期契約的性質 | 定期契約性質 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | EmploymentContract.term_start | 屬性 | 契約起日 | 契約起日 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
-| EmploymentContract.term_end | 屬性 | 契約迄日 | 契約迄日 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
+| EmploymentContract.term_end | 屬性 | 契約上寫的迄日 | 契約迄日 | 實際期限由規則推出 | [候選] | hire-employee（② @ hire-employee/02-v3） |
 | EmploymentContract.in_writing | 屬性 | 是否為書面契約 | 書面契約 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | Compensation.effective_from | 屬性 | 這一版約定薪資的生效日 | 生效日 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | Compensation.currency | 屬性 | 幣別 | 幣別 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | Compensation.pay_basis | 屬性 | 計薪方式 | 計薪方式 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | Compensation.monthly_base_salary | 屬性 | 約定月薪 | 月薪 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
-| Compensation.fixed_monthly_allowances | 屬性 | 每月固定給付的項目與金額 | 每月固定津貼 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
+| Compensation.fixed_monthly_allowances | 屬性 | 每月固定給付的項目（名稱、類別、金額） | 每月固定津貼 |  | [候選] | hire-employee（② @ hire-employee/02-v3） |
 | Compensation.monthly_wage_total | 屬性 | 月薪資總額（推導） | 月薪資總額 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | WorkAuthorization.authorization_basis | 屬性 | 工作許可的依據 | 許可依據 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | WorkAuthorization.work_category | 屬性 | 工作類別 | 工作類別 | 台灣為就業服務法 §46 各款 | [候選] | hire-employee（② @ hire-employee/02-v1） |
-| WorkAuthorization.permit_number | 屬性 | 許可文號 | 許可文號 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
-| WorkAuthorization.valid_from | 屬性 | 許可生效日 | 許可生效日 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
-| WorkAuthorization.valid_until | 屬性 | 許可期限 | 許可期限 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
+| WorkAuthorization.approvals | 屬性 | 每一次核准的紀錄（文號、起訖日） | 核准紀錄 |  | [候選] | hire-employee（② @ hire-employee/02-v3） |
+| WorkAuthorization.valid_from | 屬性 | 免申請者取得該身分的日子 | 身分取得日 |  | [候選] | hire-employee（② @ hire-employee/02-v3） |
+| WorkAuthorization.valid_until | 屬性 | 免申請者身分消失的日子 | 身分消失日 |  | [候選] | hire-employee（② @ hire-employee/02-v3） |
 | SocialInsuranceScheme.code | 屬性 | 制度代碼 | 代碼 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | SocialInsuranceScheme.insurer | 屬性 | 保險人 | 保險人 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | SocialInsuranceScheme.effective_from | 屬性 | 制度施行日 | 施行日 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
@@ -115,6 +118,8 @@
 | DataSubjectRequest.received_on | 屬性 | 收到日期 | 收到日 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | DataSubjectRequest.resolved_on | 屬性 | 處理完成日期 | 完成日 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | DataSubjectRequest.outcome | 屬性 | 處理結果與理由 | 處理結果 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
+| DataSubjectRequest.refusal_basis | 屬性 | 拒絕的依據（規則與版本或法條） | 拒絕的依據 |  | [候選] | hire-employee（② @ hire-employee/02-v3） |
+| DataSubjectRequest.extensions | 屬性 | 延長紀錄（每次：延長後期限、原因、書面通知日） | 延長紀錄 |  | [候選] | hire-employee（② @ hire-employee/02-v3） |
 | belongsToTenant | 關係 | 屬於某個客戶 | 屬於客戶 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | partOf | 關係 | 隸屬於上層（組織單位、管轄區） | 隸屬於上層 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | ofEmployer | 關係 | 屬於某個雇主（組織單位、投保單位） | 屬於雇主 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
@@ -196,6 +201,7 @@
 | WithdrawWarningOverride | 事件 | 撤回忽略的決定 | 撤回忽略 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | ReceiveDataSubjectRequest | 事件 | 收到當事人的個資請求 | 收到個資請求 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | PromptDataSubjectRequestDeadline | 事件 | 個資請求的法定處理期限將到或已過 | 提醒個資請求期限 | 建議層 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| ExtendDataSubjectRequest | 事件 | 延長個資請求的處理期限並通知當事人 | 延長個資請求處理期限 |  | [候選] | hire-employee（③ @ hire-employee/03-v2） |
 | ResolveDataSubjectRequest | 事件 | 完成或拒絕個資請求 | 處理個資請求 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | ProposeArchival | 事件 | 依保存目的產生封存建議 | 產生封存建議 | 建議層 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | ArchivePersonalData | 事件 | 封存某人的部分個資 | 封存個資 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |

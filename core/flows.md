@@ -67,7 +67,7 @@
 註銷誤登：註銷造成 Voided 或 Ended 的事件（例：誤登取消），契約依其餘事件回到 Signed 或 InForce。定期契約到期、續約、視為不定期契約都不在本切片（01_scope 不做），到期的轉換由 resignation 定義。
 
 ### WorkAuthorization（工作許可） [候選]（歷史需求：需要重建當時，依 hire-employee:Q16）
-- 出處：hire-employee（③ @ hire-employee/03-v1）；文中的 D-nn、X-nn 指該切片 03_flows.md 的決定與反例
+- 出處：hire-employee（③ @ hire-employee/03-v2）；文中的 D-nn、X-nn 指該切片 03_flows.md 的決定與反例
 - 層：shared
 - 被引用：（無）
 
@@ -77,9 +77,10 @@
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
 | （無） | Valid | RecordWorkAuthorization | 人資 | 依主管機關核發的許可函登錄；免申請者依身分證件登錄（02 D-06） | |
-| Valid | Expired | ExpireWorkAuthorization | 系統 | 登錄的期限屆滿，且沒有已登錄的展延 | |
+| Valid | Valid | RecordWorkAuthorization | 人資 | 許可還有效時登錄展延：新增一筆核准紀錄，不改前一筆（02 D-33） | |
+| Valid | Expired | ExpireWorkAuthorization | 系統 | 申請許可者：最後一筆核准的迄日屆滿，且沒有已登錄的展延。免申請者沒有到期，身分消失由 EndWorkAuthorization 記錄 | |
 | Valid | Expired | EndWorkAuthorization | 人資 | 免申請者依據的身分已消失，經人資確認（D-08）；許可被廢止的登錄不在本切片 | |
-| Expired | Valid | RecordWorkAuthorization | 人資 | 登錄期限屆滿前已核准、但較晚才登錄的展延；仍是同一筆，文號留歷史（02 WorkAuthorization 卡），生效時間為原期限的次日 | |
+| Expired | Valid | RecordWorkAuthorization | 人資 | 登錄期限屆滿前已核准、但較晚才登錄的展延；仍是同一筆許可，新增一筆核准紀錄（02 D-33），生效時間為原期限的次日 | |
 
 說明：要重建「到職日那天許可是否有效、發給哪個雇主」（hire-employee:Q16）；展延晚登錄後，到期與恢復兩筆轉換都保留，依發生與得知時間分得出「當時系統以為已失效」和「實際一直有效」（D-10）。申請、廢止、轉換雇主不在本切片（01_scope 不做）。
 
@@ -180,7 +181,7 @@
 說明：依法刪除（不只是封存）的做法在第 ⑤ 步依平台 P7 設計（01_scope D-20），本切片不定義刪除的狀態。誰可以查看哪些個資（hire-employee:Q22 前半）是權限設定，不是流程，在第 ④ 步寫規則、第 ⑤ 步依 P7 落實。
 
 ### DataSubjectRequest（個資請求） [候選]（歷史需求：需要軌跡，依 hire-employee:Q22）
-- 出處：hire-employee（③ @ hire-employee/03-v1）；文中的 D-nn、X-nn 指該切片 03_flows.md 的決定與反例
+- 出處：hire-employee（③ @ hire-employee/03-v2）；文中的 D-nn、X-nn 指該切片 03_flows.md 的決定與反例
 - 層：core
 - 被引用：（無）
 
@@ -190,8 +191,10 @@
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
 | （無） | Received | ReceiveDataSubjectRequest | 員工（自己提出）；人資（代登錄書面、email、口頭的請求，記收到管道） | 請求來自當事人本人 | |
-| Received | Completed | ResolveDataSubjectRequest | 人資 | 已執行請求的內容（例：更正走 CorrectRecord、停止利用或刪除走 ArchivePersonalData）；部分接受也算完成，結果寫明；員工撤回也記為完成，結果寫「當事人撤回」（D-07） | |
-| Received | Rejected | ResolveDataSubjectRequest | 人資 | 有法定的拒絕理由（例：依業務必要不刪除），寫明理由；拒絕會通知雇主（老闆）（D-02） | |
+| Received | Completed | ResolveDataSubjectRequest | 人資 | 已執行請求的內容（例：更正走 CorrectRecord、停止利用或刪除走 ArchivePersonalData）；部分接受也算完成，結果寫明；員工撤回也記為完成，結果寫「當事人撤回」（D-07）；部分拒絕的部分要寫依據；刪除的內容不能包含保存期間內的資料類別 | |
+| Received | Rejected | ResolveDataSubjectRequest | 人資 | 有法定的拒絕理由（例：依業務必要不刪除），寫明理由與依據（refusal_basis，被 R55 擋下的刪除自動帶入）；拒絕會通知雇主（老闆）（D-02） | |
+
+處理期限的延長（ExtendDataSubjectRequest）不改變狀態，仍是 Received：寫明原因與延長後的期限，並以書面通知當事人；在原期限內決定（推定，原文未寫）（R53、R63，D-15）。
 
 ## 事件（hire-employee）
 
@@ -208,21 +211,22 @@
 | ContractTermStarts（契約起日到達） | 時間或條件到達 | 發生 | EmploymentContract | Signed → InForce | 契約起日 | 起日更正或依據的到職被註銷時重新推導 | 生效、得知 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
 | VoidContract（契約失效） | 其他單位個體的變化（錄用取消；起日前僱傭關係結束） | 發生 | EmploymentContract | Signed → Voided | 取消或結束的紀錄 | 造成它的事件被註銷時，依其餘事件重新推導 | 發生、得知 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
 | AgreeCompensation（約定薪資） | 人的動作（人資） | 決定 | Compensation | （無）→ Agreed | 錄取通知或契約上的薪資條件 | 只能更正；調薪屬 monthly-payroll | 發生、得知、生效 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
-| RecordWorkAuthorization（登錄工作許可） | 外部系統或訊息（主管機關核發的許可函或展延核准，由人資登錄） | 發生 | WorkAuthorization | （無）→ Valid；展延晚登錄時 Expired → Valid | 許可函文號；免申請者的身分證件 | 只能更正 | 發生、得知、生效 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
-| ExpireWorkAuthorization（工作許可到期） | 時間或條件到達 | 發生 | WorkAuthorization | Valid → Expired | 登錄的期限 | 展延晚登錄時回到 Valid；期限更正時重新推導 | 生效、得知 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
+| RecordWorkAuthorization（登錄工作許可） | 外部系統或訊息（主管機關核發的許可函或展延核准，由人資登錄） | 發生 | WorkAuthorization | （無）→ Valid；展延時新增一筆核准紀錄：還有效時 Valid → Valid，晚登錄時 Expired → Valid | 許可函文號；免申請者的身分證件 | 只能更正 | 發生、得知、生效 | [候選] | hire-employee（③ @ hire-employee/03-v2） |  |
+| ExpireWorkAuthorization（工作許可到期） | 時間或條件到達 | 發生 | WorkAuthorization | Valid → Expired（只用於申請許可者） | 最後一筆核准的迄日 | 展延晚登錄時回到 Valid；期限更正時重新推導 | 生效、得知 | [候選] | hire-employee（③ @ hire-employee/03-v2） |  |
 | ProposeAuthorizationReview（提醒確認許可） | 其他單位個體的變化（免申請者依據的身分證件被取代或到期） | 建議 | WorkAuthorization | 不改變狀態；提醒人資確認許可是否仍有效 | 新的身分證件與居留事由 | 可作廢（保留紀錄） | 得知 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
 | EndWorkAuthorization（登錄許可失效） | 人的動作（人資） | 發生 | WorkAuthorization | Valid → Expired | 人資確認依據的身分已消失 [待專家確認: EQ-018] | 只能更正 | 發生、得知、生效 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
 | RecordIdentityDocument（登錄身分證件） | 人的動作（人資依員工出示的證件） | 發生 | IdentityDocument | （無）→ Valid；換發或居留事由改變時，前一筆 Valid → Superseded | 證件核對紀錄（不代管證件） | 只能更正 | 發生、得知、生效 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
 | ExpireIdentityDocument（證件到期） | 時間或條件到達 | 發生 | IdentityDocument | Valid → Expired | 有效期限 | 期限更正時重新推導 | 生效、得知 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
-| ProposeEnrollmentFiling（產生加保待辦） | 其他單位個體的變化（決定錄用、到職、改期、資料更正、註銷誤登；同一投保單位其他員工的到職或離開改變了人數）；時間或條件到達（應辦理期限將到或已過） | 建議 | Hire 或 Employment | 不改變狀態；列出各保險是否適用、應辦理期限、法定生效日、預計的投保薪資級距；已過期限的標出晚幾天；既有員工的適用改變（例：人數跨過門檻，原本自願的變成強制）一併列出；掛在已註銷僱傭關係上的投保提醒向保險人處理 | 判定用到的資料版本與規則版本 | 不由人作廢：只會被新的判定取代（記取代它的那一筆），或因辦理完成而結案；可自願的保險由雇主選擇不加時，記在這筆待辦上（人、時間）；所有待辦都保留，記錄依據的資料與規則版本（D-10、X-22） | 得知 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
+| ProposeEnrollmentFiling（產生加保待辦） | 其他單位個體的變化（決定錄用、到職、改期、資料更正、註銷誤登；登錄新的身分證件（例：拿到居留證、取得永久居留）；人的國籍、戶籍新增一段期間；雇主的判定條件改變：新增登記紀錄、取得核定課稅或購票證、免辦登記或行業類別改變、改為適用勞基法（維護屬 org-setup）；同一投保單位其他員工的到職或離開改變了人數）；時間或條件到達（應辦理期限將到或已過；條件日期到了：員工滿 65 歲、新制度的施行日、身分證件的生效日（登錄時還沒生效的證件））（D-16、D-17） | 建議 | Hire 或 Employment | 不改變狀態；列出各保險是否適用、應辦理期限、法定生效日、預計的投保薪資級距；已過期限的標出晚幾天；既有員工的適用改變（例：人數跨過門檻，原本自願的變成強制）一併列出；掛在已註銷僱傭關係上的投保提醒向保險人處理 | 判定用到的資料版本與規則版本 | 不由人作廢：只會被新的判定取代（記取代它的那一筆），或因辦理完成而結案；可自願的保險由雇主選擇不加時，記在這筆待辦上（人、時間）；所有待辦都保留，記錄依據的資料與規則版本（D-10、X-22） | 得知 | [候選] | hire-employee（③ @ hire-employee/03-v2） |  |
 | RecordInsuranceFiling（登錄實際辦理加保） | 人的動作（人資在保險人辦完後登錄） | 執行 | InsuranceEnrollment | （無）→ Enrolled；記實際辦理日、是否自願、保險人核定的生效日 | 申報回執或保險人核定資料；沒有時標示「無回執」 | 只能更正 | 發生、得知、生效 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
 | DeclareInsuredSalary（申報投保薪資） | 人的動作（人資） | 執行 | InsuredSalary | （無）→ Effective；記金額、級距、分級表版本、申報日、來源 | 申報資料 | 只能更正 | 發生、得知、生效 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
 | OverrideWarning（忽略警告） | 人的動作（人資） | 決定 | WarningOverride | （無）→ Active | 規則與版本、被警告的值、理由（可不填） | 可撤回（WithdrawWarningOverride） | 發生、得知 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
 | LapseWarningOverride（忽略失效） | 其他單位個體的變化（被警告的資料改正或改變；到職時適用的規則版本或修訂和錄用時不同） | 發生 | WarningOverride | Active → Lapsed | 新的值或更正後的規則版本 | — | 發生、得知 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
 | WithdrawWarningOverride（撤回忽略） | 人的動作（人資） | 決定 | WarningOverride | Active → Withdrawn；記撤回者、撤回時間 | — | 不可撤銷；要再忽略就是新的一筆 | 發生、得知 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
 | ReceiveDataSubjectRequest（收到個資請求） | 人的動作（員工提出；或人資代登錄） | 要求 | DataSubjectRequest | （無）→ Received | 請求內容、收到日期、收到管道 | 員工撤回時記為 Completed（D-07） | 發生、得知 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
-| PromptDataSubjectRequestDeadline（提醒個資請求期限） | 時間或條件到達（法定處理期限將到或已過） | 建議 | DataSubjectRequest | 不改變狀態 | 收到日期、法定期限（第 ④ 步規則） | 可作廢（保留紀錄） | 得知 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
-| ResolveDataSubjectRequest（處理個資請求） | 人的動作（人資） | 決定 | DataSubjectRequest | Received → Completed 或 Rejected | 處理結果與理由 | 不可撤銷 | 發生、得知 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
+| PromptDataSubjectRequestDeadline（提醒個資請求期限） | 時間或條件到達（法定處理期限將到或已過；延長過的依延長後的期限） | 建議 | DataSubjectRequest | 不改變狀態 | 收到日期、法定期限（第 ④ 步規則） | 可作廢（保留紀錄） | 得知 | [候選] | hire-employee（③ @ hire-employee/03-v2） |  |
+| ExtendDataSubjectRequest（延長個資請求處理期限） | 人的動作（人資） | 決定 | DataSubjectRequest | 不改變狀態（仍是 Received）；新增一筆延長紀錄：延長後的期限、延長原因、書面通知當事人的日期；可以延長多次（D-15） | 寄給當事人的書面通知 | 只能更正 | 發生、得知 | [候選] | hire-employee（③ @ hire-employee/03-v2） |  |
+| ResolveDataSubjectRequest（處理個資請求） | 人的動作（人資） | 決定 | DataSubjectRequest | Received → Completed 或 Rejected | 處理結果與理由；拒絕時的依據（被保存期間規則擋下時自動帶入） | 不可撤銷 | 發生、得知 | [候選] | hire-employee（③ @ hire-employee/03-v2） |  |
 | ProposeArchival（產生封存建議） | 其他單位個體的變化（到職前取消）；時間或條件到達（保存期間屆滿，屬 resignation） | 建議 | PersonalDataArchival | 不改變狀態；列出建議封存的人與個資類別；人資的處置（封存或暫不封存及理由）記在這筆建議上 | 取消日、保存期間規則 | 可作廢（保留紀錄與處置） | 得知 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
 | ArchivePersonalData（封存個資） | 人的動作（人資） | 決定 | PersonalDataArchival | （無）→ Archived | 封存的類別與理由 | 改用 ReleaseArchival | 發生、得知、生效 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
 | ReleaseArchival（解除封存） | 人的動作（人資） | 決定 | PersonalDataArchival | Archived → Released | 連到的錄用、個資請求或註銷紀錄；解除理由 | 不可撤銷；要再封存是新的一筆 | 發生、得知、生效 | [候選] | hire-employee（③ @ hire-employee/03-v1） | |
@@ -249,6 +253,6 @@
 | 實際辦理日、保險人核定的生效日、申報的投保薪資 | CorrectRecord；整筆登錯用 AnnulEntry | 人資 | 不需核准，留紀錄；重大更正通知雇主 | 要附保險人回執或標示「無回執」；原值保留；晚辦天數從有變成沒有時，通知雇主（老闆）；只更正系統內的登錄錯誤，向保險人申請更正加保日不在本切片（01_scope 不做）；同一生效日先誤報再更正投保薪資，是對同一筆的更正（02 InsuredSalary 卡） | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | 結束日、結束原因（到職後立刻離開） | CorrectRecord | 人資 | 不需核准，留紀錄；重大更正通知雇主 | 原值保留；結束日不能早於到職日（資料矛盾，阻擋） | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 
-不能註銷的事件：OverrideWarning、WithdrawWarningOverride、ResolveDataSubjectRequest、ArchivePersonalData、ReleaseArchival，以及所有建議層與由時間或條件觸發的事件（後者是推導的，依據改了就重新推導）。理由見 D-14。
+不能註銷的事件：OverrideWarning、WithdrawWarningOverride、ExtendDataSubjectRequest、ResolveDataSubjectRequest、ArchivePersonalData、ReleaseArchival，以及所有建議層與由時間或條件觸發的事件（後者是推導的，依據改了就重新推導）。理由見 D-14。
 
 沒有任何一種更正是直接覆蓋舊值或刪除事件：原值、被註銷的事件、更正者、時間、理由、證據都保留，實際保存方式依平台 P2（第 ⑤ 步）。

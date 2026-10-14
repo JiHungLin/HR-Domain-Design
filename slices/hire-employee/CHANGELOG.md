@@ -12,6 +12,22 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-14　hire-employee/03-v2　③　凍結
+- 改了什麼：第 ③ 步回頭修改後重新凍結。相對 03-v1：新增事件 ExtendDataSubjectRequest（事件 33 → 34）；WorkAuthorization 新增 Valid → Valid（還有效時登錄展延），到期只用於申請許可者；ProposeEnrollmentFiling 的觸發來源補上登錄新的身分證件、國籍或戶籍新增期間、雇主判定條件改變、滿 65 歲、制度施行日、證件生效日；個資請求的轉換規則與拒絕依據；決策流程一、歷史需求表、UC-02、UC-04、UC-07、UC-14 同步；規則欄 R54（已取消）改為「—」；新增 D-15～D-17
+- 依據：03-v1；04_rules.md D-08、D-10、D-12、X-01、X-05、X-15～X-28；使用者決定（2026-10-14）
+- 反例處理：起因是第 ④ 步兩輪挑錯（X-01～X-28 中與 ③ 有關的部分），本步沒有另外的反例
+- 審查方式：使用者說「23都直接通過」，各條未逐條說明
+- 合併進 core/：flows.md 狀態機 2 個（WorkAuthorization、DataSubjectRequest）、事件 6 列（新增 1）、不能註銷清單；glossary.md 新增 1 列；皆 [候選]；「規則」欄待第 ④ 步凍結時回填
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-14，通過）
+
+## 2026-10-14　hire-employee/02-v3　②　凍結
+- 改了什麼：第 ② 步回頭修改後重新凍結。相對 02-v2：Employer 的 registered_on 改為 registrations，新增 registration_exempt、tax_assessed_or_invoice_permit、labor_insurance_industry_category（雇主註冊於台灣時必填，後三項保留期間）；WorkAuthorization 的 permit_number 改為 approvals（每次核准一筆），valid_from、valid_until 只用於免申請者；Compensation.fixed_monthly_allowances 加類別；DataSubjectRequest 新增 refusal_basis、extensions（延長紀錄，次數不限）；EmploymentContract.term_end 只記契約上寫的迄日。屬性 89 → 94，詞彙對照表 140 → 145 列；新增 D-32～D-36
+- 依據：02-v2；04_rules.md D-08、D-10、D-11、X-02～X-04、X-07、X-09、X-12、X-16、X-18、X-21、X-24；使用者決定（2026-10-14）；inputs/shared/員工資料法定保存年限與拒絕刪除.md；inputs/research/員工個人資料.md#08、#09
+- 反例處理：起因是第 ④ 步兩輪挑錯，本步沒有另外的反例
+- 審查方式：使用者說「23都直接通過」，各條未逐條說明
+- 合併進 core/：entities.md 5 張卡（Employer、EmploymentContract、Compensation、WorkAuthorization、DataSubjectRequest）；glossary.md 新增 7 列、修改 4 列、刪除 2 列（Employer.registered_on、WorkAuthorization.permit_number）；皆 [候選]
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-14，通過）
+
 ## 2026-10-14　（未凍結）　②　回頭修改（第 0 級）：D-36 經使用者確認
 - 改了什麼：02 D-36 的依據由「AI 依 04_rules X-04 提出，待使用者確認」改為「使用者同意（2026-10-14）」；內容不變
 - 依據：使用者選 A（2026-10-14，對話中說明移工契約沒寫期限的情境後確認）；04_rules D-11、X-18

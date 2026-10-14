@@ -7,7 +7,7 @@
 | 狀態 | 待檢查 |
 | 版本 | （凍結後填 tag，例：hire-employee/04-v1） |
 | 產出者 | AI（Claude） |
-| 讀取的輸入 | 02_entities.md @ hire-employee/02-v2（回頭修改中：D-32～D-36）；03_flows.md、03_use_cases.md @ hire-employee/03-v1（回頭修改中：D-15、D-16）；法規與政策原文：inputs/research/勞保就保職保.md、全民健康保險.md、勞工退休金.md、工資與最低工資.md、勞動契約與年資.md、外國人聘僱.md、員工個人資料.md（皆最後確認 2026-10-05～06，未滿 6 個月）；inputs/shared/健保投保金額分級表_115年1月1日.md；PLAN.md D-27、D-28、D-33；inputs/shared/範圍釐清_法規警告不阻擋.md、範圍釐清_矛盾資料阻擋.md、範圍釐清_更正不需核准.md、範圍釐清_試用期.md、範圍釐清_擋下的範圍.md、員工資料法定保存年限與拒絕刪除.md；inputs/research/員工個人資料.md#08、#09（2026-10-14 讀取） |
+| 讀取的輸入 | 02_entities.md @ hire-employee/02-v3（回頭修改 D-32～D-36）；03_flows.md、03_use_cases.md @ hire-employee/03-v2（回頭修改 D-15～D-17）；法規與政策原文：inputs/research/勞保就保職保.md、全民健康保險.md、勞工退休金.md、工資與最低工資.md、勞動契約與年資.md、外國人聘僱.md、員工個人資料.md（皆最後確認 2026-10-05～06，未滿 6 個月）；inputs/shared/健保投保金額分級表_115年1月1日.md；PLAN.md D-27、D-28、D-33；inputs/shared/範圍釐清_法規警告不阻擋.md、範圍釐清_矛盾資料阻擋.md、範圍釐清_更正不需核准.md、範圍釐清_試用期.md、範圍釐清_擋下的範圍.md、員工資料法定保存年限與拒絕刪除.md；inputs/research/員工個人資料.md#08、#09（2026-10-14 讀取） |
 
 <!-- 規則的「違反時」：擋下＝資料本身矛盾、紀錄可不可信的流程規則、做了就無法挽回的刪除與查看（使用者已同意，範圍釐清_矛盾資料阻擋.md、範圍釐清_擋下的範圍.md）；
      提醒＝其他法規檢查，只警告不阻擋，使用者可以忽略（OverrideWarning），PLAN.md D-27。
