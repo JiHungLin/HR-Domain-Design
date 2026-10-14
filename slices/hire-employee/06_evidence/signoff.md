@@ -34,11 +34,11 @@
 | 10 | 勞保人數門檻的計入範圍 | 04_rules R23 | 先以雇主的在職人數計，標待確認 | 待專家回覆 EQ-008 |
 | 11 | 最低工資比較用底薪還是含津貼 | 04_rules R11 | R11 參數 compare_basis 先用底薪 | 待專家回覆 EQ-019 |
 | 12 | R25 ④「中央主管機關公告的第 6 條以外雇主」可自願，公告範圍沒有資料 | 04_rules R25 | `app/rules/applicability.py`：一律不判成可自願，落到 ⑤ 不適用，pending 標 EQ-023 | 待專家回覆 EQ-023 |
-| 13 | R24「依法應參加公教人員保險或軍人保險者」不適用，但 02 沒有屬性可以判斷 | 04_rules R24；02 Person | `app/rules/applicability.py`：不檢查這個條件 | 待處理 |
-| 14 | 需人工判斷的部分在判定結果中沒有欄位表達：R24 受僱於兩個以上雇主時擇一參加；R39 固定給付類別「其他」算不算入由人判斷 | 04_rules R24、R39；api.yaml ApplicabilityItem、EnrollmentProposal | `app/rules/applicability.py`：不偵測擇一的情形；類別「其他」不算入 | 待處理 |
-| 15 | R36 逾期未辦是提醒類規則，但 `GET /enrollment-proposals` 的回應（EnrollmentProposalList）沒有 warnings，警告無處回傳，也就無法用 UC-09 忽略 | 04_rules R36；api.yaml listEnrollmentProposals（x-rules 有 R36） | `app/services/proposals.py`：不輸出 R36 警告 | 待處理 |
-| 16 | 04_rules 版本欄為「—」的規則（R14、R15、R21、R36、R45、R61 等），api.yaml 的 Warning 仍要求 rule_version、rule_revision | 04_rules；api.yaml Warning；P5 | `app/seed.py`：這些規則以 04_rules 的凍結版本「04-v2」當版本，修訂 1 | 待處理 |
-| 17 | 錄用時（還沒到職）就產生加保待辦（03_flows 觸發來源含決定錄用；05_mapping 第六區 UC-01 第 4 步），但沒寫這時的到職日與判定日用哪一天 | 03_flows ProposeEnrollmentFiling；04_rules R37 | `app/rules/applicability.py` Subject.of_hire：以約定到職日當到職日與判定日；人數依 R23 不計入這筆錄用；到職時重新判定並取代 | 待處理 |
+| 13 | R24「依法應參加公教人員保險或軍人保險者」不適用，但 02 沒有屬性可以判斷 | 04_rules R24；02 Person | `app/rules/applicability.py`：不檢查這個條件 | 回到 ② 與 ④：02 D-37（Employment 新增是否應參加公教或軍保）、04_rules D-15（02-v4、04-v3）；程式待依新 tag 改 |
+| 14 | 需人工判斷的部分在判定結果中沒有欄位表達：R24 受僱於兩個以上雇主時擇一參加；R39 固定給付類別「其他」算不算入由人判斷 | 04_rules R24、R39；api.yaml ApplicabilityItem、EnrollmentProposal | `app/rules/applicability.py`：不偵測擇一的情形；類別「其他」不算入 | 回到 ③④⑤：04_rules D-16（新分類值「待人判斷」）、03_flows D-19、05_mapping D-21（decisions API）（03-v4、04-v3、05-v3）；程式待改 |
+| 15 | R36 逾期未辦是提醒類規則，但 `GET /enrollment-proposals` 的回應（EnrollmentProposalList）沒有 warnings，警告無處回傳，也就無法用 UC-09 忽略 | 04_rules R36；api.yaml listEnrollmentProposals（x-rules 有 R36） | `app/services/proposals.py`：不輸出 R36 警告 | 回到 ④：04_rules D-17，R36 改為判定，以加保待辦的 days_overdue 呈現、不能忽略（04-v3）；⑤ 同步（05-v3）；程式待改 |
+| 16 | 04_rules 版本欄為「—」的規則（R14、R15、R21、R36、R45、R61 等），api.yaml 的 Warning 仍要求 rule_version、rule_revision | 04_rules；api.yaml Warning；P5 | `app/seed.py`：這些規則以 04_rules 的凍結版本「04-v2」當版本，修訂 1 | 回到 ⑤：05_mapping D-20，版本欄為「—」的規則以 04 凍結版本為版本，實作暫時的做法即為正式做法（05-v3）；程式改用 04-v3 |
+| 17 | 錄用時（還沒到職）就產生加保待辦（03_flows 觸發來源含決定錄用；05_mapping 第六區 UC-01 第 4 步），但沒寫這時的到職日與判定日用哪一天 | 03_flows ProposeEnrollmentFiling；04_rules R37 | `app/rules/applicability.py` Subject.of_hire：以約定到職日當到職日與判定日；人數依 R23 不計入這筆錄用；到職時重新判定並取代 | 回到 ③④：03_flows D-19、04_rules D-18，錄用時以約定到職日判定、標預估，到職時重新判定並取代；實作暫時的做法即為正式做法（03-v4、04-v3）；⑤ 加保待辦加 estimated（05-v3） |
 
 ## 檢查紀錄
 

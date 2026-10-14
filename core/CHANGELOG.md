@@ -2,6 +2,11 @@
 
 <!-- 只新增，最新的在最上面。記錄：切片項目以 [候選] 合併、升為 [已驗證]、套用變更提案、平行切片撞號重編。格式同切片 CHANGELOG.md -->
 
+## 2026-10-14　hire-employee/02-v4、03-v4、04-v3　②③④　凍結（回頭修改）
+- 改了什麼：entities.md Employment 卡新增 public_or_military_insurance_covered，出處 02-v4；glossary.md 新增 1 列；flows.md 事件 ProposeEnrollmentFiling 的說明（預估、待人判斷的決定、逾期），出處 03-v4；rules.md R24、R36（提醒 → 判定）、R39、ALLOWANCE_CATEGORY.OTHER 更新，新增 APPLICABILITY.NEEDS_DECISION，出處 04-v3；皆 [候選]
+- 依據：slices/hire-employee 02_entities.md D-37、03_flows.md D-19、04_rules.md D-15～D-18（起因：實作回報 signoff.md #13～#17）
+- 產出者：AI（Claude）；審查者：JiHungLin；核心負責人：待審閱
+
 ## 2026-10-14　hire-employee/04-v2　④　凍結（回頭修改）
 - 改了什麼：rules.md 的 R22、R24、R25、R26 改寫為寫出所有結果（含不適用、可自願），R42 的來源補上勞退分級表全表；出處改為 04-v2；仍為 [候選]
 - 依據：slices/hire-employee/04_rules.md @ hire-employee/04-v2（D-13、D-14；起因是實作回報）
