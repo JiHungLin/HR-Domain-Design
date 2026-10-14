@@ -1,0 +1,1447 @@
+# hire-employee ⑤ API（OpenAPI 3.1）
+openapi: 3.1.0
+info:
+  title: hire-employee API
+  version: 0.1.0
+  description: 依 slices/hire-employee/05_mapping.md（對照表經使用者確認 2026-10-14）產生的設計文件，不是實作。每支 API 標 x-concept（對應的概念，P8）、x-roles（誰可以做）、x-rules（檢查的規則）。所有 API 都在一個多文件交易中寫入 events 與受影響的集合，並檢查每個引用屬於呼叫者的客戶、存在且為目前版本（05_mapping
+    D-06）。由時間或條件觸發的事件（ContractTermStarts、VoidContract、ExpireWorkAuthorization、ExpireIdentityDocument、LapseWarningOverride，以及建議層事件的產生）沒有 API，由系統排程或事件處理器產生。
+servers:
+- url: https://{host}
+  variables:
+    host:
+      default: hr.example.local
+security:
+- bearer: []
+paths:
+  /v1/hires:
+    post:
+      operationId: decideHire
+      summary: 決定錄用（同一交易建立人；可帶約定薪資、勞動契約）
+      x-concept: DecideHire
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R11
+      - R14
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                person: &id003
+                  type: object
+                employer_id: &id002
+                  type: string
+                decided_on: &id001
+                  type: string
+                  format: date
+                planned_start_date: *id001
+                planned_work_location_id: *id002
+                planned_org_unit_id: *id002
+                prior_insurance_elsewhere: *id002
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/hires/{id}/reschedule:
+    post:
+      operationId: rescheduleStart
+      summary: 到職前改期
+      x-concept: RescheduleStart
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R01
+      - R11
+      - R14
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                planned_start_date: *id001
+                reason: *id002
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/hires/{id}/cancel:
+    post:
+      operationId: cancelHire
+      summary: 到職前取消
+      x-concept: CancelHire
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cancelled_on: *id001
+                cancellation_reason: *id002
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/hires/{id}/start:
+    post:
+      operationId: startEmployment
+      summary: 登錄到職
+      x-concept: StartEmployment
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R01
+      - R04
+      - R05
+      - R06
+      - R11
+      - R14
+      - R15
+      - R16
+      - R21
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start_date: *id001
+                employee_number: *id002
+                work_location_id: *id002
+                org_unit_id: *id002
+                probation_until: *id001
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/employments/backfill:
+    post:
+      operationId: registerExistingEmployment
+      summary: 補登雇主開始由系統管理前就到職的員工（同一交易建立人並登錄目前的投保、投保薪資、約定薪資）
+      x-concept: RegisterExistingEmployment
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R02
+      - R04
+      - R05
+      - R06
+      - R08
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                person: *id003
+                employer_id: *id002
+                start_date: *id001
+                ended_on: *id001
+                historical_basis_note: *id002
+                current_facts: *id003
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/employments/{id}/early-departure:
+    post:
+      operationId: recordEarlyDeparture
+      summary: 到職後立刻離開
+      x-concept: RecordEarlyDeparture
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R02
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ended_on: *id001
+                end_reason: *id002
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/employment-contracts:
+    post:
+      operationId: signContract
+      summary: 簽訂勞動契約
+      x-concept: SignContract
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R03
+      - R18
+      - R19
+      - R20
+      - R59
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employment_id: *id002
+                hire_id: *id002
+                contract_type: *id002
+                fixed_term_nature: *id002
+                term_start: *id001
+                term_end: *id001
+                in_writing: &id005
+                  type: boolean
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/compensations:
+    post:
+      operationId: agreeCompensation
+      summary: 約定薪資
+      x-concept: AgreeCompensation
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R11
+      - R39
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employment_id: *id002
+                hire_id: *id002
+                effective_from: *id001
+                currency: *id002
+                pay_basis: *id002
+                monthly_base_salary: &id006
+                  type: string
+                  pattern: ^-?\d+(\.\d+)?$
+                  description: 十進位金額，以字串傳遞避免浮點誤差
+                fixed_monthly_allowances: &id004
+                  type: array
+                  items: {}
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/work-authorizations:
+    post:
+      operationId: recordWorkAuthorization
+      summary: 登錄工作許可（第一次）
+      x-concept: RecordWorkAuthorization
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R03
+      - R16
+      - R17
+      - R58
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                person_id: *id002
+                authorization_basis: *id002
+                work_category: *id002
+                employer_id: *id002
+                based_on_document_id: *id002
+                approval: *id003
+                valid_from: *id001
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/work-authorizations/{id}/approvals:
+    post:
+      operationId: recordWorkAuthorizationRenewal
+      summary: 登錄展延：新增一筆核准
+      x-concept: RecordWorkAuthorization
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R03
+      - R17
+      - R58
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                permit_number: *id002
+                valid_from: *id001
+                valid_until: *id001
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/work-authorizations/{id}/end:
+    post:
+      operationId: endWorkAuthorization
+      summary: 登錄許可失效（只用於免申請者）
+      x-concept: EndWorkAuthorization
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                valid_until: *id001
+                reason: *id002
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/persons/{id}/identity-documents:
+    post:
+      operationId: recordIdentityDocument
+      summary: 登錄身分證件
+      x-concept: RecordIdentityDocument
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R03
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                document_kind: *id002
+                issuing_jurisdiction_id: *id002
+                document_number: *id002
+                valid_from: *id001
+                valid_until: *id001
+                residence_basis: *id002
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/persons/{id}/periods:
+    post:
+      operationId: recordPersonPeriod
+      summary: 登錄人的身分期間（國籍、戶籍、老年給付）
+      x-concept: RecordPersonPeriod
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kind: *id002
+                period: *id003
+                evidence: *id004
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/insurance-enrollments:
+    post:
+      operationId: recordInsuranceFiling
+      summary: 登錄實際辦理加保
+      x-concept: RecordInsuranceFiling
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R07
+      - R50
+      - R61
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                employment_id: *id002
+                scheme_id: *id002
+                insurance_unit_id: *id002
+                filed_on: *id001
+                voluntary: *id005
+                effective_from: *id001
+                receipt_ref: *id002
+                no_receipt: *id005
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/insurance-enrollments/{id}/insured-salaries:
+    post:
+      operationId: declareInsuredSalary
+      summary: 申報投保薪資
+      x-concept: DeclareInsuredSalary
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R40
+      - R41
+      - R42
+      - R43
+      - R45
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                declared_amount: *id006
+                grade: *id002
+                declared_on: *id001
+                source: *id002
+                effective_from: *id001
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/warning-overrides:
+    post:
+      operationId: overrideWarning
+      summary: 忽略法規警告
+      x-concept: OverrideWarning
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R09
+      - R10
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rule_ref: *id003
+                subject_ref: *id003
+                warned_value: *id003
+                hire_id: *id002
+                employment_id: *id002
+                reason: *id002
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/warning-overrides/{id}/withdraw:
+    post:
+      operationId: withdrawWarningOverride
+      summary: 撤回忽略
+      x-concept: WithdrawWarningOverride
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/data-subject-requests:
+    post:
+      operationId: receiveDataSubjectRequest
+      summary: 收到個資請求（員工本人或人資代登錄）
+      x-concept: ReceiveDataSubjectRequest
+      x-roles:
+      - EMPLOYEE
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                person_id: *id002
+                request_kind: *id002
+                requested_categories: *id004
+                received_on: *id001
+                received_via: *id002
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/data-subject-requests/{id}:
+    get:
+      operationId: getDataSubjectRequest
+      summary: 查個資請求的進度（本人或人資）
+      x-concept: DataSubjectRequest
+      x-roles:
+      - EMPLOYEE
+      - HR
+      responses:
+        '200':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R53
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+  /v1/data-subject-requests/{id}/extensions:
+    post:
+      operationId: extendDataSubjectRequest
+      summary: 延長處理期限（每次一筆）
+      x-concept: ExtendDataSubjectRequest
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R53
+      - R63
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                extended_deadline: *id001
+                reason: *id002
+                notified_on: *id001
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/data-subject-requests/{id}/resolve:
+    post:
+      operationId: resolveDataSubjectRequest
+      summary: 處理個資請求（完成或拒絕）
+      x-concept: ResolveDataSubjectRequest
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R46
+      - R55
+      - R62
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                result: *id002
+                outcome: *id002
+                category_outcomes: *id004
+                refusal_basis: *id003
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/persons/{id}/personal-data-export:
+    get:
+      operationId: exportPersonalData
+      summary: 查閱、製給複製本（只含本人資料；留稽核紀錄）
+      x-concept: DataSubjectRequest
+      x-roles:
+      - EMPLOYEE
+      - HR
+      responses:
+        '200':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R52
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+  /v1/personal-data-archivals:
+    post:
+      operationId: archivePersonalData
+      summary: 封存個資
+      x-concept: ArchivePersonalData
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                person_id: *id002
+                data_categories: *id004
+                archived_on: *id001
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/personal-data-archivals/{id}/release:
+    post:
+      operationId: releaseArchival
+      summary: 解除封存（可只解除部分類別）
+      x-concept: ReleaseArchival
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R57
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                categories: *id004
+                released_on: *id001
+                reason: *id002
+                link: *id003
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/personal-data-erasures:
+    post:
+      operationId: erasePersonalData
+      summary: 保存期滿後遮蔽可識別個人的欄位（P7）
+      x-concept: P7
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R55
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                person_id: *id002
+                categories: *id004
+                trigger: *id002
+                data_subject_request_id: *id002
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/corrections:
+    post:
+      operationId: correctRecord
+      summary: 更正資料（只限 05_mapping 2.2 可更正的欄位）
+      x-concept: CorrectRecord
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R46
+      - R49
+      - R50
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subject: *id003
+                field: *id002
+                new_value: *id003
+                reason: *id002
+                evidence: *id004
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/annulments:
+    post:
+      operationId: annulEntry
+      summary: 註銷誤登（只限白名單上的事件）
+      x-concept: AnnulEntry
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R46
+      - R47
+      - R48
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_event_id: *id002
+                reason: *id002
+                evidence: *id004
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/annulments/{id}/revoke:
+    post:
+      operationId: revokeAnnulment
+      summary: 撤銷註銷
+      x-concept: RevokeAnnulment
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R04
+      - R46
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: *id002
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/enrollment-proposals:
+    get:
+      operationId: listEnrollmentProposals
+      summary: 列出加保待辦
+      x-concept: ProposeEnrollmentFiling
+      x-roles:
+      - HR
+      - EMPLOYER
+      responses:
+        '200':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R22
+      - R36
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+  /v1/enrollment-proposals/{id}/decline-voluntary:
+    post:
+      operationId: declineVoluntaryEnrollment
+      summary: 雇主選擇不加某種可自願的保險
+      x-concept: ProposeEnrollmentFiling
+      x-roles:
+      - HR
+      - EMPLOYER
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scheme_code: *id002
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/proposals:
+    get:
+      operationId: listProposals
+      summary: 列出其他提醒與建議
+      x-concept: PromptStartConfirmation／ProposeAuthorizationReview／PromptDataSubjectRequestDeadline／ProposeArchival
+      x-roles:
+      - HR
+      responses:
+        '200':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R13
+      - R53
+      - R56
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+  /v1/proposals/{id}/dismiss:
+    post:
+      operationId: dismissProposal
+      summary: 作廢提醒（只限這 4 種）
+      x-concept: PromptStartConfirmation／ProposeAuthorizationReview／PromptDataSubjectRequestDeadline／ProposeArchival
+      x-roles:
+      - HR
+      responses:
+        '201':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: *id002
+                occurred_at:
+                  type: string
+                  format: date-time
+                  description: 現實中何時發生（P4）
+  /v1/significant-corrections:
+    get:
+      operationId: listSignificantCorrections
+      summary: 重大更正清單（只能讀）
+      x-concept: NotifySignificantCorrection
+      x-roles:
+      - EMPLOYER
+      - HR
+      responses:
+        '200':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R46
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+  /v1/employments/{id}/labor-roster:
+    get:
+      operationId: getLaborRoster
+      summary: 查詢勞工名卡（不含已封存類別）
+      x-concept: 勞工名卡（推導）
+      x-roles:
+      - HR
+      responses:
+        '200':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R52
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+  /v1/employments/{id}/applicability:
+    get:
+      operationId: getApplicability
+      summary: 判定各保險的適用、期限、生效日與級距（現算）
+      x-concept: 各保險的適用（推導）
+      x-roles:
+      - HR
+      responses:
+        '200':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R22
+      - R23
+      - R24
+      - R25
+      - R26
+      - R27
+      - R28
+      - R29
+      - R31
+      - R32
+      - R33
+      - R34
+      - R35
+      - R40
+      - R41
+      - R42
+      - R43
+      - R44
+      - R60
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 概念的 entity_id
+      - name: 'on'
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+        description: 判定日
+      - name: as_of
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 得知時間：查當時系統知道的判定
+  /v1/persons/lookup:
+    get:
+      operationId: lookupPerson
+      summary: 回任時以證件找同一人：只回傳是否存在與 Person 編號
+      x-concept: Person（以證件辨識）
+      x-roles:
+      - HR
+      responses:
+        '200':
+          description: 成功；檢查規則為「提醒」的違反會在 warnings 回傳
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Blocked'
+      x-rules:
+      - R52
+      parameters:
+      - name: document_kind
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: document_number
+        in: query
+        required: true
+        schema:
+          type: string
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      description: 使用者帳號對應 user_accounts（角色、客戶、Person）
+  schemas:
+    Result:
+      type: object
+      properties:
+        entity_id:
+          type: string
+        event_id:
+          type: string
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+    Warning:
+      type: object
+      properties:
+        rule_id:
+          type: string
+        rule_version:
+          type: string
+        rule_revision:
+          type: integer
+        message_code:
+          type: string
+        warned_value: {}
+    Blocked:
+      type: object
+      properties:
+        rule_id:
+          type: string
+        message_code:
+          type: string
+        detail:
+          type: string
+  responses:
+    Forbidden:
+      description: 角色不符，或引用的資料不屬於呼叫者的客戶（R52、05_mapping D-06）
+    Blocked:
+      description: 違反「擋下」類規則（資料矛盾、流程規則、R52、R55），或狀態不允許這個動作（P1）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Blocked'
