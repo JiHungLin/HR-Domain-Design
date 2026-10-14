@@ -28,7 +28,7 @@
   - 到職日當天就來上班（US-D19）：步驟 2 與步驟 5 可以在同一天完成，事件仍分開記
 - 用到的 Entity：Person、IdentityDocument、Hire、Employment、EmploymentContract、Compensation、Employer、OrgUnit、WorkLocation、InsuranceUnit、Jurisdiction
 - 用到的事件：RecordIdentityDocument、DecideHire、AgreeCompensation、SignContract、PromptStartConfirmation、StartEmployment、ProposeEnrollmentFiling、RescheduleStart、CancelHire
-- 規則：R01、R04、R05、R06、R11、R12、R13、R21、R30、R38
+- 規則：R01、R04、R05、R06、R11、R12、R13、R21、R30、R38、R60
 
 ## UC-02 判定各保險的適用、期限、生效日與投保薪資級距
 - 對應草稿：US-D01、US-D05、US-D07、US-D09、US-D14、US-D15、US-D16、US-D17、US-D18
@@ -63,7 +63,7 @@
   - 登錄錯誤 → UC-08
 - 用到的 Entity：InsuranceEnrollment、InsuredSalary、Employment、InsuranceUnit、SocialInsuranceScheme
 - 用到的事件：RecordInsuranceFiling、DeclareInsuredSalary
-- 規則：R07、R31～R36、R40～R45、R50
+- 規則：R07、R31～R36、R40～R45、R50、R61
 
 ## UC-04 錄用外籍員工（含移工）
 - 對應草稿：US-D08、US-D11、US-D12
@@ -80,7 +80,7 @@
   - 許可展延已核准但較晚才登錄 → 許可從已失效回到有效，仍是同一筆
 - 用到的 Entity：Person、IdentityDocument、WorkAuthorization、Hire、Employment、EmploymentContract、Employer
 - 用到的事件：RecordIdentityDocument、RecordWorkAuthorization、DecideHire、StartEmployment、ExpireWorkAuthorization、ExpireIdentityDocument、ProposeAuthorizationReview、EndWorkAuthorization
-- 規則：R14～R18、R24、R26、R27
+- 規則：R14～R18、R24、R26、R27、R58、R59
 
 ## UC-05 到職前改期
 - 對應草稿：US-D03
@@ -93,7 +93,7 @@
 - 例外：已經提早辦了加保 → 處理方式 [待專家確認: EQ-005]
 - 用到的 Entity：Hire
 - 用到的事件：RescheduleStart、ProposeEnrollmentFiling
-- 規則：R11、R13
+- 規則：R01、R11、R13、R14
 
 ## UC-06 到職前取消錄用
 - 對應草稿：US-D03
@@ -121,7 +121,7 @@
 - 例外：期間超過上限（US-D13）→ 警告，人資可改正或照樣存檔（UC-09）
 - 用到的 Entity：EmploymentContract、Hire、Employment、WorkAuthorization
 - 用到的事件：SignContract、ContractTermStarts、StartEmployment
-- 規則：R03、R18、R19、R20
+- 規則：R03、R18、R19、R20、R59
 
 ## UC-08 更正到職資料與註銷誤登
 - 對應草稿：US-D06
@@ -188,7 +188,7 @@
 - 例外：補登已離職的先前一段（回任時要找得到）→ 直接登錄為 Ended
 - 用到的 Entity：Person、IdentityDocument、Employment、Compensation、InsuranceEnrollment、InsuredSalary
 - 用到的事件：RecordIdentityDocument、RegisterExistingEmployment、RecordInsuranceFiling、DeclareInsuredSalary、AgreeCompensation
-- 規則：R08、R28
+- 規則：R02、R06、R08、R28
 
 ## UC-12 同一個人再次被錄用（回任）
 - 對應草稿：（無，依 Q11）

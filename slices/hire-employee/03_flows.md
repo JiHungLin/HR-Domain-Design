@@ -30,7 +30,7 @@
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
 | （無） | Hired | DecideHire | 人資 | 人已登錄（新的人或同客戶內既有的人，Q11）；有雇主與約定到職日 | R11、R14 |
-| Hired | Hired | RescheduleStart | 人資 | 新的到職日和原本不同；原本的到職日保留（Q14） | R11、R13 |
+| Hired | Hired | RescheduleStart | 人資 | 新的到職日和原本不同；原本的到職日保留（Q14） | R01、R11、R13、R14 |
 | Hired | Started | StartEmployment | 人資 | 這個人已經實際開始提供勞務（01_scope D-07）；到職日不早於決定錄用日 | R01、R11、R14、R15、R16、R21 |
 | Hired | Cancelled | CancelHire | 人資 | 還沒開始提供勞務；到職日當天沒來也屬這一種（01_scope D-12） | — |
 
@@ -43,8 +43,8 @@
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
 | （無） | Active | StartEmployment | 人資 | 來自一筆 Hired 的錄用 | R04、R05、R06 |
-| （無） | Active | RegisterExistingEmployment | 人資 | 到職日早於這個雇主開始由系統管理的日子（D-09）；沒有錄用紀錄（02 D-12） | R04、R05、R08 |
-| （無） | Ended | RegisterExistingEmployment | 人資 | 補登已結束的先前一段（例：回任時要找得到，Q11）；到職日與結束日都早於這個雇主開始由系統管理的日子（D-09） | R08 |
+| （無） | Active | RegisterExistingEmployment | 人資 | 到職日早於這個雇主開始由系統管理的日子（D-09）；沒有錄用紀錄（02 D-12） | R02、R04、R05、R06、R08 |
+| （無） | Ended | RegisterExistingEmployment | 人資 | 補登已結束的先前一段（例：回任時要找得到，Q11）；到職日與結束日都早於這個雇主開始由系統管理的日子（D-09） | R02、R04、R06、R08 |
 | Active | Ended | RecordEarlyDeparture | 人資 | 結束日不早於到職日；本切片只處理到職後立刻離開（01_scope D-12），一般離職由 resignation 定義觸發事件 | R02 |
 
 註銷誤登：註銷建立這段僱傭關係的 StartEmployment 或 RegisterExistingEmployment → 這段僱傭關係視為不存在：不計入人數門檻、年資、勞工名卡（Q12、Q18），紀錄保留並標為已註銷；掛在它上面的契約、投保見下方各狀態機。前提是它後面沒有還沒註銷、又依賴它的事件（例：之後的到職後立刻離開），有的話依相反順序一起註銷（D-03）。同一人在同一雇主不能同時有兩段在職的僱傭關係（第 ④ 步規則，資料矛盾，阻擋）。
@@ -57,7 +57,7 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Signed | SignContract | 人資 | 掛在錄用上（到職前簽，02 D-18）或僱傭關係上 | R03、R18、R19、R20 |
+| （無） | Signed | SignContract | 人資 | 掛在錄用上（到職前簽，02 D-18）或僱傭關係上 | R03、R18、R19、R20、R59 |
 | Signed | InForce | StartEmployment | 系統（隨到職） | 契約起日不晚於到職日；生效時間取契約起日與到職日較晚者 | — |
 | Signed | InForce | ContractTermStarts | 系統 | 僱傭關係仍為 Active，且契約起日到達（起日晚於到職日、或續約的新契約） | — |
 | Signed | Voided | VoidContract | 系統（隨錄用取消或僱傭關係結束） | 契約掛在被取消的錄用上；或契約起日還沒到，僱傭關係就結束 | — |
@@ -71,7 +71,7 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Valid | RecordWorkAuthorization | 人資 | 依主管機關核發的許可函登錄；免申請者依身分證件登錄（02 D-06） | R03、R16、R17 |
+| （無） | Valid | RecordWorkAuthorization | 人資 | 依主管機關核發的許可函登錄；免申請者依身分證件登錄（02 D-06） | R03、R16、R17、R58 |
 | Valid | Expired | ExpireWorkAuthorization | 系統 | 登錄的期限屆滿，且沒有已登錄的展延 | — |
 | Valid | Expired | EndWorkAuthorization | 人資 | 免申請者依據的身分已消失，經人資確認（D-08）；許可被廢止的登錄不在本切片 | — |
 | Expired | Valid | RecordWorkAuthorization | 人資 | 登錄期限屆滿前已核准、但較晚才登錄的展延；仍是同一筆，文號留歷史（02 WorkAuthorization 卡），生效時間為原期限的次日 | R03、R17 |
@@ -106,7 +106,7 @@
 
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
-| （無） | Enrolled | RecordInsuranceFiling | 人資 | 依實際向保險人辦理的結果登錄實際辦理日；保險人核定的生效日可以另外輸入；附申報回執，沒有時標示「無回執」（D-02） | R07、R31、R32、R50 |
+| （無） | Enrolled | RecordInsuranceFiling | 人資 | 依實際向保險人辦理的結果登錄實際辦理日；保險人核定的生效日可以另外輸入；附申報回執，沒有時標示「無回執」（D-02） | R07、R31、R32、R50、R61 |
 | Enrolled | Terminated | （由 resignation 定義：退保） | 人資 | 不在本切片 | — |
 
 說明：

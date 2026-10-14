@@ -12,6 +12,13 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-14　（未凍結）　③　回頭修改（第 0 級）：第 ④ 步挑錯後調整回填
+- 改了什麼：03_flows.md 6 個狀態轉換、03_use_cases.md 6 個 UC 的「規則」依 04_rules.md 挑錯後的修改調整（RescheduleStart 加 R01、R14；補登兩列加 R02、R06；SignContract 加 R59；RecordWorkAuthorization 加 R58；RecordInsuranceFiling 加 R61；UC-01、03、04、05、07、11 同步）
+- 依據：04_rules.md X-03、X-04、X-08、X-11、X-14
+- 舊 → 新：見 04_rules.md「回填紀錄」
+- 影響與回歸：無，狀態與事件不變
+- 產出者：AI（Claude）；審查者：JiHungLin（隨第 ④ 步審查）
+
 ## 2026-10-14　（未凍結）　③　回頭修改（第 0 級）：第 ④ 步回填規則編號
 - 改了什麼：03_flows.md 33 個狀態轉換的「規則」欄、03_use_cases.md 15 個 UC 的「規則」，由「（第 ④ 步回填）」改為 04_rules.md 的規則編號；狀態、事件、流程不變
 - 依據：04_rules.md（草稿）；docs/01 ④「回填 03_flows.md 狀態轉換的規則編號、03_use_cases.md 的規則欄」
