@@ -199,7 +199,7 @@
 | EndWorkAuthorization（登錄許可失效） | 人的動作（人資） | 發生 | WorkAuthorization | Valid → Expired | 人資確認依據的身分已消失 [待專家確認: EQ-018] | 只能更正 | 發生、得知、生效 |
 | RecordIdentityDocument（登錄身分證件） | 人的動作（人資依員工出示的證件） | 發生 | IdentityDocument | （無）→ Valid；換發或居留事由改變時，前一筆 Valid → Superseded | 證件核對紀錄（不代管證件） | 只能更正 | 發生、得知、生效 |
 | ExpireIdentityDocument（證件到期） | 時間或條件到達 | 發生 | IdentityDocument | Valid → Expired | 有效期限 | 期限更正時重新推導 | 生效、得知 |
-| ProposeEnrollmentFiling（產生加保待辦） | 其他單位個體的變化（決定錄用、到職、改期、資料更正、註銷誤登；登錄新的身分證件（例：拿到居留證、取得永久居留）；同一投保單位其他員工的到職或離開改變了人數）；時間或條件到達（應辦理期限將到或已過；條件日期到了：員工滿 65 歲、新制度的施行日）（D-16） | 建議 | Hire 或 Employment | 不改變狀態；列出各保險是否適用、應辦理期限、法定生效日、預計的投保薪資級距；已過期限的標出晚幾天；既有員工的適用改變（例：人數跨過門檻，原本自願的變成強制）一併列出；掛在已註銷僱傭關係上的投保提醒向保險人處理 | 判定用到的資料版本與規則版本 | 不由人作廢：只會被新的判定取代（記取代它的那一筆），或因辦理完成而結案；可自願的保險由雇主選擇不加時，記在這筆待辦上（人、時間）；所有待辦都保留，記錄依據的資料與規則版本（D-10、X-22） | 得知 |
+| ProposeEnrollmentFiling（產生加保待辦） | 其他單位個體的變化（決定錄用、到職、改期、資料更正、註銷誤登；登錄新的身分證件（例：拿到居留證、取得永久居留）；人的國籍、戶籍新增一段期間；雇主的判定條件改變：新增登記紀錄、取得核定課稅或購票證、免辦登記或行業類別改變、改為適用勞基法（維護屬 org-setup）；同一投保單位其他員工的到職或離開改變了人數）；時間或條件到達（應辦理期限將到或已過；條件日期到了：員工滿 65 歲、新制度的施行日、身分證件的生效日（登錄時還沒生效的證件））（D-16、D-17） | 建議 | Hire 或 Employment | 不改變狀態；列出各保險是否適用、應辦理期限、法定生效日、預計的投保薪資級距；已過期限的標出晚幾天；既有員工的適用改變（例：人數跨過門檻，原本自願的變成強制）一併列出；掛在已註銷僱傭關係上的投保提醒向保險人處理 | 判定用到的資料版本與規則版本 | 不由人作廢：只會被新的判定取代（記取代它的那一筆），或因辦理完成而結案；可自願的保險由雇主選擇不加時，記在這筆待辦上（人、時間）；所有待辦都保留，記錄依據的資料與規則版本（D-10、X-22） | 得知 |
 | RecordInsuranceFiling（登錄實際辦理加保） | 人的動作（人資在保險人辦完後登錄） | 執行 | InsuranceEnrollment | （無）→ Enrolled；記實際辦理日、是否自願、保險人核定的生效日 | 申報回執或保險人核定資料；沒有時標示「無回執」 | 只能更正 | 發生、得知、生效 |
 | DeclareInsuredSalary（申報投保薪資） | 人的動作（人資） | 執行 | InsuredSalary | （無）→ Effective；記金額、級距、分級表版本、申報日、來源 | 申報資料 | 只能更正 | 發生、得知、生效 |
 | OverrideWarning（忽略警告） | 人的動作（人資） | 決定 | WarningOverride | （無）→ Active | 規則與版本、被警告的值、理由（可不填） | 可撤回（WithdrawWarningOverride） | 發生、得知 |
@@ -207,7 +207,7 @@
 | WithdrawWarningOverride（撤回忽略） | 人的動作（人資） | 決定 | WarningOverride | Active → Withdrawn；記撤回者、撤回時間 | — | 不可撤銷；要再忽略就是新的一筆 | 發生、得知 |
 | ReceiveDataSubjectRequest（收到個資請求） | 人的動作（員工提出；或人資代登錄） | 要求 | DataSubjectRequest | （無）→ Received | 請求內容、收到日期、收到管道 | 員工撤回時記為 Completed（D-07） | 發生、得知 |
 | PromptDataSubjectRequestDeadline（提醒個資請求期限） | 時間或條件到達（法定處理期限將到或已過；延長過的依延長後的期限） | 建議 | DataSubjectRequest | 不改變狀態 | 收到日期、法定期限（第 ④ 步規則） | 可作廢（保留紀錄） | 得知 |
-| ExtendDataSubjectRequest（延長個資請求處理期限） | 人的動作（人資） | 決定 | DataSubjectRequest | 不改變狀態（仍是 Received）；記延長後的期限、延長原因、書面通知當事人的日期（D-15） | 寄給當事人的書面通知 | 只能更正 | 發生、得知 |
+| ExtendDataSubjectRequest（延長個資請求處理期限） | 人的動作（人資） | 決定 | DataSubjectRequest | 不改變狀態（仍是 Received）；新增一筆延長紀錄：延長後的期限、延長原因、書面通知當事人的日期；可以延長多次（D-15） | 寄給當事人的書面通知 | 只能更正 | 發生、得知 |
 | ResolveDataSubjectRequest（處理個資請求） | 人的動作（人資） | 決定 | DataSubjectRequest | Received → Completed 或 Rejected | 處理結果與理由；拒絕時的依據（被保存期間規則擋下時自動帶入） | 不可撤銷 | 發生、得知 |
 | ProposeArchival（產生封存建議） | 其他單位個體的變化（到職前取消）；時間或條件到達（保存期間屆滿，屬 resignation） | 建議 | PersonalDataArchival | 不改變狀態；列出建議封存的人與個資類別；人資的處置（封存或暫不封存及理由）記在這筆建議上 | 取消日、保存期間規則 | 可作廢（保留紀錄與處置） | 得知 |
 | ArchivePersonalData（封存個資） | 人的動作（人資） | 決定 | PersonalDataArchival | （無）→ Archived | 封存的類別與理由 | 改用 ReleaseArchival | 發生、得知、生效 |
@@ -217,13 +217,13 @@
 | RevokeAnnulment（撤銷註銷） | 人的動作（人資） | 發生 | 一筆 AnnulEntry | 原事件恢復，它建立的那一段與掛在上面的紀錄跟著恢復，身分不變；狀態重新推導；產生 NotifySignificantCorrection | 理由 | 不可撤銷；要再註銷是新的一筆 | 發生、得知 |
 | NotifySignificantCorrection（通知重大更正） | 其他單位個體的變化（重大更正、註銷、撤銷註銷、拒絕個資請求） | 建議 | 被更正或註銷的事實 | 不改變狀態；列出改了什麼、誰改的、理由與證據、受影響的員工與改變的判定，通知雇主（老闆），並列入重大更正清單 | 更正或註銷的紀錄、更正前後的判定 | 不可作廢（保留紀錄） | 得知 |
 
-四種觸發來源都有：人的動作（大部分）、其他單位個體的變化（VoidContract、ProposeEnrollmentFiling、ProposeAuthorizationReview、LapseWarningOverride、ProposeArchival、NotifySignificantCorrection）、外部系統或訊息（RecordWorkAuthorization）、時間或條件到達（PromptStartConfirmation、ContractTermStarts、ExpireWorkAuthorization、ExpireIdentityDocument、ProposeEnrollmentFiling（含滿 65 歲、制度施行日）、PromptDataSubjectRequestDeadline、ProposeArchival）。保險人核定的生效日目前由人資登錄（01_scope D-04，系統不連線勞保局），之後若串接保險人回覆，RecordInsuranceFiling 的觸發來源會改為外部系統或訊息。
+四種觸發來源都有：人的動作（大部分）、其他單位個體的變化（VoidContract、ProposeEnrollmentFiling、ProposeAuthorizationReview、LapseWarningOverride、ProposeArchival、NotifySignificantCorrection）、外部系統或訊息（RecordWorkAuthorization）、時間或條件到達（PromptStartConfirmation、ContractTermStarts、ExpireWorkAuthorization、ExpireIdentityDocument、ProposeEnrollmentFiling（含滿 65 歲、制度施行日、證件生效日）、PromptDataSubjectRequestDeadline、ProposeArchival）。保險人核定的生效日目前由人資登錄（01_scope D-04，系統不連線勞保局），之後若串接保險人回覆，RecordInsuranceFiling 的觸發來源會改為外部系統或訊息。
 
 ## 決策流程
 <!-- 訊號 → 證據 → 狀態 → 建議 → 決定；沒有需要判斷的地方寫「無」 -->
 
 ### 一、到職後要辦哪些加保
-- 訊號：決定錄用、到職、到職前改期、資料更正、註銷誤登；登錄新的身分證件；同一投保單位其他員工的到職或離開；或應辦理期限將到、已過；員工滿 65 歲、新制度的施行日（D-16）。
+- 訊號：決定錄用、到職、到職前改期、資料更正、註銷誤登；登錄新的身分證件；人的國籍、戶籍新增期間；雇主的判定條件改變；同一投保單位其他員工的到職或離開；或應辦理期限將到、已過；員工滿 65 歲、新制度的施行日、身分證件的生效日（D-16、D-17）。
 - 證據：人的國籍、戶籍、證件與居留事由、出生日期、已領的老年給付；雇主的勞保行業類別、登記紀錄、是否依法免辦登記、是否有核定課稅或購票證、是否適用勞基法；投保單位在當天的計入人數與名單（依實際到職、離開的**發生**日期計算，不是登錄日，Q12）；到職日（應辦理期限與法定生效日用）、判定日（適用與否用）；約定薪資與每月固定給付項目的類別；當時有效的規則版本與分級表版本（沒有對應版本時標「無對應規則版本」，PLAN.md D-33）。
 - 狀態：各保險為強制、可自願或不適用；應辦理期限、法定生效日；應申報的投保薪資級距；已登錄的實際辦理日與差距；既有員工的適用是否改變。
 - 建議：ProposeEnrollmentFiling 產生加保待辦（哪幾種、哪天前辦、預計從哪天生效、報哪一級），可自願的列出讓雇主選擇。
@@ -373,6 +373,7 @@
 | D-14 | AnnulEntry 只能註銷白名單上的事件：DecideHire、RescheduleStart、CancelHire、StartEmployment、RegisterExistingEmployment、RecordEarlyDeparture、SignContract、AgreeCompensation、RecordWorkAuthorization、EndWorkAuthorization、RecordIdentityDocument、RecordInsuranceFiling、DeclareInsuredSalary、ReceiveDataSubjectRequest。不能註銷：OverrideWarning、WithdrawWarningOverride、ResolveDataSubjectRequest、ArchivePersonalData、ReleaseArchival、建議層事件、由時間或條件觸發的事件 | 寫「等」，由人判斷 | 白名單上的都是登錄現實事實的事件，登錯了要能讓它不算數；不能註銷的是對紀錄本身的決定，Q20、Q22 的軌跡不能消失，做錯了用新的相反決定處理（例：撤回忽略、解除封存）；時間觸發的事件是推導的，不需要註銷（X-19） | X-19；Q20、Q22 |
 | D-15 | 〔回頭修改，2026-10-14〕新增事件 ExtendDataSubjectRequest（延長個資請求處理期限）：不改變狀態（仍是 Received），記延長後的期限、原因、書面通知日；不能註銷，只能更正 | 在 ResolveDataSubjectRequest 時一併補記延長 | 個資法 §13 規定延長要以書面通知原因（員工個人資料#09），延長發生在處理完成之前，要有自己的事件（「要在原期限內決定延長」原文沒有寫，是依「延長之期間」的文意推定，見 04_rules R63）；使用者同意新增延長的屬性（02 D-35，2026-10-14）。不能註銷的理由同 ResolveDataSubjectRequest：已經通知當事人的事不能當作沒發生 | 02 D-35；04_rules D-08 ⑤ |
 | D-16 | 〔回頭修改，2026-10-14〕ProposeEnrollmentFiling 的觸發來源加上「登錄新的身分證件」（其他單位個體的變化）與「條件日期到了：員工滿 65 歲、新制度的施行日」（時間或條件到達） | 不改，在說明中寫明這兩種情況系統不會提醒，由人資自己重新檢查 | 第 ④ 步把保險適用改成依判定日 d 判斷（04_rules X-01）：外籍員工拿到居留證後才合於健保投保條件（R26、R33），滿 65 歲改變勞保、就保適用（R29），施行前到職者自施行日起加保（R28）。原本的觸發來源抓不到這些「員工沒做什麼，但適用改了」的情況，漏掉會變成晚辦（Q14）。使用者選 A（2026-10-14） | 04_rules D-08、X-01、X-05 |
+| D-17 | 〔回頭修改，2026-10-14〕ProposeEnrollmentFiling 的觸發來源再補：① 其他單位個體的變化：人的國籍、戶籍新增一段期間；雇主的判定條件改變（新增登記紀錄、取得核定課稅或購票證、免辦登記或行業類別改變、改為適用勞基法）；② 時間或條件到達：身分證件的生效日（登錄時還沒生效的證件）。雇主的變化由 org-setup 維護，本切片只定義「它改變時重新判定」 | 不補，寫明這些情況系統不會提醒 | 和 D-16 同一類：員工沒做什麼，但適用改了，漏掉會變成晚辦（04_rules X-20）。例：新開的店先僱人、之後才取得核定課稅，就保從那天起適用；外籍員工先登錄居留證，生效日才合於健保投保條件（R26）。使用者選 A（2026-10-14） | 04_rules D-12、X-20 |
 
 ### 反例處理
 
