@@ -12,6 +12,14 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-14　hire-employee/03-v1　③　凍結
+- 改了什麼：第 ③ 步初版凍結（03_flows.md、03_use_cases.md）。狀態機 11 個、事件 33 個（建議層 6 個）、決策流程 6 個、更正方式（CorrectRecord、AnnulEntry、RevokeAnnulment，不需核准、重大更正通知雇主）、正式 UC 15 個；決定 D-01～D-14；草稿 US 19 個與驗收問題 Q01～Q22 都有 UC 涵蓋
+- 依據：01_scope.md @ hire-employee/01-v1；02_entities.md @ hire-employee/02-v2；inputs/shared/範圍釐清_更正不需核准.md
+- 反例處理：兩輪 AI 挑錯共 23 項（接受並修改 22、拒絕 1：X-18 因使用者選擇不設核准）；過程中回頭修改第 ② 步一次（02-v2）
+- 審查方式：第 1～4 條逐條審查；第 5～7 條看過說明；第 8～10 條未逐條說明，使用者作為「信任 AI」的測試直接通過（2026-10-14），之後發現的問題可追溯到此
+- 合併進 core/：flows.md 狀態機 11、事件 33、更正方式 11 列；glossary.md 60 列；皆 [候選]；「規則」欄待第 ④ 步回填
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-14，通過）
+
 ## 2026-10-07　hire-employee/02-v2　②　凍結
 - 改了什麼：第 ② 步回頭修改後重新凍結。相對 02-v1：Employer 新增 system_managed_from（D-31）；修正檢查紀錄的表格格式；其餘不變
 - 依據：02-v1；03_flows.md D-09、D-13；inputs/shared/範圍釐清_更正不需核准.md

@@ -4,8 +4,8 @@
 |---|---|
 | 切片 | hire-employee |
 | 步驟 | ③ 流程與狀態（Use Case） |
-| 狀態 | 待檢查 |
-| 版本 | （與 03_flows.md 一起凍結） |
+| 狀態 | 已凍結 |
+| 版本 | hire-employee/03-v1 |
 | 讀取的輸入 | 01_scope.md @ hire-employee/01-v1；02_entities.md @ hire-employee/02-v1；03_flows.md（本步） |
 
 <!-- 完成標準與檢查紀錄寫在 03_flows.md。參與者用業務角色：人資、員工、雇主（老闆）、系統 -->

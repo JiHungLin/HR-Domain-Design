@@ -11,3 +11,9 @@
 - 改了什麼：Employer 卡新增屬性 system_managed_from（開始由系統管理的日子），對應驗收問題加 hire-employee:Q21，出處改為 02-v2；glossary.md 新增一列；仍為 [候選]
 - 依據：slices/hire-employee/02_entities.md @ hire-employee/02-v2（D-31；起因 03_flows.md D-09、D-13）
 - 產出者：AI（Claude）；審查者：JiHungLin；核心負責人：待審閱
+
+## 2026-10-14　hire-employee/03-v1　③　凍結
+- 改了什麼：hire-employee 第 ③ 步以 [候選] 合併：flows.md 新增狀態機 11 個、事件 33 個、更正方式 11 列；glossary.md 新增狀態與事件 60 列；狀態轉換的「規則」欄待第 ④ 步回填
+- 依據：slices/hire-employee/03_flows.md @ hire-employee/03-v1
+- 產出者：AI（Claude）；審查者：JiHungLin；核心負責人：待審閱
+

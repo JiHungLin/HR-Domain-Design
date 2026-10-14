@@ -144,3 +144,63 @@
 | registeredWith | 關係 | 投保單位涵蓋哪些制度 | 涵蓋制度 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | declaredFor | 關係 | 投保薪資屬於某段投保 | 屬於投保 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
 | fromPerson | 關係 | 個資請求的當事人 | 當事人 | | [候選] | hire-employee（② @ hire-employee/02-v1） |
+| Hire.Hired | 狀態 | 已決定錄用，還沒開始提供勞務 | 已錄用 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| Hire.Started | 狀態 | 這個人已開始提供勞務，錄用轉成僱傭關係 | 已到職 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| Hire.Cancelled | 狀態 | 到職前取消 | 到職前取消 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| Employment.Active | 狀態 | 僱傭關係進行中 | 在職 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| Employment.Ended | 狀態 | 僱傭關係已結束 | 已結束 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| EmploymentContract.Signed | 狀態 | 已簽訂，尚未生效 | 已簽訂 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| EmploymentContract.InForce | 狀態 | 契約生效中 | 生效中 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| EmploymentContract.Ended | 狀態 | 契約已結束 | 已結束 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| EmploymentContract.Voided | 狀態 | 從未生效就失效（錄用取消、或起日前僱傭關係就結束） | 已失效 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| WorkAuthorization.Valid | 狀態 | 許可有效 | 有效 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| WorkAuthorization.Expired | 狀態 | 許可期限屆滿，或依據的身分經確認已消失 | 已失效 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| IdentityDocument.Valid | 狀態 | 證件有效 | 有效 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| IdentityDocument.Expired | 狀態 | 證件有效期限屆滿 | 已到期 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| IdentityDocument.Superseded | 狀態 | 被換發、展延或居留事由改變的新一筆取代 | 已被取代 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| Compensation.Agreed | 狀態 | 約定有效 | 有效 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| InsuranceEnrollment.Enrolled | 狀態 | 已加保 | 已加保 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| InsuranceEnrollment.Terminated | 狀態 | 已退保（由 resignation 觸發） | 已退保 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| InsuredSalary.Effective | 狀態 | 投保薪資生效中 | 生效中 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| InsuredSalary.Superseded | 狀態 | 被調整後的投保薪資取代（由 social-insurance 觸發） | 已被取代 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| WarningOverride.Active | 狀態 | 忽略決定有效 | 有效 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| WarningOverride.Lapsed | 狀態 | 警告已不成立或內容已改變 | 失效 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| WarningOverride.Withdrawn | 狀態 | 忽略決定被撤回 | 已撤回 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| PersonalDataArchival.Archived | 狀態 | 封存中 | 封存中 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| PersonalDataArchival.Released | 狀態 | 已解除封存 | 已解除 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| DataSubjectRequest.Received | 狀態 | 已收到，處理中 | 已收到 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| DataSubjectRequest.Completed | 狀態 | 已處理完成（含部分接受、當事人撤回） | 已完成 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| DataSubjectRequest.Rejected | 狀態 | 依法拒絕 | 已拒絕 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| DecideHire | 事件 | 雇主決定錄用某人並約定到職日 | 決定錄用 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| RescheduleStart | 事件 | 到職前改變約定到職日 | 到職前改期 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| CancelHire | 事件 | 到職前取消錄用 | 到職前取消 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| PromptStartConfirmation | 事件 | 約定到職日到了，提醒確認到職 | 提醒確認到職 | 建議層 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| StartEmployment | 事件 | 這個人開始提供勞務，僱傭關係成立 | 到職 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| RegisterExistingEmployment | 事件 | 補登客戶開始使用系統前就到職的員工 | 補登既有員工 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| RecordEarlyDeparture | 事件 | 到職後立刻離開，記錄結束日與原因 | 到職後立刻離開 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| SignContract | 事件 | 簽訂勞動契約 | 簽訂勞動契約 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| ContractTermStarts | 事件 | 契約起日到達 | 契約起日到達 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| VoidContract | 事件 | 契約從未生效就失效（隨錄用取消或僱傭關係結束） | 契約失效 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| AgreeCompensation | 事件 | 約定薪資 | 約定薪資 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| RecordWorkAuthorization | 事件 | 登錄主管機關核發的工作許可、展延，或免申請的身分 | 登錄工作許可 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| ExpireWorkAuthorization | 事件 | 工作許可到期 | 工作許可到期 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| ProposeAuthorizationReview | 事件 | 免申請者依據的身分證件改變，提醒確認許可 | 提醒確認許可 | 建議層 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| EndWorkAuthorization | 事件 | 人資確認許可依據的身分已消失 | 登錄許可失效 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| RecordIdentityDocument | 事件 | 登錄員工出示的身分證件 | 登錄身分證件 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| ExpireIdentityDocument | 事件 | 證件有效期限屆滿 | 證件到期 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| ProposeEnrollmentFiling | 事件 | 依判定產生加保待辦 | 產生加保待辦 | 建議層 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| RecordInsuranceFiling | 事件 | 登錄實際向保險人辦理加保的結果 | 登錄實際辦理加保 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| DeclareInsuredSalary | 事件 | 申報投保薪資 | 申報投保薪資 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| OverrideWarning | 事件 | 看到法規警告後照樣存檔 | 忽略警告 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| LapseWarningOverride | 事件 | 警告不再成立或內容改變，忽略失效 | 忽略失效 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| WithdrawWarningOverride | 事件 | 撤回忽略的決定 | 撤回忽略 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| ReceiveDataSubjectRequest | 事件 | 收到當事人的個資請求 | 收到個資請求 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| PromptDataSubjectRequestDeadline | 事件 | 個資請求的法定處理期限將到或已過 | 提醒個資請求期限 | 建議層 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| ResolveDataSubjectRequest | 事件 | 完成或拒絕個資請求 | 處理個資請求 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| ProposeArchival | 事件 | 依保存目的產生封存建議 | 產生封存建議 | 建議層 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| ArchivePersonalData | 事件 | 封存某人的部分個資 | 封存個資 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| ReleaseArchival | 事件 | 解除封存 | 解除封存 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| CorrectRecord | 事件 | 更正登錄錯誤的值，原值保留 | 更正資料 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| AnnulEntry | 事件 | 註銷一筆誤登的事件，狀態依其餘事件重新推導 | 註銷誤登 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| RevokeAnnulment | 事件 | 撤銷一筆註銷，原事件恢復 | 撤銷註銷 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| NotifySignificantCorrection | 事件 | 重大更正或註銷後，通知雇主並列入重大更正清單 | 通知重大更正 | 建議層 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
