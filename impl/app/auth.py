@@ -5,7 +5,8 @@
 from dataclasses import dataclass, field
 
 from bson import ObjectId
-from fastapi import Depends, Header
+from fastapi import Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.db import database
 from app.errors import Forbidden
@@ -29,10 +30,13 @@ class Actor:
         return {"user_id": self.account_id, "role": self.roles[0]}
 
 
-def current_actor(authorization: str = Header(default="")) -> Actor:
-    if not authorization.lower().startswith("bearer "):
+bearer = HTTPBearer(auto_error=False)   # api.yaml securitySchemes.bearer
+
+
+def current_actor(cred: HTTPAuthorizationCredentials | None = Depends(bearer)) -> Actor:
+    if cred is None:
         raise Forbidden("缺少 bearer token")
-    token = authorization.split(" ", 1)[1].strip()
+    token = cred.credentials
     acc = database().user_accounts.find_one({"user_id": token})
     if not acc:
         raise Forbidden("帳號不存在")

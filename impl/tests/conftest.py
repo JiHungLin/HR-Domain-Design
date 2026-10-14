@@ -45,6 +45,8 @@ def make_org(db, ref, *, name="飲料公司", existing_employees=12, lsa=True,
         "labor_insurance_industry_category": [{"code": category, "from": to_dt(registered_on)}],
         "labor_standards_act_applicable": [{"value": lsa, "from": to_dt(registered_on)}],
         "system_managed_from": to_dt(date(2026, 1, 1)), "created_at": ts}).inserted_id
+    location = db.work_locations.insert_one({"tenant_id": tenant, "name": "總店", "jurisdiction_id": ref["tw"],
+                                             "created_at": ts}).inserted_id
     units = {
         "BLI": db.insurance_units.insert_one({
             "tenant_id": tenant, "employer_id": employer, "insurer": "INSURER.BLI_TW", "unit_code": f"BLI-{tenant}",
@@ -66,10 +68,34 @@ def make_org(db, ref, *, name="飲料公司", existing_employees=12, lsa=True,
             "tenant_id": tenant, "entity_id": ObjectId(), "revision": 1, "is_current": True, "recorded_at": ts,
             "person_id": pid, "employer_id": employer, "start_date": to_dt(date(2020, 1, 1)),
             "employee_number": f"E{i + 1:03d}", "status": "Active", "annulled": False, "created_at": ts})
-    return {"tenant": tenant, "employer": employer, "units": units,
+    return {"tenant": tenant, "employer": employer, "units": units, "location": location,
             "hr": {"Authorization": f"Bearer {hr_user}"}, "boss": {"Authorization": f"Bearer {employer_user}"}}
 
 
 @pytest.fixture
 def org(db, ref):
     return make_org(db, ref)
+
+
+class Api:
+    """依 operationId 呼叫 API；成功的回應一律用 api.yaml 的回應格式檢查（05_mapping D-18）。"""
+
+    def __init__(self, client):
+        self.client = client
+
+    def __call__(self, op_id: str, headers: dict, *, path: dict | None = None, json=None, params=None, expect=None):
+        from app import spec
+        method, template, op = spec.operations()[op_id]
+        url = template.format(**(path or {}))
+        r = self.client.request(method.upper(), url, headers=headers, json=json, params=params)
+        if expect is not None:
+            assert r.status_code == expect, r.text
+        if 200 <= r.status_code < 300:
+            errs = spec.errors(spec.response_schema(op_id, r.status_code), r.json())
+            assert not errs, (op_id, errs)
+        return r
+
+
+@pytest.fixture(scope="session")
+def api(client):
+    return Api(client)

@@ -21,6 +21,12 @@ class NotFound(Exception):
 
 
 def install(app):
+    from app.spec import RequestInvalid
+
+    @app.exception_handler(RequestInvalid)
+    def _invalid(_: Request, e: RequestInvalid):
+        return JSONResponse(status_code=422, content={"detail": e.errors})
+
     @app.exception_handler(Blocked)
     def _blocked(_: Request, e: Blocked):
         return JSONResponse(status_code=409, content={"rule_id": e.rule_id, "message_code": e.message_code, "detail": e.detail})

@@ -1,6 +1,6 @@
 # hire-employee 實作（MongoDB＋FastAPI）
 
-依 `slices/hire-employee/` 第 ⑤ 步凍結的設計（`05_mapping.md`、`schema.mongo.js`、`api.yaml` @ `hire-employee/05-v1`）實作。
+依 `slices/hire-employee/` 凍結的設計實作：`04_rules.md` @ `hire-employee/04-v2`；`05_mapping.md`、`schema.mongo.js`、`api.yaml`（0.2.0）@ `hire-employee/05-v2`。
 
 ## 需要
 
@@ -23,9 +23,10 @@ uv run pytest                                # 在真的 MongoDB 上跑；每次
 
 | 位置 | 內容 | 對應設計 |
 |---|---|---|
-| `app/seed.py` | 參考資料：管轄區、5 種保險制度、規則版本（最低工資、4 張分級表…）、多語名稱（從 `04_rules.md` 分類值表解析） | P5、P10 |
+| `app/spec.py` | 依 api.yaml 檢查請求；OpenAPI 文件的請求、回應、components 直接取自 api.yaml | 05_mapping D-18 |
+| `app/seed.py` | 參考資料：管轄區、5 種保險制度（施行日附來源）、規則版本（分級表載入時從 `inputs/` 的來源檔解析）、多語名稱（從 `04_rules.md` 分類值表解析） | P5、P10 |
 | `app/store.py` | 寫事件、只新增的版本（A）、覆寫＋變更紀錄（B）、引用檢查 | P1、P2、D-06、D-10 |
-| `app/rules/` | 各保險的適用、期限、級距（R22～R44、R60）；提醒類規則（R11、R14、R15、R21） | 04_rules |
+| `app/rules/` | 各保險的適用、期限、級距（R22～R44、R60）；提醒類規則（R11、R14、R15、R21、R45、R61） | 04_rules |
 | `app/services/` | 各動作：一個動作一個多文件交易 | 05_mapping 第二節 |
 | `app/routers/uc01.py` | 已實作的 API | api.yaml |
 | `app/stubs.py` | api.yaml 中還沒實作的 API，回 501 | api.yaml |
@@ -33,15 +34,15 @@ uv run pytest                                # 在真的 MongoDB 上跑；每次
 ## 範圍
 
 已實作 UC-01（錄用本國籍員工並到職）、UC-02（判定各保險）、UC-03（登錄實際加保與投保薪資），共 9 支 API；其餘 27 支回 501。
+UC-01～UC-03 照 05_mapping 第六區走一遍，每一步只用前一步回應的欄位（`tests/test_gc01.py`）。
 
-尚未實作：系統排程（ContractTermStarts、ExpireWorkAuthorization、PromptStartConfirmation 等時間觸發的事件）、更正與註銷、個資相關的 API、外籍員工的工作許可登錄。
+尚未實作：系統排程（ContractTermStarts、ExpireWorkAuthorization、PromptStartConfirmation 等時間觸發的事件）、更正與註銷、個資相關的 API、外籍員工的工作許可登錄（R16、R18～R20、R59）。
 
-## 專家還沒回覆的地方怎麼處理
+## 暫時的做法
 
-| 項目 | 做法 |
-|---|---|
-| EQ-003 健保、勞退的法定生效日 | 不給值，標出待確認；晚辦天數不計算（R35） |
-| EQ-012 哪些固定給付算入投保薪資 | 規則 R39 的參數暫以「伙食津貼等四類都算入」為假設（使用者 GC01 預期結果的前提），標出待確認；確認後新增 R39 的修訂即可，不改程式 |
-| EQ-006 65 歲界線 | R22、R24 參數 `max_age: 65` 含 65 歲；剛好 65 歲時標出待確認 |
-| EQ-008 人數計入範圍 | 先以雇主的在職人數計（R23），標出待確認 |
-| EQ-019 最低工資的比較基礎 | 先用底薪比較（R11 參數 `compare_basis`） |
+程式裡的暫時做法都標了 `暫時：…（signoff.md #n）`，並列在 `slices/hire-employee/06_evidence/signoff.md`「實作時發現的設計問題」：
+
+- 等專家回覆的參數假設：#7 EQ-012、#8 EQ-003、#9 EQ-006、#10 EQ-008、#11 EQ-019、#12 EQ-023
+- 待處理的設計問題：#13～#17
+
+登入只是開發用（bearer token 等於 `user_accounts.user_id`）；正式的登入方式由平台決定（05_mapping D-09）。

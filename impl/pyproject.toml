@@ -8,6 +8,8 @@ dependencies = [
   "uvicorn>=0.30",
   "pymongo>=4.9",
   "pyyaml>=6.0",
+  "jsonschema>=4.26.0",
+  "rfc3339-validator>=0.1.4",
 ]
 
 [dependency-groups]
