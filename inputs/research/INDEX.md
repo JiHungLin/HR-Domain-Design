@@ -19,3 +19,4 @@
 | 聯邦與紐約 | 聯邦與紐約.md | US、US-NY、US-NY-NYC | 人資／薪資、人資／跨國任用 | 9 | 0 | 0 | Cornell LII、紐約州勞工廳、紐約州政府、紐約市消費者與勞工保護局、紐約州政府 Paid Family Leave、美國國稅局、紐約州稅務局 | 2026-10-05 | second-country-hire、hourly-payroll、assignment-payroll |
 | 外國人聘僱 | 外國人聘僱.md | TW | 人資／人事 | 6 | 0 | 0 | 全國法規資料庫 | 2026-10-06 | hire-employee、resignation、annual-leave-request、shift-attendance |
 | 員工個人資料 | 員工個人資料.md | TW | 人資／人事 | 9 | 0 | 0 | 全國法規資料庫 | 2026-10-14 | hire-employee、resignation |
+| 期間計算 | 期間計算.md | TW | 人資／人事、人資／請假、人資／薪資 | 4 | 0 | 0 | 全國法規資料庫 | 2026-10-14 | hire-employee |

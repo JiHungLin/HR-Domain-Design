@@ -6,7 +6,7 @@
 | 步驟 | ③ 流程與狀態（Use Case） |
 | 狀態 | 待檢查 |
 | 版本 | hire-employee/03-v1（回頭修改中，重新凍結後為 03-v2） |
-| 讀取的輸入 | 01_scope.md @ hire-employee/01-v1；02_entities.md @ hire-employee/02-v1；03_flows.md（本步） |
+| 讀取的輸入 | 01_scope.md @ hire-employee/01-v1；02_entities.md @ hire-employee/02-v1（回頭修改中的 02-v2：D-32～D-36）；03_flows.md（本步） |
 
 <!-- 完成標準與檢查紀錄寫在 03_flows.md。參與者用業務角色：人資、員工、雇主（老闆）、系統 -->
 
@@ -43,7 +43,7 @@
   6. 產生加保待辦（ProposeEnrollmentFiling）：可自願的列出讓雇主選擇；記錄這次判定依據的資料與規則版本
 - 例外：
   - 到職日沒有對應的規則版本（補登的既有員工）→ 標「無對應規則版本」，不用現行規則代替（UC-11）
-  - 到職日早於某制度的施行日 → 該制度為「不適用（制度尚未施行）」
+  - 判定日早於某制度的施行日 → 該制度為「不適用（制度尚未施行）」；施行前就到職、到施行日仍在職的，在施行日重新判定（R28）
   - 員工到職前在別處投保（US-D07）→ 判定照常；原投保情形只記錄說明，對本雇主加保的影響 [待專家確認: EQ-010]
 - 用到的 Entity：Person、IdentityDocument、Employer、InsuranceUnit、Employment、Compensation、SocialInsuranceScheme、Jurisdiction、Hire
 - 用到的事件：ProposeEnrollmentFiling
@@ -73,7 +73,7 @@
   1. 人資登錄國籍、居留證或永久居留證與居留事由（RecordIdentityDocument）
   2. 登錄工作許可（RecordWorkAuthorization）：依據（雇主申請、本人申請、依身分免申請）、工作類別、綁定的雇主；申請許可者記這次核准的文號與起訖日（每次展延各記一筆核准），免申請者記取得身分的日子
   3. 其餘同 UC-01；移工的書面定期契約見 UC-07
-  4. 系統檢查到職日是否落在許可期間內、許可是否發給這個雇主；判定各保險時使用到職日當時有效的證件與居留事由（UC-02）
+  4. 系統檢查到職日是否落在許可期間內、許可是否發給這個雇主；判定各保險時使用判定日當時有效的證件與居留事由（UC-02）
 - 例外：
   - 許可在到職日還沒生效（US-D11）→ 警告，人資可改到職日（UC-05）或照樣存檔（UC-09）
   - 居留事由在到職後改變（例：取得永久居留、離婚後依法繼續居留）→ 登錄新的一筆證件，前一筆 Superseded；之後的判定依新的一筆，系統重新產生加保待辦（UC-02）。免申請者的許可由系統提醒確認（ProposeAuthorizationReview），人資決定是否登錄失效（EndWorkAuthorization）[待專家確認: EQ-018]
@@ -116,7 +116,7 @@
 - 前提：已有錄用或僱傭關係
 - 主流程：
   1. 人資登錄契約（SignContract）：不定期或定期；定期的寫性質與起訖日；是否書面
-  2. 系統檢查定期契約的期間是否超過該性質的上限；移工檢查是否為書面定期契約，沒寫期限時以聘僱許可期限為準
+  2. 系統檢查定期契約的期間是否超過該性質的上限；移工檢查是否為書面定期契約，沒寫期限時，依簽約當時有效那一次核准的迄日（R59），推出的期限不寫回契約迄日
   3. 到職時契約生效（隨 StartEmployment）；起日晚於到職日的，起日到達時生效（ContractTermStarts）
 - 例外：期間超過上限（US-D13）→ 警告，人資可改正或照樣存檔（UC-09）
 - 用到的 Entity：EmploymentContract、Hire、Employment、WorkAuthorization

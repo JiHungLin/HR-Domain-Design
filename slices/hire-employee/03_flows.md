@@ -7,7 +7,7 @@
 | 狀態 | 待檢查 |
 | 版本 | hire-employee/03-v1（回頭修改中，重新凍結後為 03-v2） |
 | 產出者 | AI（Claude） |
-| 讀取的輸入 | 01_scope.md @ hire-employee/01-v1；02_entities.md @ hire-employee/02-v1；slices/PLAN.md D-27、D-28、D-29、D-33 @ 4d051d4；docs/03 P1～P4、P7（平台約定未填，只引用其分類）；回頭修改（2026-10-14）：04_rules.md D-08（觸發來源、個資請求延長） |
+| 讀取的輸入 | 01_scope.md @ hire-employee/01-v1；02_entities.md @ hire-employee/02-v1（回頭修改中的 02-v2：D-32～D-36）；slices/PLAN.md D-27、D-28、D-29、D-33 @ 4d051d4；docs/03 P1～P4、P7（平台約定未填，只引用其分類）；回頭修改（2026-10-14）：04_rules.md D-08（觸發來源、個資請求延長） |
 
 <!-- 本文件的「誰可以做」用業務角色：
      人資＝雇主指定處理人事的人（小雇主可以是老闆本人；PLAN.md P-05 小團隊沒有部門也照樣有人資）
@@ -72,9 +72,10 @@
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
 | （無） | Valid | RecordWorkAuthorization | 人資 | 依主管機關核發的許可函登錄；免申請者依身分證件登錄（02 D-06） | R03、R16、R17、R58 |
-| Valid | Expired | ExpireWorkAuthorization | 系統 | 登錄的期限屆滿，且沒有已登錄的展延 | — |
+| Valid | Valid | RecordWorkAuthorization | 人資 | 許可還有效時登錄展延：新增一筆核准紀錄，不改前一筆（02 D-33） | R03、R17、R58 |
+| Valid | Expired | ExpireWorkAuthorization | 系統 | 申請許可者：最後一筆核准的迄日屆滿，且沒有已登錄的展延。免申請者沒有到期，身分消失由 EndWorkAuthorization 記錄 | — |
 | Valid | Expired | EndWorkAuthorization | 人資 | 免申請者依據的身分已消失，經人資確認（D-08）；許可被廢止的登錄不在本切片 | — |
-| Expired | Valid | RecordWorkAuthorization | 人資 | 登錄期限屆滿前已核准、但較晚才登錄的展延；仍是同一筆，文號留歷史（02 WorkAuthorization 卡），生效時間為原期限的次日 | R03、R17 |
+| Expired | Valid | RecordWorkAuthorization | 人資 | 登錄期限屆滿前已核准、但較晚才登錄的展延；仍是同一筆許可，新增一筆核准紀錄（02 D-33），生效時間為原期限的次日 | R03、R17、R58 |
 
 說明：要重建「到職日那天許可是否有效、發給哪個雇主」（Q16）；展延晚登錄後，到期與恢復兩筆轉換都保留，依發生與得知時間分得出「當時系統以為已失效」和「實際一直有效」（D-10）。申請、廢止、轉換雇主不在本切片（01_scope 不做）。
 
@@ -157,10 +158,10 @@
 | 從 | 到 | 觸發事件 | 誰可以做 | 前提條件 | 規則 |
 |---|---|---|---|---|---|
 | （無） | Received | ReceiveDataSubjectRequest | 員工（自己提出）；人資（代登錄書面、email、口頭的請求，記收到管道） | 請求來自當事人本人 | — |
-| Received | Completed | ResolveDataSubjectRequest | 人資 | 已執行請求的內容（例：更正走 CorrectRecord、停止利用或刪除走 ArchivePersonalData）；部分接受也算完成，結果寫明；員工撤回也記為完成，結果寫「當事人撤回」（D-07）；部分拒絕的部分要寫依據 | R53、R55、R62 |
-| Received | Rejected | ResolveDataSubjectRequest | 人資 | 有法定的拒絕理由（例：依業務必要不刪除），寫明理由與依據（refusal_basis）；拒絕會通知雇主（老闆）（D-02） | R46、R55、R62 |
+| Received | Completed | ResolveDataSubjectRequest | 人資 | 已執行請求的內容（例：更正走 CorrectRecord、停止利用或刪除走 ArchivePersonalData）；部分接受也算完成，結果寫明；員工撤回也記為完成，結果寫「當事人撤回」（D-07）；部分拒絕的部分要寫依據；刪除的內容不能包含保存期間內的資料類別 | R53、R55、R62 |
+| Received | Rejected | ResolveDataSubjectRequest | 人資 | 有法定的拒絕理由（例：依業務必要不刪除），寫明理由與依據（refusal_basis，被 R55 擋下的刪除自動帶入）；拒絕會通知雇主（老闆）（D-02） | R46、R62 |
 
-處理期限的延長（ExtendDataSubjectRequest）不改變狀態，仍是 Received：要在原期限內決定、寫明原因與延長後的期限，並以書面通知當事人（R53、R63，D-15）。
+處理期限的延長（ExtendDataSubjectRequest）不改變狀態，仍是 Received：寫明原因與延長後的期限，並以書面通知當事人；在原期限內決定（推定，原文未寫）（R53、R63，D-15）。
 
 ### 不需要狀態機的東西
 
@@ -170,7 +171,7 @@
 | Person 的姓名、性別、出生日期、教育程度、住址 | 需要軌跡 | Q10、Q15 | 勞工名卡項目；登錯要能更正並留紀錄 |
 | Person 的聯絡方式 | 只需現況 | — | 只供聯絡（02 D-14），直接存目前值，不做事件（docs/01 ③「可以簡化的時候」） |
 | Employer 的是否適用勞基法 | 需要重建當時 | Q05、Q13 | 屬性保留期間（02 卡片）；維護屬 org-setup |
-| Employer 的勞保行業類別、登記紀錄、是否依法免辦登記、是否有核定課稅或購票證 | 需要重建當時 | Q05 | 決定各保險是強制、可自願或不適用（04_rules R22、R24、R25）；登記紀錄本身帶日期，行業類別保留期間（02 D-32）；維護屬 org-setup |
+| Employer 的勞保行業類別、登記紀錄、是否依法免辦登記、是否有核定課稅或購票證 | 需要重建當時 | Q05 | 決定各保險是強制、可自願或不適用（04_rules R22、R24、R25）；登記紀錄本身帶日期，其餘三項會改變時保留期間（例：新開的店先僱人、之後才取得核定課稅）（02 D-32）；維護屬 org-setup |
 | Tenant、Employer 其他屬性、InsuranceUnit、OrgUnit、WorkLocation | 只需現況（本切片） | — | 本切片以固定資料提供，建立與維護的狀態機由 org-setup 定義（01_scope 範圍外但會用到） |
 | Jurisdiction、SocialInsuranceScheme | 只需現況 | Q02、Q05 | 全平台共用的參考資料；施行日是屬性（02 D-23） |
 
@@ -192,8 +193,8 @@
 | ContractTermStarts（契約起日到達） | 時間或條件到達 | 發生 | EmploymentContract | Signed → InForce | 契約起日 | 起日更正或依據的到職被註銷時重新推導 | 生效、得知 |
 | VoidContract（契約失效） | 其他單位個體的變化（錄用取消；起日前僱傭關係結束） | 發生 | EmploymentContract | Signed → Voided | 取消或結束的紀錄 | 造成它的事件被註銷時，依其餘事件重新推導 | 發生、得知 |
 | AgreeCompensation（約定薪資） | 人的動作（人資） | 決定 | Compensation | （無）→ Agreed | 錄取通知或契約上的薪資條件 | 只能更正；調薪屬 monthly-payroll | 發生、得知、生效 |
-| RecordWorkAuthorization（登錄工作許可） | 外部系統或訊息（主管機關核發的許可函或展延核准，由人資登錄） | 發生 | WorkAuthorization | （無）→ Valid；展延晚登錄時 Expired → Valid | 許可函文號；免申請者的身分證件 | 只能更正 | 發生、得知、生效 |
-| ExpireWorkAuthorization（工作許可到期） | 時間或條件到達 | 發生 | WorkAuthorization | Valid → Expired | 登錄的期限 | 展延晚登錄時回到 Valid；期限更正時重新推導 | 生效、得知 |
+| RecordWorkAuthorization（登錄工作許可） | 外部系統或訊息（主管機關核發的許可函或展延核准，由人資登錄） | 發生 | WorkAuthorization | （無）→ Valid；展延時新增一筆核准紀錄：還有效時 Valid → Valid，晚登錄時 Expired → Valid | 許可函文號；免申請者的身分證件 | 只能更正 | 發生、得知、生效 |
+| ExpireWorkAuthorization（工作許可到期） | 時間或條件到達 | 發生 | WorkAuthorization | Valid → Expired（只用於申請許可者） | 最後一筆核准的迄日 | 展延晚登錄時回到 Valid；期限更正時重新推導 | 生效、得知 |
 | ProposeAuthorizationReview（提醒確認許可） | 其他單位個體的變化（免申請者依據的身分證件被取代或到期） | 建議 | WorkAuthorization | 不改變狀態；提醒人資確認許可是否仍有效 | 新的身分證件與居留事由 | 可作廢（保留紀錄） | 得知 |
 | EndWorkAuthorization（登錄許可失效） | 人的動作（人資） | 發生 | WorkAuthorization | Valid → Expired | 人資確認依據的身分已消失 [待專家確認: EQ-018] | 只能更正 | 發生、得知、生效 |
 | RecordIdentityDocument（登錄身分證件） | 人的動作（人資依員工出示的證件） | 發生 | IdentityDocument | （無）→ Valid；換發或居留事由改變時，前一筆 Valid → Superseded | 證件核對紀錄（不代管證件） | 只能更正 | 發生、得知、生效 |
@@ -223,7 +224,7 @@
 
 ### 一、到職後要辦哪些加保
 - 訊號：決定錄用、到職、到職前改期、資料更正、註銷誤登；登錄新的身分證件；同一投保單位其他員工的到職或離開；或應辦理期限將到、已過；員工滿 65 歲、新制度的施行日（D-16）。
-- 證據：人的國籍、戶籍、證件與居留事由、出生日期、已領的老年給付；雇主的勞保行業類別、登記紀錄、是否依法免辦登記、是否有核定課稅或購票證、是否適用勞基法；投保單位在當天的計入人數與名單（依實際到職、離開的**發生**日期計算，不是登錄日，Q12）；判定日；約定薪資與每月固定給付項目的類別；當時有效的規則版本與分級表版本（沒有對應版本時標「無對應規則版本」，PLAN.md D-33）。
+- 證據：人的國籍、戶籍、證件與居留事由、出生日期、已領的老年給付；雇主的勞保行業類別、登記紀錄、是否依法免辦登記、是否有核定課稅或購票證、是否適用勞基法；投保單位在當天的計入人數與名單（依實際到職、離開的**發生**日期計算，不是登錄日，Q12）；到職日（應辦理期限與法定生效日用）、判定日（適用與否用）；約定薪資與每月固定給付項目的類別；當時有效的規則版本與分級表版本（沒有對應版本時標「無對應規則版本」，PLAN.md D-33）。
 - 狀態：各保險為強制、可自願或不適用；應辦理期限、法定生效日；應申報的投保薪資級距；已登錄的實際辦理日與差距；既有員工的適用是否改變。
 - 建議：ProposeEnrollmentFiling 產生加保待辦（哪幾種、哪天前辦、預計從哪天生效、報哪一級），可自願的列出讓雇主選擇。
 - 決定：人資在保險人辦完後登錄（RecordInsuranceFiling、DeclareInsuredSalary）；可自願的由雇主決定加或不加。系統的待辦不會自己建立投保。
@@ -370,7 +371,7 @@
 | D-12 | 由日期觸發的轉換（工作許可與證件到期、契約起日到達、隨其他事件連動的契約失效）是推導的；CorrectRecord 不直接改變狀態，但依更正後的日期重新推導這些轉換；時間觸發的事件也記得知時間 | 更正只改值，狀態不動 | 期限打錯而被判到期，更正後要能回到有效；否則只能登錄假的展延，歷史失真（X-16） | X-16；D-10 |
 | D-13 | 回到已凍結的第 ② 步（第 0 級回頭修改）：Employer 新增「開始由系統管理的日子」（system_managed_from），供 D-09 使用；使用者同意（2026-10-07）。原本也考慮把核准申請建成 Entity，使用者選擇更正不需核准（D-02）後不需要 | 不記這個日子、補登不檢查；新增核准申請 Entity | 依回頭對照表「③ 有情境在流程上走不完，缺名詞或屬性 → 回到 ②，第 0 級」；補登的界線要有資料可以判斷（X-21） | X-21；docs/01 0.9；inputs/shared/範圍釐清_更正不需核准.md |
 | D-14 | AnnulEntry 只能註銷白名單上的事件：DecideHire、RescheduleStart、CancelHire、StartEmployment、RegisterExistingEmployment、RecordEarlyDeparture、SignContract、AgreeCompensation、RecordWorkAuthorization、EndWorkAuthorization、RecordIdentityDocument、RecordInsuranceFiling、DeclareInsuredSalary、ReceiveDataSubjectRequest。不能註銷：OverrideWarning、WithdrawWarningOverride、ResolveDataSubjectRequest、ArchivePersonalData、ReleaseArchival、建議層事件、由時間或條件觸發的事件 | 寫「等」，由人判斷 | 白名單上的都是登錄現實事實的事件，登錯了要能讓它不算數；不能註銷的是對紀錄本身的決定，Q20、Q22 的軌跡不能消失，做錯了用新的相反決定處理（例：撤回忽略、解除封存）；時間觸發的事件是推導的，不需要註銷（X-19） | X-19；Q20、Q22 |
-| D-15 | 〔回頭修改，2026-10-14〕新增事件 ExtendDataSubjectRequest（延長個資請求處理期限）：不改變狀態（仍是 Received），記延長後的期限、原因、書面通知日；不能註銷，只能更正 | 在 ResolveDataSubjectRequest 時一併補記延長 | 個資法 §13 的延長要在原期限內決定並以書面通知原因（員工個人資料#09），發生在處理完成之前，要有自己的事件；使用者同意新增延長的屬性（02 D-35，2026-10-14）。不能註銷的理由同 ResolveDataSubjectRequest：已經通知當事人的事不能當作沒發生 | 02 D-35；04_rules D-08 ⑤ |
+| D-15 | 〔回頭修改，2026-10-14〕新增事件 ExtendDataSubjectRequest（延長個資請求處理期限）：不改變狀態（仍是 Received），記延長後的期限、原因、書面通知日；不能註銷，只能更正 | 在 ResolveDataSubjectRequest 時一併補記延長 | 個資法 §13 規定延長要以書面通知原因（員工個人資料#09），延長發生在處理完成之前，要有自己的事件（「要在原期限內決定延長」原文沒有寫，是依「延長之期間」的文意推定，見 04_rules R63）；使用者同意新增延長的屬性（02 D-35，2026-10-14）。不能註銷的理由同 ResolveDataSubjectRequest：已經通知當事人的事不能當作沒發生 | 02 D-35；04_rules D-08 ⑤ |
 | D-16 | 〔回頭修改，2026-10-14〕ProposeEnrollmentFiling 的觸發來源加上「登錄新的身分證件」（其他單位個體的變化）與「條件日期到了：員工滿 65 歲、新制度的施行日」（時間或條件到達） | 不改，在說明中寫明這兩種情況系統不會提醒，由人資自己重新檢查 | 第 ④ 步把保險適用改成依判定日 d 判斷（04_rules X-01）：外籍員工拿到居留證後才合於健保投保條件（R26、R33），滿 65 歲改變勞保、就保適用（R29），施行前到職者自施行日起加保（R28）。原本的觸發來源抓不到這些「員工沒做什麼，但適用改了」的情況，漏掉會變成晚辦（Q14）。使用者選 A（2026-10-14） | 04_rules D-08、X-01、X-05 |
 
 ### 反例處理
