@@ -12,6 +12,13 @@
 - 同意者：
 -->
 
+### 2026-10-14　PLAN　第 ⑤ 步需要的平台約定
+- 改了什麼：地圖新增決定 D-35（資料庫 MongoDB、API 形式，以及平台約定 P1、P2、P3、P6、P7、P8 的做法）
+- 依據：hire-employee 進入第 ⑤ 步時，docs/03 的 P1～P8 未填；inputs/shared/範圍釐清_平台約定_第五步.md
+- 舊 → 新：決定 D-01～D-34 → D-01～D-35；切片與名詞不變
+- 影響：所有切片的第 ⑤ 步依 D-35 投影；交付物 schema.sql 改為 schema.mongo.js
+- 同意者：JiHungLin（2026-10-14，對話中同意）
+
 ### 2026-10-14　PLAN、SKETCH　人的特殊身分：新增切片 quota-employment
 - 改了什麼：地圖新增候選切片 quota-employment（定額進用，建議順序 18）、待釐清 P-19（問 HC：到職時是否蒐集特殊身分）、P-20（先蒐集定額進用與歲時祭儀的法規原文）、決定 D-34；草圖新增 IndigenousStatus（原住民身分）、DisabilityCertificate（身心障礙證明），「不確定的地方」記下待 quota-employment 第 ② 步決定的事
 - 依據：使用者審查 hire-employee 第 ③ 步時提出（inputs/shared/範圍釐清_特殊身分員工.md），選擇 A＋C
