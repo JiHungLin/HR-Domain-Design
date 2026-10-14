@@ -21,7 +21,9 @@ const versioned = {
 };
 const tenantScoped = { tenant_id: ref };              // [技術] 客戶隔離
 const tech = { created_at: date, updated_at: date, schema_version: { bsonType: "int" } };
-const cache = { annulled: bool };                     // [技術] 快取：由註銷與撤銷事件推出（05_mapping D-11）
+const cache = { annulled: bool };
+const decision = { bsonType: "object", required: ["kind", "result", "by", "at"], properties: {
+  kind: { enum: ["EMPLOYMENT_INSURANCE_CHOICE", "ALLOWANCE_INCLUSION"] }, allowance_name: str, result: str, by: ref, at: date, reason: str } };                     // [技術] 快取：由註銷與撤銷事件推出（05_mapping D-11）
 
 function create(name, concept, required, properties, extra = {}) {
   db.createCollection(name, {
@@ -107,6 +109,7 @@ create("employments", "Employment", ["tenant_id", "entity_id", "revision", "is_c
   ...tenantScoped, ...versioned, ...cache, person_id: ref, employer_id: ref, hire_id: ref,
   start_date: date, ended_on: date, end_reason: code, employee_number: str,
   employee_category: period(code), probation_until: date, historical_basis_note: str,
+  public_or_military_insurance_covered: period(bool), // 02 D-37；就保 R24
   org_unit_assignments: { bsonType: "array", items: { bsonType: "object", properties: { org_unit_id: ref, from: date, to: date } } },
   work_locations: { bsonType: "array", items: { bsonType: "object", properties: { work_location_id: ref, from: date, to: date } } },
   status: { enum: ["Active", "Ended"] },
@@ -189,9 +192,12 @@ db.data_subject_requests.createIndex({ tenant_id: 1, status: 1, received_on: 1 }
 
 create("enrollment_proposals", "ProposeEnrollmentFiling（加保待辦）", ["tenant_id", "determined_on", "basis", "items"], {
   ...tenantScoped, hire_id: ref, employment_id: ref, determined_on: date, basis: { bsonType: "object" },
+  estimated: bool, // 錄用時以約定到職日判定的預估結果（04_rules D-18）
+  allowance_decisions: { bsonType: "array", items: decision }, // 「其他」類固定給付算不算入（04_rules D-16）
   items: { bsonType: "array", items: { bsonType: "object", required: ["scheme_code", "applicability"], properties: {
     scheme_code: code, applicability: code, filing_deadline: date, legal_effective_date: date, expected_grade: str, days_overdue: { bsonType: "int" },
-    closed_by_enrollment_id: ref, voluntary_declined: { bsonType: "object", properties: { by: ref, at: date } } } } },
+    closed_by_enrollment_id: ref, voluntary_declined: { bsonType: "object", properties: { by: ref, at: date } },
+    decisions: { bsonType: "array", items: decision } } } }, // 就保擇一參加（04_rules D-16）
   superseded_by: ref,
 });
 db.enrollment_proposals.createIndex({ tenant_id: 1, employment_id: 1, superseded_by: 1 });

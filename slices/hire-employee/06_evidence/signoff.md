@@ -11,7 +11,7 @@
 - 執行者：
 - 簽核者：（不得與執行者同一人）
 - 日期：
-- 實作版本：JiHungLin/HR-Domain-Design，分支 impl/hire-employee @ b88a209（依 05-v1 實作 UC-01～UC-03，9 支 API；第 ⑥ 步尚未開始）
+- 實作版本：JiHungLin/HR-Domain-Design，分支 impl/hire-employee @ c7f2176（依 04-v2、05-v2 實作 UC-01～UC-03，9 支 API）
 - 結果摘要：P0 可回答率 x/x；黃金案例 x/x 通過；
 - 未執行的項目：
 - 受 [未核對] 規則影響、不算通過的案例：
@@ -22,17 +22,23 @@
 
 | # | 問題 | 牽涉 | 實作暫時的做法 | 處理 |
 |---|---|---|---|---|
-| 1 | 錄用（`POST /hires`）的回應沒有 person_id，下一步登錄證件拿不到人的編號 | 05_mapping、api.yaml | `app/services/hiring.py` 的 decide_hire 在回應多回傳 `person_id`（api.yaml 沒有） | 回到 ⑤：05_mapping D-18、X-16，api.yaml 回應給所有建立項目的編號（05-v2）；程式待依新 api.yaml 改 |
-| 2 | 錄用的請求帶不進約定薪資 | 03_flows DecideHire、api.yaml | 約定薪資改用 `POST /compensations` 另外登錄並帶 hire_id | 查 03：DecideHire 本來就帶約定薪資，問題在 api.yaml。回到 ⑤：05_mapping D-17、X-17（05-v2）；程式待改為錄用時一併建立 |
-| 3 | R25 只寫了強制的條件，雇主沒有登記、稅籍、執業證照或聘僱許可時沒有結果 | 04_rules R25 | `app/rules/applicability.py` 在這種情況回「不適用」並加註 | 回到 ④：04_rules D-13、X-29，R25 寫出強制、可自願、不適用（04-v2）；公告範圍與不適用待 EQ-023；程式待依新 R25 改 |
-| 4 | api.yaml 太寬鬆：請求只寫 object，沒有必填與巢狀結構 | api.yaml | `app/models.py` 依 05_mapping 1.2 自行定必填與型別 | 回到 ⑤：05_mapping D-18、X-18，api.yaml 寫到欄位層級（05-v2）；程式待改為依 api.yaml，`tests/test_contract.py` 重跑 |
-| 5 | 五種保險的施行日沒有來源 | SocialInsuranceScheme.effective_from；04_rules R28 | `app/seed.py` SCHEMES 由 AI 依一般知識填寫（勞保 1950-03-01、就保 2003-01-01、職保 2022-05-01、健保 1995-03-01、勞退 2005-07-01） | 補來源：勞保就保職保#20～#22、全民健康保險#13、勞工退休金#06（2026-10-14，[未核對]）。和程式不同的：勞保條例在臺灣省施行為 1960-02-24（行政院令日期與生效日的關係待核對），程式的 1950-03-01 是條例前的省辦法時期；勞退 2005-07-01 屬解讀。程式待依來源改 |
-| 6 | 勞退月提繳分級表只有第 25 級以上的來源 | 04_rules R42 | `app/seed.py` 的 R42 只載入第 25～57 級（到 126,300 元），缺第 1～24 級與第 58～62 級 | 補來源：inputs/shared/勞工退休金月提繳分級表_115年1月1日.md（使用者提供，全表 62 級）；R42 來源已更新（04-v2）。程式待載入全表；月提繳工資超過 126,300 元的級距目前會判錯 |
+| 1 | 錄用（`POST /hires`）的回應沒有 person_id，下一步登錄證件拿不到人的編號 | 05_mapping、api.yaml | 已依設計修改：`POST /hires` 回應照 DecideHireOut（hire_id、person_id、compensation_id、contract_id）；`/start` 照 StartEmploymentOut；請求可用 person_id 沿用既有的人 | 回到 ⑤：05_mapping D-18、X-16，api.yaml 回應給所有建立項目的編號（05-v2）；程式待依新 api.yaml 改 |
+| 2 | 錄用的請求帶不進約定薪資 | 03_flows DecideHire、api.yaml | 已依設計修改：`POST /hires` 可一併帶 compensation、contract，同一交易建立並在錄用時判斷 R11；到職時接續到僱傭關係；`POST /compensations` 保留給錄用後另外約定 | 查 03：DecideHire 本來就帶約定薪資，問題在 api.yaml。回到 ⑤：05_mapping D-17、X-17（05-v2）；程式待改為錄用時一併建立 |
+| 3 | R25 只寫了強制的條件，雇主沒有登記、稅籍、執業證照或聘僱許可時沒有結果 | 04_rules R25 | 已依設計修改：R22、R24、R25、R26 依 04-v2 逐項給結果（`app/rules/applicability.py`）；R25 ④ 的公告範圍另列 #12 | 回到 ④：04_rules D-13、X-29，R25 寫出強制、可自願、不適用（04-v2）；公告範圍與不適用待 EQ-023；程式待依新 R25 改 |
+| 4 | api.yaml 太寬鬆：請求只寫 object，沒有必填與巢狀結構 | api.yaml | 已依設計修改：刪除 `app/models.py`，請求直接依 api.yaml 檢查（`app/spec.py`）；OpenAPI 的請求、回應、components 取自 api.yaml；測試每次呼叫都依 api.yaml 檢查回應，`tests/test_contract.py` 比對請求與回應格式 | 回到 ⑤：05_mapping D-18、X-18，api.yaml 寫到欄位層級（05-v2）；程式待改為依 api.yaml，`tests/test_contract.py` 重跑 |
+| 5 | 五種保險的施行日沒有來源 | SocialInsuranceScheme.effective_from；04_rules R28 | 已依設計修改：`app/seed.py` SCHEMES 改為勞保 1960-02-24、就保 2003-01-01、職保 2022-05-01、健保 1995-03-01、勞退 2005-07-01，source_ref 寫來源條目，全部 [未核對] | 補來源：勞保就保職保#20～#22、全民健康保險#13、勞工退休金#06（2026-10-14，[未核對]）。和程式不同的：勞保條例在臺灣省施行為 1960-02-24（行政院令日期與生效日的關係待核對），程式的 1950-03-01 是條例前的省辦法時期；勞退 2005-07-01 屬解讀。程式待依來源改 |
+| 6 | 勞退月提繳分級表只有第 25 級以上的來源 | 04_rules R42 | 已依設計修改：R42 載入全表 62 級；四張分級表都改為載入時從 inputs/ 的來源檔解析，不在程式裡抄數字 | 補來源：inputs/shared/勞工退休金月提繳分級表_115年1月1日.md（使用者提供，全表 62 級）；R42 來源已更新（04-v2）。程式待載入全表；月提繳工資超過 126,300 元的級距目前會判錯 |
 | 7 | 哪些固定給付算入投保薪資的計算基礎 | 04_rules R39 | R39 參數暫以「伙食、交通、全勤、職務加給四類都算入」為假設，標待確認 | 待專家回覆 EQ-012；回覆後新增 R39 的修訂，不改程式 |
 | 8 | 健保、勞退的法定生效日 | 04_rules R33、R34 | 不給值、晚辦天數不計算，標待確認 | 待專家回覆 EQ-003 |
 | 9 | 65 歲界線含不含生日當天 | 04_rules R22、R24、R29 | 參數 max_age: 65 含 65 歲，剛好 65 歲時標待確認 | 待專家回覆 EQ-006 |
 | 10 | 勞保人數門檻的計入範圍 | 04_rules R23 | 先以雇主的在職人數計，標待確認 | 待專家回覆 EQ-008 |
 | 11 | 最低工資比較用底薪還是含津貼 | 04_rules R11 | R11 參數 compare_basis 先用底薪 | 待專家回覆 EQ-019 |
+| 12 | R25 ④「中央主管機關公告的第 6 條以外雇主」可自願，公告範圍沒有資料 | 04_rules R25 | `app/rules/applicability.py`：一律不判成可自願，落到 ⑤ 不適用，pending 標 EQ-023 | 待專家回覆 EQ-023 |
+| 13 | R24「依法應參加公教人員保險或軍人保險者」不適用，但 02 沒有屬性可以判斷 | 04_rules R24；02 Person | `app/rules/applicability.py`：不檢查這個條件 | 回到 ② 與 ④：02 D-37（Employment 新增是否應參加公教或軍保）、04_rules D-15（02-v4、04-v3，待審查）；程式待依新 tag 改 |
+| 14 | 需人工判斷的部分在判定結果中沒有欄位表達：R24 受僱於兩個以上雇主時擇一參加；R39 固定給付類別「其他」算不算入由人判斷 | 04_rules R24、R39；api.yaml ApplicabilityItem、EnrollmentProposal | `app/rules/applicability.py`：不偵測擇一的情形；類別「其他」不算入 | 回到 ③④⑤：04_rules D-16（新分類值「待人判斷」）、03_flows D-19、05_mapping D-21（decisions API）（03-v4、04-v3、05-v3，待審查）；程式待改 |
+| 15 | R36 逾期未辦是提醒類規則，但 `GET /enrollment-proposals` 的回應（EnrollmentProposalList）沒有 warnings，警告無處回傳，也就無法用 UC-09 忽略 | 04_rules R36；api.yaml listEnrollmentProposals（x-rules 有 R36） | `app/services/proposals.py`：不輸出 R36 警告 | 回到 ④：04_rules D-17，R36 改為判定，以加保待辦的 days_overdue 呈現、不能忽略（04-v3，待審查）；⑤ 同步（05-v3）；程式待改 |
+| 16 | 04_rules 版本欄為「—」的規則（R14、R15、R21、R36、R45、R61 等），api.yaml 的 Warning 仍要求 rule_version、rule_revision | 04_rules；api.yaml Warning；P5 | `app/seed.py`：這些規則以 04_rules 的凍結版本「04-v2」當版本，修訂 1 | 回到 ⑤：05_mapping D-20，版本欄為「—」的規則以 04 凍結版本為版本，實作暫時的做法即為正式做法（05-v3，待審查）；程式改用 04-v3 |
+| 17 | 錄用時（還沒到職）就產生加保待辦（03_flows 觸發來源含決定錄用；05_mapping 第六區 UC-01 第 4 步），但沒寫這時的到職日與判定日用哪一天 | 03_flows ProposeEnrollmentFiling；04_rules R37 | `app/rules/applicability.py` Subject.of_hire：以約定到職日當到職日與判定日；人數依 R23 不計入這筆錄用；到職時重新判定並取代 | 回到 ③④：03_flows D-19、04_rules D-18，錄用時以約定到職日判定、標預估，到職時重新判定並取代；實作暫時的做法即為正式做法（03-v4、04-v3，待審查）；⑤ 加保待辦加 estimated（05-v3） |
 
 ## 檢查紀錄
 

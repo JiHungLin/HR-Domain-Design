@@ -12,6 +12,13 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-14　（未凍結）　②③④⑤　回頭修改（第 0 級）：實作發現的設計問題 signoff.md #13～#17
+- 改了什麼：② 02_entities.md Employment 新增 public_or_military_insurance_covered（D-37），狀態 → 待檢查。③ 03_flows.md、03_use_cases.md 加保待辦補：錄用時為預估、待人判斷的決定記在待辦上、逾期不能忽略（D-19），UC-02 同步，狀態 → 待檢查。④ 04_rules.md：R24 改看新屬性（D-15）；R24 擇一、R39「其他」類輸出新分類值 APPLICABILITY.NEEDS_DECISION（D-16）；R36 由提醒改為判定（D-17）；判定日補錄用時的做法（D-18）；X-30～X-33；狀態 → 待檢查。⑤ 05_mapping.md：欄位、可更正欄位、API、規則落實位置、第六區同步；D-20（版本欄「—」的規則以 04 凍結版本為版本）、D-21；X-19～X-23；api.yaml 0.3.0（新增 `POST /enrollment-proposals/{id}/decisions`，共 37 支、79 個 schema）；schema.mongo.js 加欄位；狀態 → 待檢查。四份的檢查紀錄審查者確認清空。06_evidence/signoff.md 由實作分支取回（impl/hire-employee @ a35400b），#13～#17 的處理欄改寫
+- 依據：實作回報 signoff.md #13～#17（impl/hire-employee @ c7f2176）；domain-change 判斷為第 0 級；使用者同意（2026-10-14：「都照建議」，含 #15 改變 R36 的性質）
+- 舊 → 新：② 屬性 94 → 95；④ 分類值 77 → 78、R36 提醒 → 判定；⑤ API 36 → 37
+- 影響與回歸：② → ③④⑤ 依序已對齊；core/ 在重新凍結（02-v4、03-v4、04-v3）時更新；實作要依新 tag 改：R24 新屬性、待人判斷與決定 API、R36 不輸出警告改輸出 days_overdue、錄用時的待辦標 estimated；受影響的測試重跑
+- 產出者：AI（Claude）；審查者：JiHungLin（待審查）
+
 ## 2026-10-14　hire-employee/05-v2　⑤　凍結
 - 改了什麼：第 ⑤ 步回頭修改後重新凍結。相對 05-v1：新增第六區「Use Case 走一遍」；api.yaml 0.2.0 寫到欄位層級、回傳所有建立項目的編號；錄用一併帶約定薪資與契約；新增 D-17～D-19、X-16～X-18；檢查紀錄換新範本（9 條）
 - 依據：05-v1；實作回報問題 1、2、4；工具包 @ ee24004；04-v2

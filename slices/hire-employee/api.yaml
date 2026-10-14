@@ -2,7 +2,7 @@
 openapi: 3.1.0
 info:
   title: hire-employee API
-  version: 0.2.0
+  version: 0.3.0
   description: 依 slices/hire-employee/05_mapping.md 產生的設計文件，不是實作。請求與回應寫到欄位層級（必填、巢狀物件）；同一個動作建立的每個項目，回應都給編號。每支 API 標 x-concept（概念，P8）、x-roles（誰可以做）、x-rules（檢查的規則）。所有 API 在一個多文件交易中寫入 events 與受影響的集合，並檢查每個引用屬於呼叫者的客戶、存在且為目前版本（05_mapping
     D-06）。由時間或條件觸發的事件沒有 API，由系統排程或事件處理器產生。
 servers:
@@ -854,7 +854,7 @@ paths:
   /v1/enrollment-proposals:
     get:
       operationId: listEnrollmentProposals
-      summary: 列出加保待辦
+      summary: 列出加保待辦（含預估、逾期天數、待人判斷）
       x-concept: ProposeEnrollmentFiling
       x-roles:
       - HR
@@ -905,6 +905,37 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DeclineVoluntaryIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+  /v1/enrollment-proposals/{id}/decisions:
+    post:
+      operationId: recordProposalDecision
+      summary: 記錄待人判斷事項的決定（就保擇一參加、「其他」類固定給付算不算入）
+      x-concept: ProposeEnrollmentFiling（待人判斷的決定）
+      x-roles:
+      - HR
+      x-rules:
+      - R24
+      - R39
+      parameters:
+      - *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionIn'
       responses:
         '201':
           description: 成功
@@ -1239,7 +1270,9 @@ components:
       additionalProperties: false
       properties:
         rule_id: *id004
-        rule_version: *id004
+        rule_version:
+          type: string
+          description: 規則版本；04_rules 版本欄為「—」的規則，填規則所在的 04 凍結版本（例：hire-employee/04-v3）（05_mapping D-20）
         rule_revision: &id009
           type: integer
         message_code: *id004
@@ -1350,6 +1383,9 @@ components:
       additionalProperties: false
       properties:
         start_date: *id005
+        public_or_military_insurance_covered:
+          type: boolean
+          description: 這個職務是否依法應參加公教或軍保（02 D-37）
         employee_number: *id004
         work_location_id: *id002
         org_unit_id: *id002
@@ -1389,6 +1425,7 @@ components:
         work_location_id: *id002
         org_unit_id: *id002
         historical_basis_note: *id004
+        public_or_military_insurance_covered: *id008
         compensation:
           $ref: '#/components/schemas/CompensationIn'
         contract:
@@ -1785,6 +1822,27 @@ components:
         reason: *id004
       required:
       - reason
+    DecisionIn:
+      type: object
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+          enum:
+          - EMPLOYMENT_INSURANCE_CHOICE
+          - ALLOWANCE_INCLUSION
+        scheme_code:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+          description: 擇一參加時必填
+        allowance_name:
+          type: string
+          description: 固定給付時必填
+        result: *id004
+        reason: *id004
+      required:
+      - kind
+      - result
     DecideHireOut:
       type: object
       additionalProperties: false
@@ -2092,22 +2150,54 @@ components:
       - event_id
       - proposal_id
       - warnings
+    Decision:
+      type: object
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+          enum:
+          - EMPLOYMENT_INSURANCE_CHOICE
+          - ALLOWANCE_INCLUSION
+        allowance_name: *id004
+        result:
+          type: string
+          description: 擇一參加：JOIN／NOT_JOIN；固定給付：INCLUDED／EXCLUDED
+        by: *id002
+        at: *id014
+        reason: *id004
+      required:
+      - kind
+      - result
+      - by
+      - at
+      description: 人的決定（04_rules D-16）
     ApplicabilityItem:
       type: object
       additionalProperties: false
       properties:
         scheme_code: *id006
-        applicability: *id006
+        applicability: &id015
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+          description: 含 APPLICABILITY.NEEDS_DECISION（待人判斷）
+        decisions: &id016
+          type: array
+          items:
+            $ref: '#/components/schemas/Decision'
         filing_deadline: *id005
         legal_effective_date: *id005
         expected_grade: *id004
         expected_amount: *id007
         days_late: *id009
-        pending: &id015
+        days_overdue: &id017
+          type: integer
+          description: 逾期天數（R36，不能忽略）
+        pending: &id018
           type: array
           items: *id004
           description: 待專家確認的 EQ 編號
-        rule_versions: &id016
+        rule_versions: &id019
           type: array
           items:
             $ref: '#/components/schemas/RuleRef'
@@ -2142,6 +2232,13 @@ components:
         hire_id: *id002
         employment_id: *id002
         determined_on: *id005
+        estimated:
+          type: boolean
+          description: 錄用時以約定到職日判定的預估結果（04_rules D-18）
+        allowance_decisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Decision'
         items:
           type: array
           items:
@@ -2149,14 +2246,16 @@ components:
             additionalProperties: false
             properties:
               scheme_code: *id006
-              applicability: *id006
+              applicability: *id015
+              decisions: *id016
               filing_deadline: *id005
               legal_effective_date: *id005
               expected_grade: *id004
               expected_amount: *id007
               days_late: *id009
-              pending: *id015
-              rule_versions: *id016
+              days_overdue: *id017
+              pending: *id018
+              rule_versions: *id019
               closed_by_enrollment_id: *id002
               voluntary_declined:
                 type: object
