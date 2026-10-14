@@ -4,8 +4,8 @@
 |---|---|
 | 切片 | hire-employee |
 | 步驟 | ③ 流程與狀態（Use Case） |
-| 狀態 | 已凍結 |
-| 版本 | hire-employee/03-v1 |
+| 狀態 | 待檢查 |
+| 版本 | hire-employee/03-v1（回頭修改中，重新凍結後為 03-v2） |
 | 讀取的輸入 | 01_scope.md @ hire-employee/01-v1；02_entities.md @ hire-employee/02-v1；03_flows.md（本步） |
 
 <!-- 完成標準與檢查紀錄寫在 03_flows.md。參與者用業務角色：人資、員工、雇主（老闆）、系統 -->
@@ -35,8 +35,8 @@
 - 參與者：系統、人資、雇主（老闆）
 - 前提：已有錄用或僱傭關係；約定薪資已登錄
 - 主流程：
-  1. 訊號：決定錄用、到職、改期或資料更正（其他單位個體的變化），或應辦理期限將到（時間到達）
-  2. 系統依人的國籍、戶籍、證件與居留事由、出生日期、已領的老年給付，雇主的型態、登記日、是否適用勞基法，投保單位當天的計入人數，以及到職日當時的規則版本，判定勞保、就保、職保、健保、勞退各為強制、可自願或不適用
+  1. 訊號：決定錄用、到職、改期、資料更正、登錄新的身分證件（其他單位個體的變化），或應辦理期限將到、員工滿 65 歲、新制度的施行日（時間或條件到達）（03_flows D-16）
+  2. 系統依人的國籍、戶籍、證件與居留事由、出生日期、已領的老年給付，雇主的勞保行業類別、登記紀錄、是否依法免辦登記、是否有核定課稅或購票證、是否適用勞基法，投保單位當天的計入人數，以及判定日當時的規則版本，判定勞保、就保、職保、健保、勞退各為強制、可自願或不適用
   3. 人數依實際到職、離開的發生日期計算，列出計入與不計入的名單（Q12，計入範圍待 [待專家確認: EQ-008]）；人數跨過門檻時，既有員工的適用改變一併列出（US-D17）
   4. 對每一種適用的保險，分開算出應辦理期限與法定生效日（月底到職、前一份工作做到前一天，都依同一套規則，US-D15、US-D16）
   5. 依月薪資總額與各保險自己的分級表，算出應申報的級距，並記下分級表版本（US-D09、US-D14、US-D18）
@@ -71,12 +71,12 @@
 - 前提：同 UC-01
 - 主流程：
   1. 人資登錄國籍、居留證或永久居留證與居留事由（RecordIdentityDocument）
-  2. 登錄工作許可（RecordWorkAuthorization）：依據（雇主申請、本人申請、依身分免申請）、工作類別、文號、起訖日、綁定的雇主
+  2. 登錄工作許可（RecordWorkAuthorization）：依據（雇主申請、本人申請、依身分免申請）、工作類別、綁定的雇主；申請許可者記這次核准的文號與起訖日（每次展延各記一筆核准），免申請者記取得身分的日子
   3. 其餘同 UC-01；移工的書面定期契約見 UC-07
   4. 系統檢查到職日是否落在許可期間內、許可是否發給這個雇主；判定各保險時使用到職日當時有效的證件與居留事由（UC-02）
 - 例外：
   - 許可在到職日還沒生效（US-D11）→ 警告，人資可改到職日（UC-05）或照樣存檔（UC-09）
-  - 居留事由在到職後改變（例：取得永久居留、離婚後依法繼續居留）→ 登錄新的一筆證件，前一筆 Superseded；之後的判定依新的一筆。免申請者的許可由系統提醒確認（ProposeAuthorizationReview），人資決定是否登錄失效（EndWorkAuthorization）[待專家確認: EQ-018]
+  - 居留事由在到職後改變（例：取得永久居留、離婚後依法繼續居留）→ 登錄新的一筆證件，前一筆 Superseded；之後的判定依新的一筆，系統重新產生加保待辦（UC-02）。免申請者的許可由系統提醒確認（ProposeAuthorizationReview），人資決定是否登錄失效（EndWorkAuthorization）[待專家確認: EQ-018]
   - 許可展延已核准但較晚才登錄 → 許可從已失效回到有效，仍是同一筆
 - 用到的 Entity：Person、IdentityDocument、WorkAuthorization、Hire、Employment、EmploymentContract、Employer
 - 用到的事件：RecordIdentityDocument、RecordWorkAuthorization、DecideHire、StartEmployment、ExpireWorkAuthorization、ExpireIdentityDocument、ProposeAuthorizationReview、EndWorkAuthorization
@@ -224,14 +224,14 @@
 - 前提：員工本人提出
 - 主流程：
   1. 員工提出，或人資代登錄書面、email、口頭的請求（ReceiveDataSubjectRequest）：種類、收到日期、收到管道
-  2. 法定處理期限將到或已過時，系統提醒（PromptDataSubjectRequestDeadline）
+  2. 法定處理期限將到或已過時，系統提醒（PromptDataSubjectRequestDeadline）；必要時人資在原期限內延長，寫明原因與延長後的期限，並以書面通知員工（ExtendDataSubjectRequest）
   3. 人資執行：更正走 CorrectRecord；停止利用或刪除走 ArchivePersonalData（刪除的實際做法第 ⑤ 步依平台 P7 設計）；查詢、複製則提供資料
-  4. 人資完成請求（ResolveDataSubjectRequest），寫明結果；不接受時寫明法定理由，系統通知雇主（NotifySignificantCorrection）
+  4. 人資完成請求（ResolveDataSubjectRequest），寫明結果；不接受時寫明理由與依據（被保存期間規則擋下時自動帶入），系統通知雇主（NotifySignificantCorrection）
 - 例外：員工撤回 → 記為完成，結果寫「當事人撤回」
 - 誰可以查看哪些個資（Q22 前半）是權限設定，不是流程：第 ④ 步寫規則、第 ⑤ 步依平台 P7 落實
 - 用到的 Entity：DataSubjectRequest、Person、PersonalDataArchival
-- 用到的事件：ReceiveDataSubjectRequest、PromptDataSubjectRequestDeadline、ResolveDataSubjectRequest、NotifySignificantCorrection、CorrectRecord、ArchivePersonalData
-- 規則：R46、R53、R54、R55
+- 用到的事件：ReceiveDataSubjectRequest、PromptDataSubjectRequestDeadline、ExtendDataSubjectRequest、ResolveDataSubjectRequest、NotifySignificantCorrection、CorrectRecord、ArchivePersonalData
+- 規則：R46、R53、R55、R62、R63
 
 ## UC-15 查詢勞工名卡
 - 對應草稿：（無，依 Q10）

@@ -12,6 +12,20 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-14　（未凍結）　③　回頭修改（第 0 級）：加保待辦的觸發來源、延長個資請求
+- 改了什麼：03_flows.md 狀態 已凍結 → 待檢查。① ProposeEnrollmentFiling 的觸發來源加上「登錄新的身分證件」與「條件日期到了：員工滿 65 歲、新制度的施行日」，決策流程一的訊號、證據同步（雇主的勞保行業類別、登記紀錄、免辦登記、核定課稅或購票證；判定日；固定給付項目的類別）；② 新增事件 ExtendDataSubjectRequest（延長個資請求處理期限，決定層，不改變狀態，不能註銷），個資請求狀態機下方加說明，Rejected 與 Completed 轉換的規則加 R62；③ ReceiveDataSubjectRequest 的規則 R54（第 ④ 步已取消）改為「—」；④「不需要狀態機的東西」加雇主的行業類別與登記狀況（需要重建當時）；新增 D-15、D-16；詞彙對照表加 1 列。03_use_cases.md 狀態 已凍結 → 待檢查：UC-02 的訊號與判定依據、UC-04 的工作許可登錄（每次核准各記一筆）與居留事由改變時重新產生加保待辦、UC-14 加延長步驟與拒絕的依據，UC-14 規則改為 R46、R53、R55、R62、R63。兩份的檢查紀錄審查者確認清空、AI 自評更新數字
+- 依據：04_rules.md D-08、X-01、X-05；使用者決定（2026-10-14，對話中逐件確認：第 5 件 A＋拒絕的依據 A、第 6 件 A）；inputs/research/員工個人資料.md#09（個資法 §13 延長要以書面通知原因）
+- 舊 → 新：事件 33 → 34；狀態 27 不變；狀態機 11 不變；詞彙對照表 60 → 61 列；決定 D-01～D-14 → D-01～D-16
+- 影響與回歸：依 docs/01 0.9，③ 改了事件與觸發來源 → ④ 的 R53、R62、R63 對應（已寫）；⑤ 尚未開始；core/flows.md、glossary.md 在重新凍結（hire-employee/03-v2）時更新；其他切片尚未引用
+- 產出者：AI（Claude）；審查者：JiHungLin（待審查）
+
+## 2026-10-14　（未凍結）　②　回頭修改（第 0 級）：雇主登記與行業類別、工作許可的核准紀錄、津貼類別、個資請求延長
+- 改了什麼：02_entities.md 狀態 已凍結 → 待檢查。① Employer：registered_on 改為 registrations（登記種類與日期，可多筆），新增 registration_exempt、tax_assessed_or_invoice_permit、labor_insurance_industry_category，四項建立雇主時必填（D-32）；② WorkAuthorization：permit_number 改為 approvals（每一次核准的文號與起訖日），valid_from、valid_until 只用於免申請者（D-33）；③ Compensation.fixed_monthly_allowances 加類別（D-34）；④ DataSubjectRequest 新增 refusal_basis、extended_deadline、extension_reason、extension_notified_on（D-35）；⑤ EmploymentContract.term_end 只記契約上寫的迄日，移工的實際期限由規則推出、不寫回（D-36）。詞彙對照表同步；檢查紀錄審查者確認清空、AI 自評更新數字
+- 依據：04_rules.md D-08（挑錯 X-02、X-03、X-04、X-07、X-09、X-12）；docs/01 0.9 回頭對照表「④ 規則需要的判斷條件，名詞裡存不下 → ②，第 0 級」；使用者決定（2026-10-14，對話中逐件確認：第 1～5 件都選 A，拒絕的依據選 A）；inputs/shared/員工資料法定保存年限與拒絕刪除.md；inputs/research/員工個人資料.md#08、#09
+- 舊 → 新：屬性 89 → 96；詞彙對照表 140 → 147 列；Entity 19、關係 39 不變；決定 D-01～D-31 → D-01～D-36
+- 影響與回歸：依 docs/01 0.9，② 改了屬性 → ③ 用到它們的地方（決策流程一、UC-02、UC-04、UC-14，已對齊，見上一筆）→ ④ 的 R17、R22、R24、R25、R32、R39、R53、R55、R58、R59、R62、R63（已改寫）；core/entities.md、glossary.md 在重新凍結（hire-employee/02-v3）時更新；其他切片尚未引用；名詞草圖不變（只改屬性）
+- 產出者：AI（Claude）；審查者：JiHungLin（待審查）
+
 ## 2026-10-14　（未凍結）　③　回頭修改（第 0 級）：第 ④ 步挑錯後調整回填
 - 改了什麼：03_flows.md 6 個狀態轉換、03_use_cases.md 6 個 UC 的「規則」依 04_rules.md 挑錯後的修改調整（RescheduleStart 加 R01、R14；補登兩列加 R02、R06；SignContract 加 R59；RecordWorkAuthorization 加 R58；RecordInsuranceFiling 加 R61；UC-01、03、04、05、07、11 同步）
 - 依據：04_rules.md X-03、X-04、X-08、X-11、X-14
