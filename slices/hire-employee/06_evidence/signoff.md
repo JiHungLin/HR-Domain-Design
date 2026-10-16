@@ -11,7 +11,7 @@
 - 執行者：
 - 簽核者：（不得與執行者同一人）
 - 日期：
-- 實作版本：JiHungLin/HR-Domain-Design，分支 impl/hire-employee @ ccc0bf8（依 02-v4、03-v6、04-v5、05-v5 實作 UC-01～UC-03，11 支 API）
+- 實作版本：JiHungLin/HR-Domain-Design，分支 impl/hire-employee @ 2505b27（依 02-v4、03-v6、04-v5、05-v5 實作 UC-01～UC-03，11 支 API）
 - 結果摘要：P0 可回答率 x/x；黃金案例 x/x 通過；
 - 未執行的項目：
 - 受 [未核對] 規則影響、不算通過的案例：
