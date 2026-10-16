@@ -12,6 +12,38 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-16　hire-employee/05-v4　⑤　凍結
+- 改了什麼：依實作回報 signoff.md #18～#20 回頭修改後重新凍結（內容見「（未凍結）③④⑤ 回頭修改」那一筆）。相對 hire-employee/05-v3：enrollment_proposals 加 `needs_decision`；decisions API 的回應改為新的待辦與重新判定的事件；R24、R39 的落實位置與第六區 UC-02 同步；api.yaml 0.3.0 → 0.4.0（新增 NeedsDecision，schema 79 → 80，API 仍 37 支）；schema.mongo.js 加欄位；新增 D-22、X-24～X-26
+- 依據：hire-employee/05-v3；hire-employee/03-v5、hire-employee/04-v4；signoff.md #18～#20
+- 反例處理：新增 3 條（X-24～X-26），皆接受，已修改
+- 審查方式：使用者說「05，一樣採用AI自評，全通過」
+- 待處理：實作（impl/hire-employee）依新 tag 修改，受影響的測試重跑
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-16，通過）
+
+## 2026-10-16　hire-employee/04-v4　④　凍結
+- 改了什麼：依實作回報 signoff.md #18～#20 回頭修改後重新凍結。相對 hire-employee/04-v3：R39「其他」類固定給付未決定時，各保險的適用照常判定，只有應申報的級距待人判斷（D-19）；R24「兩個以上雇主」只依系統內的僱傭關係判斷，系統外另有雇主時由人資主動記錄擇一參加（D-20）；第三區開頭、APPLICABILITY.NEEDS_DECISION 的說明同步；新增 X-34、X-35
+- 依據：hire-employee/04-v3；hire-employee/03-v5；signoff.md #18、#20；02 X-21
+- 反例處理：新增 2 條（X-34、X-35），皆接受，已修改
+- 審查方式：使用者說「04，一樣採用AI自評，全通過」
+- 合併進 core/：rules.md R24、R39、APPLICABILITY.NEEDS_DECISION 更新，出處改為 hire-employee/04-v4；仍為 [候選]
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-16，通過）
+
+## 2026-10-16　hire-employee/03-v5　③　凍結
+- 改了什麼：依實作回報 signoff.md #18～#20 回頭修改後重新凍結。相對 hire-employee/03-v4：ProposeEnrollmentFiling 的觸發來源加「人資記錄待人判斷的決定」，記錄後依決定重新判定並取代原待辦，不另立事件；待人判斷分成兩種（就保擇一參加標在適用；「其他」類固定給付只影響級距）；系統外另有雇主時人資可主動記錄擇一參加；決策流程一、UC-02 第 6 步同步；讀取的輸入改為 02-v4；新增 D-20、X-24～X-26
+- 依據：hire-employee/03-v4；hire-employee/02-v4；signoff.md #18～#20；02 X-21
+- 反例處理：新增 3 條（X-24～X-26），皆接受，已修改
+- 審查方式：使用者說「03我看過了，採用AI 自評，所以幫我打勾吧」
+- 合併進 core/：flows.md 事件 ProposeEnrollmentFiling 更新，出處改為 hire-employee/03-v5；仍為 [候選]
+- 備註：上一次凍結把四個 tag 合寫在同一筆（「hire-employee/02-v4、03-v4、04-v3、05-v3」），工具只認得完整的 tag 名稱，03-v4、04-v3、05-v3 比對不到；舊紀錄不改，本次三筆的依據以完整名稱寫出上一版，之後每個 tag 各記一筆
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-16，通過）
+
+## 2026-10-14　（未凍結）　③④⑤　回頭修改（第 0 級）：實作發現的設計問題 signoff.md #18～#20
+- 改了什麼：③ 03_flows.md ProposeEnrollmentFiling：觸發來源加「人資記錄待人判斷的決定」；待人判斷分成兩種（就保擇一參加標在適用；「其他」類固定給付只影響級距）；記錄決定後依決定重新判定並取代；系統外另有雇主時人資可主動記錄擇一參加；決策流程一同步；新增 D-20、X-24～X-26；03_use_cases.md UC-02 第 6 步同步；狀態 → 待檢查。④ 04_rules.md：第三區開頭、R24、R39、分類值 APPLICABILITY.NEEDS_DECISION 的說明改寫；新增 D-19、D-20、X-34、X-35；狀態 → 待檢查。⑤ 05_mapping.md：enrollment_proposals 加 `needs_decision`；decisions API、規則落實位置、第六區 UC-02 同步；新增 D-22、X-24～X-26；api.yaml 0.4.0（新增 NeedsDecision schema，EnrollmentProposal、ApplicabilityOut 加 needs_decision，recordProposalDecision 加說明）；schema.mongo.js 加欄位；狀態 → 待檢查。三份的檢查紀錄審查者確認清空。06_evidence/signoff.md 由實作分支取回（impl/hire-employee @ 4cdc290），#18～#20 的處理欄改寫
+- 依據：實作回報 signoff.md #18～#20（impl/hire-employee @ 392b358）；domain-change 判斷為第 0 級；使用者選擇三項都採方案 A（2026-10-14），其中 #20 因與 02 X-21 的原則（只記錄系統中的登記與變化）衝突，使用者改選方案 B（不加屬性，人資主動記錄擇一參加）
+- 舊 → 新：② 不變（02-v4）；④ 「其他」類固定給付未決定：保險項目待人判斷 → 適用照常、級距待人判斷；⑤ api.yaml 0.3.0 → 0.4.0（schema 79 → 80，API 仍 37 支）
+- 影響與回歸：core/flows.md 的 ProposeEnrollmentFiling、core/rules.md 的 R24、R39、APPLICABILITY.NEEDS_DECISION 在重新凍結（03-v5、04-v4）時更新；實作要依新 tag 改：「其他」類固定給付不再把適用標成待人判斷、改輸出 needs_decision；擇一參加可主動記錄；記錄決定的暫時做法（#19）成為正式做法；受影響的測試重跑
+- 產出者：AI（Claude）；審查者：JiHungLin（待審查）
+
 ## 2026-10-14　hire-employee/02-v4、03-v4、04-v3、05-v3　②③④⑤　凍結
 - 改了什麼：依實作回報 signoff.md #13～#17 回頭修改後，四步一起重新凍結（內容見下一筆）。02-v4：Employment 新增 public_or_military_insurance_covered（D-37）。03-v4：加保待辦的預估、待人判斷的決定、逾期不能忽略（D-19）。04-v3：R24 改看新屬性、R24 與 R39 的待人判斷、R36 改為判定、錄用時的判定日（D-15～D-18），新分類值 APPLICABILITY.NEEDS_DECISION。05-v3：對照表、api.yaml 0.3.0、schema.mongo.js 同步（D-20、D-21）
 - 依據：02-v3、03-v3、04-v2、05-v2；signoff.md #13～#17

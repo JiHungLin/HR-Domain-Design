@@ -2,9 +2,8 @@
 openapi: 3.1.0
 info:
   title: hire-employee API
-  version: 0.3.0
-  description: 依 slices/hire-employee/05_mapping.md 產生的設計文件，不是實作。請求與回應寫到欄位層級（必填、巢狀物件）；同一個動作建立的每個項目，回應都給編號。每支 API 標 x-concept（概念，P8）、x-roles（誰可以做）、x-rules（檢查的規則）。所有 API 在一個多文件交易中寫入 events 與受影響的集合，並檢查每個引用屬於呼叫者的客戶、存在且為目前版本（05_mapping
-    D-06）。由時間或條件觸發的事件沒有 API，由系統排程或事件處理器產生。
+  version: 0.4.0
+  description: 依 slices/hire-employee/05_mapping.md 產生的設計文件，不是實作。請求與回應寫到欄位層級（必填、巢狀物件）；同一個動作建立的每個項目，回應都給編號。每支 API 標 x-concept（概念，P8）、x-roles（誰可以做）、x-rules（檢查的規則）。所有 API 在一個多文件交易中寫入 events 與受影響的集合，並檢查每個引用屬於呼叫者的客戶、存在且為目前版本（05_mapping D-06）。由時間或條件觸發的事件沒有 API，由系統排程或事件處理器產生。
 servers:
 - url: https://{host}
   variables:
@@ -922,6 +921,7 @@ paths:
     post:
       operationId: recordProposalDecision
       summary: 記錄待人判斷事項的決定（就保擇一參加、「其他」類固定給付算不算入）
+      description: 決定記在這筆加保待辦上（P2 B，留變更紀錄），記錄後立刻依決定重新判定，產生新的待辦取代這一筆（03_flows D-20）。回應的 proposal_id 是新的待辦、event_id 是重新判定的 ProposeEnrollmentFiling 事件；不另立事件。就保擇一參加（EMPLOYMENT_INSURANCE_CHOICE）可以在系統沒有判成待人判斷時主動記錄，處理員工在系統外另有雇主的情況（04_rules D-20）。result：擇一參加為 JOIN／NOT_JOIN；固定給付為 INCLUDED／EXCLUDED。
       x-concept: ProposeEnrollmentFiling（待人判斷的決定）
       x-roles:
       - HR
@@ -2180,7 +2180,7 @@ components:
         applicability: &id015
           type: string
           pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
-          description: 含 APPLICABILITY.NEEDS_DECISION（待人判斷）
+          description: 含 APPLICABILITY.NEEDS_DECISION（待人判斷，只用於就保擇一參加；04_rules D-19）
         decisions: &id016
           type: array
           items:
@@ -2220,6 +2220,11 @@ components:
           type: array
           items: *id004
           description: R60 資料不足時缺的項目
+        needs_decision:
+          type: array
+          items:
+            $ref: '#/components/schemas/NeedsDecision'
+          description: 待人資決定的固定給付項目；未決定前受影響的級距不給（04_rules D-19）
       required:
       - employment_id
       - 'on'
@@ -2239,6 +2244,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Decision'
+        needs_decision:
+          type: array
+          items:
+            $ref: '#/components/schemas/NeedsDecision'
+          description: 待人資決定的固定給付項目；未決定前受影響的級距不給（04_rules D-19）
         items:
           type: array
           items:
@@ -2419,6 +2429,20 @@ components:
             $ref: '#/components/schemas/SignificantCorrection'
       required:
       - items
+    NeedsDecision:
+      type: object
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+          enum:
+          - ALLOWANCE_INCLUSION
+        allowance_name:
+          type: string
+      required:
+      - kind
+      - allowance_name
+      description: 還沒決定的待人判斷事項（04_rules D-19）：「其他」類固定給付算不算入投保薪資，影響應申報的級距；就保擇一參加改看 items 的 applicability
   responses:
     Forbidden:
       description: 角色不符，或引用的資料不屬於呼叫者的客戶（R52、05_mapping D-06）
