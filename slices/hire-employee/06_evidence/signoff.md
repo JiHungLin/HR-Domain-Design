@@ -11,7 +11,7 @@
 - 執行者：
 - 簽核者：（不得與執行者同一人）
 - 日期：
-- 實作版本：JiHungLin/HR-Domain-Design，分支 impl/hire-employee @ 392b358（依 02-v4、03-v4、04-v3、05-v3 實作 UC-01～UC-03，10 支 API）
+- 實作版本：JiHungLin/HR-Domain-Design，分支 impl/hire-employee @ ccc0bf8（依 02-v4、03-v5、04-v4、05-v4 實作 UC-01～UC-03，10 支 API）
 - 結果摘要：P0 可回答率 x/x；黃金案例 x/x 通過；
 - 未執行的項目：
 - 受 [未核對] 規則影響、不算通過的案例：
@@ -39,9 +39,10 @@
 | 15 | R36 逾期未辦是提醒類規則，但 `GET /enrollment-proposals` 的回應（EnrollmentProposalList）沒有 warnings，警告無處回傳，也就無法用 UC-09 忽略 | 04_rules R36；api.yaml listEnrollmentProposals（x-rules 有 R36） | 已依設計修改：不再輸出 R36 警告；逾期天數以 `days_overdue` 呈現在加保待辦與判定查詢，登錄實際辦理後結案 | 回到 ④：04_rules D-17，R36 改為判定，以加保待辦的 days_overdue 呈現、不能忽略（04-v3）；⑤ 同步（05-v3）；程式待改 |
 | 16 | 04_rules 版本欄為「—」的規則（R14、R15、R21、R36、R45、R61 等），api.yaml 的 Warning 仍要求 rule_version、rule_revision | 04_rules；api.yaml Warning；P5 | 已依設計修改：版本改為 `hire-employee/04-v3`、修訂 1，程式註明依據 05_mapping D-20 | 回到 ⑤：05_mapping D-20，版本欄為「—」的規則以 04 凍結版本為版本，實作暫時的做法即為正式做法（05-v3）；程式改用 04-v3 |
 | 17 | 錄用時（還沒到職）就產生加保待辦（03_flows 觸發來源含決定錄用；05_mapping 第六區 UC-01 第 4 步），但沒寫這時的到職日與判定日用哪一天 | 03_flows ProposeEnrollmentFiling；04_rules R37 | 已依設計修改：錄用時的待辦標 `estimated: true`，到職時以實際到職日重新判定並以 `superseded_by` 取代；程式註明依據 04_rules D-18 | 回到 ③④：03_flows D-19、04_rules D-18，錄用時以約定到職日判定、標預估，到職時重新判定並取代；實作暫時的做法即為正式做法（03-v4、04-v3）；⑤ 加保待辦加 estimated（05-v3） |
-| 18 | R39「其他」類固定給付還沒決定時，05 第六區說待判斷的項目在 items 的 applicability＝待人判斷；但未決定的只是級距，保險本身是強制、可自願或不適用其實已判得出來，標成待人判斷後這個結果就看不到（可自願的也就無法讓雇主選擇不加） | 04_rules R39、D-16；05_mapping 第六區 UC-02；api.yaml ApplicabilityItem | `app/rules/applicability.py`：需要級距的項目（強制、可自願）標成待人判斷、不給級距，原本的結果存在待辦 `basis.items[].underlying`（API 看不到）；期限與法定生效日照樣給；逾期天數依原本的結果計算 | 回到 ③④⑤：03_flows D-20、04_rules D-19（適用照常判定，只有級距待人判斷）、05_mapping D-22（待辦與判定查詢加 needs_decision，api.yaml 0.4.0）（重新凍結為 hire-employee/03-v5、04-v4、05-v4）；程式待改 |
-| 19 | 記錄待人判斷的決定之後要不要立刻重新判定、`ProposalOut.proposal_id` 回哪一筆，沒有寫；03 的加保待辦觸發來源沒有「記錄決定」，也沒有對應的事件，但 ProposalOut 要求 event_id | 03_flows ProposeEnrollmentFiling、D-19；05_mapping D-21；api.yaml recordProposalDecision、ProposalOut | `app/services/proposals.py` record_decision：記錄後立刻依決定重新判定，產生新的待辦取代原本那一筆，回應的 proposal_id 是新的待辦；event_id 是重新判定的 ProposeEnrollmentFiling 事件，決定本身只記在 change_log | 回到 ③⑤：03_flows D-20（觸發來源加「人資記錄待人判斷的決定」，不另立事件）、05_mapping D-22（回應新的待辦與重新判定的事件）；實作暫時的做法即為正式做法（重新凍結為 hire-employee/03-v5、05-v4） |
-| 20 | R24「受僱於兩個以上雇主」只看得到同一客戶內的僱傭關係（P11、PLAN.md D-31 識別範圍為客戶），客戶以外的兼職系統沒有資料 | 04_rules R24、D-16；02 Employment | `app/rules/applicability.py` other_employers：只看同一客戶內、判定日在職的其他雇主 | 回到 ③④⑤：03_flows D-20、04_rules D-20，依 02 X-21 的原則不記錄系統外的雇主，人資可主動記錄擇一參加；api.yaml 說明同步（重新凍結為 hire-employee/03-v5、04-v4、05-v4）；程式待改：擇一參加不必先判成待人判斷也能記錄 |
+| 18 | R39「其他」類固定給付還沒決定時，05 第六區說待判斷的項目在 items 的 applicability＝待人判斷；但未決定的只是級距，保險本身是強制、可自願或不適用其實已判得出來，標成待人判斷後這個結果就看不到（可自願的也就無法讓雇主選擇不加） | 04_rules R39、D-16；05_mapping 第六區 UC-02；api.yaml ApplicabilityItem | 已依設計修改：適用、期限、法定生效日照常判定，只有級距不給；待決定的給付列在待辦與判定查詢的 `needs_decision`；程式註明依據 04_rules D-19、05_mapping D-22 | 回到 ③④⑤：03_flows D-20、04_rules D-19（適用照常判定，只有級距待人判斷）、05_mapping D-22（待辦與判定查詢加 needs_decision，api.yaml 0.4.0）（重新凍結為 hire-employee/03-v5、04-v4、05-v4）；程式待改 |
+| 19 | 記錄待人判斷的決定之後要不要立刻重新判定、`ProposalOut.proposal_id` 回哪一筆，沒有寫；03 的加保待辦觸發來源沒有「記錄決定」，也沒有對應的事件，但 ProposalOut 要求 event_id | 03_flows ProposeEnrollmentFiling、D-19；05_mapping D-21；api.yaml recordProposalDecision、ProposalOut | 已依設計修改：暫時的做法即為正式做法（記錄後依決定重新判定，回應新的待辦與重新判定的事件）；程式註明依據 03_flows D-20、05_mapping D-22 | 回到 ③⑤：03_flows D-20（觸發來源加「人資記錄待人判斷的決定」，不另立事件）、05_mapping D-22（回應新的待辦與重新判定的事件）；實作暫時的做法即為正式做法（重新凍結為 hire-employee/03-v5、05-v4） |
+| 20 | R24「受僱於兩個以上雇主」只看得到同一客戶內的僱傭關係（P11、PLAN.md D-31 識別範圍為客戶），客戶以外的兼職系統沒有資料 | 04_rules R24、D-16；02 Employment | 已依設計修改：只看系統內的僱傭關係；就保擇一參加不必先判成待人判斷也能記錄，之後依決定；程式註明依據 04_rules D-20 | 回到 ③④⑤：03_flows D-20、04_rules D-20，依 02 X-21 的原則不記錄系統外的雇主，人資可主動記錄擇一參加；api.yaml 說明同步（重新凍結為 hire-employee/03-v5、04-v4、05-v4）；程式待改：擇一參加不必先判成待人判斷也能記錄 |
+| 21 | R24 用到 `Employment.public_or_military_insurance_covered`，但沒寫這個值未知時（到職與補登時沒帶、錄用時的預估、02-v4 之前建立的僱傭關係）的結果；03 也沒有登錄或改變這個值的事件（02 D-37 寫「人資登錄，會改變時保留期間」），到職後無法補登或改變 | 04_rules R24、R60；03_flows（Employment 的事件）；02 D-37；api.yaml startEmployment、registerExistingEmployment；docs/03 P12 | `app/rules/applicability.py`：值未知時當成「否」（不排除），就保照其他條件判定 | 回到 ③④⑤：03_flows D-21（到職、補登必填；新增 RecordEmploymentPeriod）、04_rules D-21（未知 → 資料不足，錄用時的預估也是）、05_mapping D-23（新增 API、第四區既有資料，api.yaml 0.5.0）（重新凍結為 hire-employee/03-v6、04-v5、05-v5）；程式待改；另新增 R64（RecordEmploymentPeriod 的起日要在僱傭期間內） |
 
 ## 檢查紀錄
 

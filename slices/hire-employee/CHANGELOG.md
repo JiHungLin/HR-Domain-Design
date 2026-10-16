@@ -12,6 +12,37 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-16　hire-employee/05-v5　⑤　凍結
+- 改了什麼：依實作回報 signoff.md #21 回頭修改後重新凍結（內容見「（未凍結）③④⑤ 回頭修改：signoff.md #21」那一筆）。相對 hire-employee/05-v4：新增 `POST /v1/employments/{id}/periods`（RecordEmploymentPeriod，x-rules R24、R64）；到職、補登的請求把公教或軍保改為必填；第四區新增「既有資料（P12）」；R64 的落實位置；第六區 UC-01、UC-02、UC-11 同步；api.yaml 0.4.0 → 0.5.0（API 37 → 38、schema 80 → 81）；新增 D-23、X-27
+- 依據：hire-employee/05-v4；hire-employee/03-v6、hire-employee/04-v5；signoff.md #21；docs/03 P12
+- 反例處理：新增 1 條（X-27），接受，已修改
+- 審查方式：使用者說「全通過」，各條未逐條說明
+- 待處理：實作（impl/hire-employee）依新 tag 修改，受影響的測試重跑
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-16，通過）
+
+## 2026-10-16　hire-employee/04-v5　④　凍結
+- 改了什麼：依實作回報 signoff.md #21 回頭修改後重新凍結。相對 hire-employee/04-v4：R24 的公教或軍保值未知時，就保 → 資料不足（R60），錄用時的預估也是（D-21）；R60 的說明加「未知」；新增前提規則 R64：RecordEmploymentPeriod 的起日要在僱傭期間內，擋下（D-22）；完成標準換成新範本的文字（需要的資料未知時）；新增 X-36、X-37
+- 依據：hire-employee/04-v4；hire-employee/03-v6；signoff.md #21；docs/03 P12
+- 反例處理：新增 2 條（X-36、X-37），皆接受，已修改
+- 審查方式：使用者說「全通過」，各條未逐條說明
+- 合併進 core/：rules.md R24、R60 更新，新增 R64，出處 hire-employee/04-v5；皆 [候選]
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-16，通過）
+
+## 2026-10-16　hire-employee/03-v6　③　凍結
+- 改了什麼：依實作回報 signoff.md #21 回頭修改後重新凍結。相對 hire-employee/03-v5：新增事件 RecordEmploymentPeriod（登錄僱傭關係的期間屬性：這個職務是否依法應參加公教或軍保），是加保待辦的觸發來源；StartEmployment、RegisterExistingEmployment 登錄這個值（必填）；「不需要狀態機的東西」加一列；UC-01、UC-02、UC-11 同步；新增 D-21、X-27
+- 依據：hire-employee/03-v5；signoff.md #21；docs/03 P12；02 D-37
+- 反例處理：新增 1 條（X-27），接受，已修改
+- 審查方式：使用者說「全通過」，各條未逐條說明
+- 合併進 core/：flows.md 新增事件 RecordEmploymentPeriod，更新 StartEmployment、RegisterExistingEmployment、ProposeEnrollmentFiling，出處 hire-employee/03-v6；glossary.md 新增 1 列；皆 [候選]
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-16，通過）
+
+## 2026-10-16　（未凍結）　③④⑤　回頭修改（第 0 級）：實作發現的設計問題 signoff.md #21
+- 改了什麼：③ 03_flows.md 新增事件 RecordEmploymentPeriod（登錄僱傭關係的期間屬性：這個職務是否依法應參加公教或軍保），加進 ProposeEnrollmentFiling 的觸發來源與詞彙對照表；StartEmployment、RegisterExistingEmployment 登錄這個值（必填）；「不需要狀態機的東西」加一列；新增 D-21、X-27；03_use_cases.md UC-01 第 5 步、UC-02（訊號與用到的事件）、UC-11 第 1 步同步；狀態 → 待檢查。④ 04_rules.md R24：值未知時就保 → 資料不足（R60），錄用時的預估也是；新增前提規則 R64（RecordEmploymentPeriod 的起日要在僱傭期間內，擋下；D-22、X-37）；R60 的說明加「未知」；第三區開頭同步；完成標準換成新範本的文字；新增 D-21、X-36；狀態 → 待檢查。⑤ 05_mapping.md：欄位說明、事件 → API 新增 `POST /v1/employments/{id}/periods`、2.2 說明、第四區新增「既有資料（P12）」、第六區 UC-01、UC-02、UC-11 同步；新增 D-23、X-27；api.yaml 0.5.0（新增 recordEmploymentPeriod 與 RecordEmploymentPeriodIn，到職與補登的請求把這個值改為必填）；狀態 → 待檢查。schema.mongo.js 不變（欄位維持選填，舊資料沒有這個欄位代表未知）。三份的檢查紀錄審查者確認清空。06_evidence/signoff.md 由實作分支取回（impl/hire-employee @ 275b82a），新增 #21
+- 依據：實作回報 signoff.md #21（impl/hire-employee @ ccc0bf8）；docs/03 P12（工具包 @ d301ec6）；domain-change 判斷為第 0 級；使用者選擇：錄用時的預估判成資料不足、到職與補登必填、新增事件與 API；R64 起日要在僱傭期間內（2026-10-16）
+- 舊 → 新：② 不變（02-v4）；③ 事件 35 → 36；④ R24 未知 → 當成「否」改為資料不足；⑤ api.yaml 0.4.0 → 0.5.0（API 37 → 38、schema 80 → 81）
+- 影響與回歸：core/flows.md 新增事件 RecordEmploymentPeriod、更新 ProposeEnrollmentFiling、StartEmployment、RegisterExistingEmployment；core/rules.md R24、R60 更新、新增 R64，在重新凍結（03-v6、04-v5）時更新；實作要依新 tag 改：R24 未知 → 資料不足、到職與補登必填、新增 API；受影響的測試重跑
+- 產出者：AI（Claude）；審查者：JiHungLin（待審查）
+
 ## 2026-10-16　hire-employee/05-v4　⑤　凍結
 - 改了什麼：依實作回報 signoff.md #18～#20 回頭修改後重新凍結（內容見「（未凍結）③④⑤ 回頭修改」那一筆）。相對 hire-employee/05-v3：enrollment_proposals 加 `needs_decision`；decisions API 的回應改為新的待辦與重新判定的事件；R24、R39 的落實位置與第六區 UC-02 同步；api.yaml 0.3.0 → 0.4.0（新增 NeedsDecision，schema 79 → 80，API 仍 37 支）；schema.mongo.js 加欄位；新增 D-22、X-24～X-26
 - 依據：hire-employee/05-v3；hire-employee/03-v5、hire-employee/04-v4；signoff.md #18～#20
