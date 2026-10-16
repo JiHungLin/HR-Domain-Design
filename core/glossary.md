@@ -194,6 +194,7 @@
 | EndWorkAuthorization | 事件 | 人資確認許可依據的身分已消失 | 登錄許可失效 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | RecordIdentityDocument | 事件 | 登錄員工出示的身分證件 | 登錄身分證件 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | RecordPersonPeriod | 事件 | 登錄人的國籍、戶籍或居住登記、老年給付的新期間 | 登錄人的身分期間 |  | [候選] | hire-employee（③ @ hire-employee/03-v3） |
+| RecordEmploymentPeriod | 事件 | 登錄僱傭關係的期間屬性（這個職務是否依法應參加公教或軍保）的新期間 | 登錄僱傭關係的期間屬性 | | [候選] | hire-employee（③ @ hire-employee/03-v6） |
 | ExpireIdentityDocument | 事件 | 證件有效期限屆滿 | 證件到期 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | ProposeEnrollmentFiling | 事件 | 依判定產生加保待辦 | 產生加保待辦 | 建議層 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | RecordInsuranceFiling | 事件 | 登錄實際向保險人辦理加保的結果 | 登錄實際辦理加保 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |

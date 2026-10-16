@@ -2,7 +2,7 @@
 openapi: 3.1.0
 info:
   title: hire-employee API
-  version: 0.4.0
+  version: 0.5.0
   description: 依 slices/hire-employee/05_mapping.md 產生的設計文件，不是實作。請求與回應寫到欄位層級（必填、巢狀物件）；同一個動作建立的每個項目，回應都給編號。每支 API 標 x-concept（概念，P8）、x-roles（誰可以做）、x-rules（檢查的規則）。所有 API 在一個多文件交易中寫入 events 與受影響的集合，並檢查每個引用屬於呼叫者的客戶、存在且為目前版本（05_mapping D-06）。由時間或條件觸發的事件沒有 API，由系統排程或事件處理器產生。
 servers:
 - url: https://{host}
@@ -195,6 +195,38 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EarlyDepartureIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmploymentOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+  /v1/employments/{id}/periods:
+    post:
+      operationId: recordEmploymentPeriod
+      summary: 登錄僱傭關係的期間屬性（這個職務是否依法應參加公教或軍保）
+      description: 登錄從 from 那一天起的新值，是真的改變或補上未知的值（02-v4 之前建立的僱傭關係），不是更正；登錯用 CorrectRecord（03_flows D-21）。產生新版本的僱傭關係並觸發加保待辦重新判定。
+      x-concept: RecordEmploymentPeriod
+      x-roles:
+      - HR
+      x-rules:
+      - R24
+      - R64
+      parameters:
+      - *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordEmploymentPeriodIn'
       responses:
         '201':
           description: 成功
@@ -1385,7 +1417,7 @@ components:
         start_date: *id005
         public_or_military_insurance_covered:
           type: boolean
-          description: 這個職務是否依法應參加公教或軍保（02 D-37）
+          description: 這個職務是否依法應參加公教或軍保（02 D-37；必填，03_flows D-21）
         employee_number: *id004
         work_location_id: *id002
         org_unit_id: *id002
@@ -1394,6 +1426,7 @@ components:
       required:
       - start_date
       - work_location_id
+      - public_or_military_insurance_covered
     CurrentEnrollmentIn:
       type: object
       additionalProperties: false
@@ -1441,6 +1474,7 @@ components:
       - employer_id
       - start_date
       - work_location_id
+      - public_or_military_insurance_covered
     EarlyDepartureIn:
       type: object
       additionalProperties: false
@@ -1545,6 +1579,23 @@ components:
       - issuing_jurisdiction_id
       - document_number
       - valid_from
+    RecordEmploymentPeriodIn:
+      type: object
+      additionalProperties: false
+      properties:
+        public_or_military_insurance_covered:
+          type: boolean
+          description: 這個職務從 from 起是否依法應參加公教或軍保（02 D-37）
+        from: *id005
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceIn'
+        occurred_at: *id010
+      required:
+      - public_or_military_insurance_covered
+      - from
+      - evidence
     RecordPersonPeriodIn:
       type: object
       additionalProperties: false
