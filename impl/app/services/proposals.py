@@ -37,6 +37,7 @@ def propose_enrollment_filing(db, s, subj: ap.Subject, on: date, *, cause_event_
     decisions = ap.Decisions.of_proposal(previous)                             # 沿用之前的決定
     facts = ap.load_facts(db, subj, on, session=s, decisions=decisions)
     items = ap.determine(db, facts, on, session=s)
+    pending_decisions = ap.needs_decision(db, facts, items, session=s)
     all_refs = _unique(r for i in items for r in i.rules)
     pid, event_id = ObjectId(), event_id or ObjectId()
     record_event(db, s, tenant_id=subj.tenant_id, type="ProposeEnrollmentFiling",
@@ -55,10 +56,11 @@ def propose_enrollment_filing(db, s, subj: ap.Subject, on: date, *, cause_event_
         "employment_id": subj.employment["entity_id"] if subj.employment else None, "determined_on": to_dt(on),
         "estimated": subj.estimated,
         "allowance_decisions": (previous or {}).get("allowance_decisions"),
+        "needs_decision": pending_decisions or None,
         "basis": {"data": facts.data_refs, "headcount": facts.headcount, "other_employers": facts.other_employers,
                   "rule_versions": all_refs, "cause_event_id": cause_event_id,
                   "items": {i.scheme_code: clean({"rule_versions": i.rules, "pending": i.pending or None,
-                                                  "missing_data": i.missing or None, "underlying": i.underlying})
+                                                  "missing_data": i.missing or None})
                             for i in items}},
         "items": docs, "created_at": now(),
     }), session=s)
@@ -81,10 +83,9 @@ def _unique(refs):
 # ---------------- 待人判斷的決定（POST /v1/enrollment-proposals/{id}/decisions） ----------------
 
 def record_decision(db, actor: Actor, proposal_id: str, body: dict) -> dict:
-    """記在加保待辦上（04_rules D-16、05_mapping D-21）。
-
-    暫時：記錄決定後立刻依決定重新判定，產生新的待辦取代這一筆，回應的 proposal_id 是新的待辦；
-    03 沒有「記錄決定」的事件，回應的 event_id 是重新判定的 ProposeEnrollmentFiling，決定本身記在 change_log（signoff.md #19）。
+    """記在加保待辦上（04_rules D-16、05_mapping D-21），記錄後立刻依決定重新判定，產生新的待辦取代這一筆
+    （03_flows D-20、05_mapping D-22）：回應的 proposal_id 是新的待辦，event_id 是重新判定的 ProposeEnrollmentFiling，
+    不另立事件，決定本身記在 change_log。就保擇一參加不必先判成待人判斷也能記錄（系統外的雇主，04_rules D-20）。
     """
     kind, result = body["kind"], body["result"]
     if result not in DECISION_RESULTS[kind]:
@@ -104,8 +105,6 @@ def record_decision(db, actor: Actor, proposal_id: str, body: dict) -> dict:
         if kind == "EMPLOYMENT_INSURANCE_CHOICE":
             items = p["items"]
             it = next(i for i in items if i["scheme_code"] == ap.EI)
-            if it["applicability"] != ap.NEEDS_DECISION and not it.get("decisions"):
-                raise Blocked("R24", "NOT_NEEDS_DECISION", "就保不是待人判斷")
             it.setdefault("decisions", []).append(decision)
             changes = {"items": items}
         else:
@@ -132,9 +131,8 @@ def _subject_of(db, p: dict, s) -> ap.Subject:
 # ---------------- 查詢 ----------------
 
 def _is_open(p: dict) -> bool:
-    basis = p["basis"].get("items", {})
     return "superseded_by" not in p and any(
-        (basis.get(it["scheme_code"], {}).get("underlying") or it["applicability"]) in (ap.MANDATORY, ap.VOLUNTARY, ap.NEEDS_DECISION)
+        it["applicability"] in (ap.MANDATORY, ap.VOLUNTARY, ap.NEEDS_DECISION)
         and not it.get("closed_by_enrollment_id") and not it.get("voluntary_declined") for it in p["items"])
 
 
@@ -170,7 +168,7 @@ def proposal_view(db, p: dict, today: date) -> dict:
                 "filing_deadline": _iso(it.get("filing_deadline")), "legal_effective_date": _iso(it.get("legal_effective_date")),
                 "expected_grade": it.get("expected_grade"), "expected_amount": _amount(db, it, b),
                 "days_overdue": None if "superseded_by" in p else
-                ap.days_overdue(b.get("underlying") or it["applicability"], it.get("filing_deadline"), today, closed),
+                ap.days_overdue(it["applicability"], it.get("filing_deadline"), today, closed),
                 "pending": b.get("pending"), "rule_versions": b.get("rule_versions"),
                 "closed_by_enrollment_id": str(it["closed_by_enrollment_id"]) if closed else None}
         if closed and it["applicability"] == ap.MANDATORY:
@@ -185,7 +183,7 @@ def proposal_view(db, p: dict, today: date) -> dict:
         "employment_id": str(p["employment_id"]) if p.get("employment_id") else None,
         "determined_on": _iso(p["determined_on"]), "estimated": p.get("estimated"),
         "allowance_decisions": [_decision_view(d) for d in p.get("allowance_decisions", [])] or None,
-        "items": items, "superseded_by": str(p["superseded_by"]) if p.get("superseded_by") else None}.items()
+        "needs_decision": p.get("needs_decision"), "items": items, "superseded_by": str(p["superseded_by"]) if p.get("superseded_by") else None}.items()
         if v is not None}
 
 
@@ -216,12 +214,13 @@ def applicability_on(db, tenant_id, employment_id: ObjectId, on: date, as_of: da
     facts = ap.load_facts(db, subj, on, as_of, decisions=decisions)
     prop_items = {it["scheme_code"]: it for it in (prop or {}).get("items", [])}
     items, missing = [], []
-    for i in ap.determine(db, facts, on, as_of):
+    determined = ap.determine(db, facts, on, as_of)
+    for i in determined:
         missing += [m for m in i.missing if m not in missing]
         enr = _first_enrollment(db, employment_id, i.scheme_code, as_of)
         late = ap.days_late(i.legal_effective_date, to_date(enr.get("effective_from"))) \
             if enr and i.applicability == ap.MANDATORY and not enr["voluntary"] else None
-        overdue = ap.days_overdue(i.underlying or i.applicability, i.filing_deadline, today, closed=enr is not None)
+        overdue = ap.days_overdue(i.applicability, i.filing_deadline, today, closed=enr is not None)
         decided = [_decision_view(d) for d in prop_items.get(i.scheme_code, {}).get("decisions", [])]
         items.append(i.to_api(late, overdue, decided))
     out = {"employment_id": str(employment_id), "on": on.isoformat(), "items": items}
@@ -229,6 +228,8 @@ def applicability_on(db, tenant_id, employment_id: ObjectId, on: date, as_of: da
         out["as_of"] = as_of.isoformat()
     if missing:
         out["missing_data"] = missing
+    if pending := ap.needs_decision(db, facts, determined, as_of):
+        out["needs_decision"] = pending
     return out
 
 

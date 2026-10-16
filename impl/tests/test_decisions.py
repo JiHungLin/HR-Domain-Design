@@ -1,4 +1,4 @@
-"""04-v3 的回頭修改：公教或軍保（D-15）、待人判斷（D-16）、逾期（D-17）、錄用時的預估（D-18）。"""
+"""04 的回頭修改：公教或軍保（D-15）、待人判斷（D-16、D-19、D-20）、逾期（D-17）、錄用時的預估（D-18）。"""
 from datetime import date
 
 from app.db import now, to_dt
@@ -40,15 +40,20 @@ def test_d16_other_allowance_needs_decision_then_follows_decision(api, db, ref):
     started = _start(api, org, hire)
     prop, items = _current(api, org, employment_id=started["employment_id"])
     for code in (LI, EI, OAI, LP):
-        assert items[code]["applicability"] == NEEDS, code
-        assert "expected_grade" not in items[code]
-    assert items[LI]["filing_deadline"] == START                   # 期限照樣給（signoff.md #18）
+        assert items[code]["applicability"] == M, code            # 適用照常判定（04_rules D-19）
+        assert "expected_grade" not in items[code]                 # 只有級距待人判斷
+    assert items[LI]["filing_deadline"] == START
+    pending = [{"kind": "ALLOWANCE_INCLUSION", "allowance_name": "專案獎金"}]
+    assert prop["needs_decision"] == pending                       # 05_mapping D-22
+    applic = api("getApplicability", org["hr"], path={"id": started["employment_id"]}, params={"on": START}, expect=200).json()
+    assert applic["needs_decision"] == pending
 
     out = api("recordProposalDecision", org["hr"], path={"id": prop["enrollment_proposal_id"]}, expect=201,
               json={"kind": "ALLOWANCE_INCLUSION", "allowance_name": "專案獎金", "result": "INCLUDED", "reason": "每月固定發放"}).json()
     new, items = _current(api, org, employment_id=started["employment_id"])
     assert new["enrollment_proposal_id"] == out["proposal_id"] != prop["enrollment_proposal_id"]
     assert [d["result"] for d in new["allowance_decisions"]] == ["INCLUDED"]
+    assert "needs_decision" not in new
     for code in (LI, EI, OAI, LP):
         assert items[code]["applicability"] == M, code
     # 32,000＋2,400 算入後的級距，取自分級表來源（勞保就保職保#17 第 5 級 33,301～34,800 元）
@@ -83,6 +88,21 @@ def test_d16_two_employers_choose_employment_insurance(api, db, ref):
     assert new["enrollment_proposal_id"] == out["proposal_id"]
     assert items[EI]["applicability"] == M
     assert [d["result"] for d in items[EI]["decisions"]] == ["JOIN"]     # 決定沿用到新的待辦
+
+
+def test_d20_choice_recorded_without_other_employer_in_system(api, db, ref):
+    """系統外另有雇主：系統沒判成待人判斷，人資也能主動記錄擇一參加，之後依決定（04_rules D-20）。"""
+    org = make_org(db, ref)
+    started = _start(api, org, _hire(api, org, ref))
+    prop, items = _current(api, org, employment_id=started["employment_id"])
+    assert items[EI]["applicability"] == M
+    out = api("recordProposalDecision", org["hr"], path={"id": prop["enrollment_proposal_id"]}, expect=201,
+              json={"kind": "EMPLOYMENT_INSURANCE_CHOICE", "scheme_code": EI, "result": "NOT_JOIN",
+                    "reason": "員工在系統外的雇主參加就保"}).json()
+    new, items = _current(api, org, employment_id=started["employment_id"])
+    assert new["enrollment_proposal_id"] == out["proposal_id"]
+    assert items[EI]["applicability"] == NA
+    assert items[LI]["applicability"] == M                        # 其他保險不受影響
 
 
 def test_d17_overdue_is_on_proposal_not_a_warning(api, db, ref):

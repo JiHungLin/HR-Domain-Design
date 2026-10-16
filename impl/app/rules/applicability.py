@@ -115,7 +115,7 @@ def load_facts(db, subj: Subject, on: date, as_of: datetime | None = None, sessi
 def other_employers(db, subj: Subject, on: date, as_of=None, session=None) -> int:
     """判定日同一人在其他雇主的在職僱傭關係數（R24 受僱於兩個以上雇主）。
 
-    暫時：只看得到同一客戶內的僱傭關係，客戶以外的兼職沒有資料（signoff.md #20）。
+    只依系統內（同一客戶）的僱傭關係判斷；系統外另有雇主時由人資主動記錄擇一參加（04_rules D-20）。
     """
     d = to_dt(on)
     emps = versions.snapshot(db, "employments", {"tenant_id": subj.tenant_id, "person_id": subj.person_id}, as_of, session)
@@ -193,7 +193,7 @@ class Item:
     pending: list[str] = field(default_factory=list)
     rules: list[dict] = field(default_factory=list)
     missing: list[str] = field(default_factory=list)
-    underlying: str | None = None    # 標成待人判斷之前的適用結果（signoff.md #18）
+    grade_undecided: bool = False    # 「其他」類固定給付未決定，級距待人判斷；適用照常（04_rules D-19）
 
     def to_doc(self) -> dict:
         """加保待辦 items[] 的一列（05_mapping 1.2）。"""
@@ -230,10 +230,16 @@ def determine(db, facts: Facts, on: date, as_of=None, session=None) -> list[Item
     return items
 
 
+def needs_decision(db, facts: Facts, items: list[Item], as_of=None, session=None) -> list[dict]:
+    """還沒決定的「其他」類固定給付（NeedsDecision，04_rules D-19、05_mapping D-22）：有保險的級距因此不給時才列。"""
+    if not any(i.grade_undecided for i in items):
+        return []
+    _, _, undecided = wage_bases(db, facts.compensation, facts.subject.start_date, as_of, session, facts.decisions)
+    return [{"kind": "ALLOWANCE_INCLUSION", "allowance_name": n} for n in undecided]
+
+
 def days_overdue(applicability: str, filing_deadline, today: date, closed: bool) -> int | None:
     """R36：強制保險的應辦理期限已過、還沒登錄實際辦理 → 逾期天數（判定，不是警告；04_rules D-17）。
-
-    applicability 傳標成待人判斷之前的結果（signoff.md #18）。
     """
     deadline = to_date(filing_deadline)
     if applicability != MANDATORY or closed or deadline is None or today <= deadline:
@@ -296,9 +302,11 @@ def _applicability(db, facts: Facts, code: str, on: date, as_of, session) -> Ite
             return item
         if national or residence_bases(facts, on) & set(p["residence_basis"]):
             item.applicability = MANDATORY
-            if facts.other_employers:                                          # 受僱於兩個以上雇主得擇一參加（D-16）
-                choice = facts.decisions.employment_insurance
-                item.applicability = {"JOIN": MANDATORY, "NOT_JOIN": NA}.get(choice, NEEDS_DECISION)
+            choice = facts.decisions.employment_insurance
+            if choice:                                                         # 依人資的決定（D-16；系統外的雇主也由人資主動記錄，D-20）
+                item.applicability = {"JOIN": MANDATORY, "NOT_JOIN": NA}[choice]
+            elif facts.other_employers:                                        # 受僱於兩個以上雇主得擇一參加（D-16）
+                item.applicability = NEEDS_DECISION
 
     elif code == OAI:                                                          # R25
         regs = {r["kind"] for r in employer.get("registrations") or [] if to_date(r["registered_on"]) <= on}
@@ -375,7 +383,7 @@ def wage_bases(db, comp: dict | None, on: date, as_of=None, session=None, decisi
     undecided = [a["name"] for a in comp.get("fixed_monthly_allowances") or []
                  if a["category"] in rv["params"].get("needs_decision", []) and a["name"] not in decided]
     if undecided:
-        return None, rv, undecided                                             # 「其他」類待人判斷（04_rules D-16）
+        return None, rv, undecided                                             # 「其他」類待人判斷（04_rules D-16、D-19）
     out = {}
     for name, spec in rv["params"]["bases"].items():
         out[name] = base + sum((a["amount"].to_decimal() for a in comp.get("fixed_monthly_allowances") or []
@@ -392,9 +400,8 @@ def _grade(db, facts: Facts, item: Item, as_of, session) -> None:
     table_day = facts.subject.start_date                                      # R44：預設依到職日的分級表
     bases, r39, undecided = wage_bases(db, facts.compensation, table_day, as_of, session, facts.decisions)
     if undecided:
-        # 暫時：「其他」類固定給付未決定時，把需要級距的項目標成待人判斷，原本的適用結果另存 underlying，
-        # 期限與法定生效日照樣給（signoff.md #18）
-        item.underlying, item.applicability = item.applicability, NEEDS_DECISION
+        # 「其他」類固定給付未決定：適用、期限、法定生效日照常，只有級距不給（04_rules D-19）
+        item.grade_undecided = True
         item.rules.append(versions.ref(r39))
         return
     if bases is None:
