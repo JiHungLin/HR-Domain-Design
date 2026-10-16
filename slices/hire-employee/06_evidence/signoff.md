@@ -11,7 +11,7 @@
 - 執行者：
 - 簽核者：（不得與執行者同一人）
 - 日期：
-- 實作版本：JiHungLin/HR-Domain-Design，分支 impl/hire-employee @ ccc0bf8（依 02-v4、03-v5、04-v4、05-v4 實作 UC-01～UC-03，10 支 API）
+- 實作版本：JiHungLin/HR-Domain-Design，分支 impl/hire-employee @ 2505b27（依 02-v4、03-v6、04-v5、05-v5 實作 UC-01～UC-03，11 支 API）
 - 結果摘要：P0 可回答率 x/x；黃金案例 x/x 通過；
 - 未執行的項目：
 - 受 [未核對] 規則影響、不算通過的案例：
@@ -42,7 +42,7 @@
 | 18 | R39「其他」類固定給付還沒決定時，05 第六區說待判斷的項目在 items 的 applicability＝待人判斷；但未決定的只是級距，保險本身是強制、可自願或不適用其實已判得出來，標成待人判斷後這個結果就看不到（可自願的也就無法讓雇主選擇不加） | 04_rules R39、D-16；05_mapping 第六區 UC-02；api.yaml ApplicabilityItem | 已依設計修改：適用、期限、法定生效日照常判定，只有級距不給；待決定的給付列在待辦與判定查詢的 `needs_decision`；程式註明依據 04_rules D-19、05_mapping D-22 | 回到 ③④⑤：03_flows D-20、04_rules D-19（適用照常判定，只有級距待人判斷）、05_mapping D-22（待辦與判定查詢加 needs_decision，api.yaml 0.4.0）（重新凍結為 hire-employee/03-v5、04-v4、05-v4）；程式待改 |
 | 19 | 記錄待人判斷的決定之後要不要立刻重新判定、`ProposalOut.proposal_id` 回哪一筆，沒有寫；03 的加保待辦觸發來源沒有「記錄決定」，也沒有對應的事件，但 ProposalOut 要求 event_id | 03_flows ProposeEnrollmentFiling、D-19；05_mapping D-21；api.yaml recordProposalDecision、ProposalOut | 已依設計修改：暫時的做法即為正式做法（記錄後依決定重新判定，回應新的待辦與重新判定的事件）；程式註明依據 03_flows D-20、05_mapping D-22 | 回到 ③⑤：03_flows D-20（觸發來源加「人資記錄待人判斷的決定」，不另立事件）、05_mapping D-22（回應新的待辦與重新判定的事件）；實作暫時的做法即為正式做法（重新凍結為 hire-employee/03-v5、05-v4） |
 | 20 | R24「受僱於兩個以上雇主」只看得到同一客戶內的僱傭關係（P11、PLAN.md D-31 識別範圍為客戶），客戶以外的兼職系統沒有資料 | 04_rules R24、D-16；02 Employment | 已依設計修改：只看系統內的僱傭關係；就保擇一參加不必先判成待人判斷也能記錄，之後依決定；程式註明依據 04_rules D-20 | 回到 ③④⑤：03_flows D-20、04_rules D-20，依 02 X-21 的原則不記錄系統外的雇主，人資可主動記錄擇一參加；api.yaml 說明同步（重新凍結為 hire-employee/03-v5、04-v4、05-v4）；程式待改：擇一參加不必先判成待人判斷也能記錄 |
-| 21 | R24 用到 `Employment.public_or_military_insurance_covered`，但沒寫這個值未知時（到職與補登時沒帶、錄用時的預估、02-v4 之前建立的僱傭關係）的結果；03 也沒有登錄或改變這個值的事件（02 D-37 寫「人資登錄，會改變時保留期間」），到職後無法補登或改變 | 04_rules R24、R60；03_flows（Employment 的事件）；02 D-37；api.yaml startEmployment、registerExistingEmployment；docs/03 P12 | `app/rules/applicability.py`：值未知時當成「否」（不排除），就保照其他條件判定 | 回到 ③④⑤：03_flows D-21（到職、補登必填；新增 RecordEmploymentPeriod）、04_rules D-21（未知 → 資料不足，錄用時的預估也是）、05_mapping D-23（新增 API、第四區既有資料，api.yaml 0.5.0）（重新凍結為 hire-employee/03-v6、04-v5、05-v5）；程式待改；另新增 R64（RecordEmploymentPeriod 的起日要在僱傭期間內） |
+| 21 | R24 用到 `Employment.public_or_military_insurance_covered`，但沒寫這個值未知時（到職與補登時沒帶、錄用時的預估、02-v4 之前建立的僱傭關係）的結果；03 也沒有登錄或改變這個值的事件（02 D-37 寫「人資登錄，會改變時保留期間」），到職後無法補登或改變 | 04_rules R24、R60；03_flows（Employment 的事件）；02 D-37；api.yaml startEmployment、registerExistingEmployment；docs/03 P12 | 已依設計修改：值未知時就保判成資料不足並列出缺的屬性（錄用時的預估也是）；到職的請求必填；新增 `POST /v1/employments/{id}/periods`（R64 起日要在僱傭期間內，擋下），新增一段並觸發加保待辦在起日重新判定；程式註明依據 03_flows D-21、04_rules D-21、05_mapping D-23。補登（registerExistingEmployment）尚未實作，仍回 501 | 回到 ③④⑤：03_flows D-21（到職、補登必填；新增 RecordEmploymentPeriod）、04_rules D-21（未知 → 資料不足，錄用時的預估也是）、05_mapping D-23（新增 API、第四區既有資料，api.yaml 0.5.0）（重新凍結為 hire-employee/03-v6、04-v5、05-v5）；程式待改；另新增 R64（RecordEmploymentPeriod 的起日要在僱傭期間內） |
 
 ## 檢查紀錄
 
