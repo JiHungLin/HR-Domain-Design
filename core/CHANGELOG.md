@@ -2,6 +2,11 @@
 
 <!-- 只新增，最新的在最上面。記錄：切片項目以 [候選] 合併、升為 [已驗證]、套用變更提案、平行切片撞號重編。格式同切片 CHANGELOG.md -->
 
+## 2026-10-16　hire-employee/03-v5、hire-employee/04-v4　③④　凍結（回頭修改）
+- 改了什麼：flows.md 事件 ProposeEnrollmentFiling 的觸發來源（加「人資記錄待人判斷的決定」）、說明（待人判斷分兩種、系統外雇主由人資主動記錄）、保存方式（記錄決定後重新判定並取代），出處改為 hire-employee/03-v5；rules.md R24、R39、APPLICABILITY.NEEDS_DECISION 更新，出處改為 hire-employee/04-v4；皆仍為 [候選]
+- 依據：slices/hire-employee 03_flows.md D-20、04_rules.md D-19、D-20（起因：實作回報 signoff.md #18～#20）
+- 產出者：AI（Claude）；審查者：JiHungLin；核心負責人：待審閱
+
 ## 2026-10-14　hire-employee/02-v4、03-v4、04-v3　②③④　凍結（回頭修改）
 - 改了什麼：entities.md Employment 卡新增 public_or_military_insurance_covered，出處 02-v4；glossary.md 新增 1 列；flows.md 事件 ProposeEnrollmentFiling 的說明（預估、待人判斷的決定、逾期），出處 03-v4；rules.md R24、R36（提醒 → 判定）、R39、ALLOWANCE_CATEGORY.OTHER 更新，新增 APPLICABILITY.NEEDS_DECISION，出處 04-v3；皆 [候選]
 - 依據：slices/hire-employee 02_entities.md D-37、03_flows.md D-19、04_rules.md D-15～D-18（起因：實作回報 signoff.md #13～#17）

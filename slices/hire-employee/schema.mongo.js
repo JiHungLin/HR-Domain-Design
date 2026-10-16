@@ -194,6 +194,8 @@ create("enrollment_proposals", "ProposeEnrollmentFiling（加保待辦）", ["te
   ...tenantScoped, hire_id: ref, employment_id: ref, determined_on: date, basis: { bsonType: "object" },
   estimated: bool, // 錄用時以約定到職日判定的預估結果（04_rules D-18）
   allowance_decisions: { bsonType: "array", items: decision }, // 「其他」類固定給付算不算入（04_rules D-16）
+  needs_decision: { bsonType: "array", items: { bsonType: "object", required: ["kind", "allowance_name"], properties: {
+    kind: { enum: ["ALLOWANCE_INCLUSION"] }, allowance_name: str } } }, // 判定時還沒決定的「其他」類固定給付（04_rules D-19）
   items: { bsonType: "array", items: { bsonType: "object", required: ["scheme_code", "applicability"], properties: {
     scheme_code: code, applicability: code, filing_deadline: date, legal_effective_date: date, expected_grade: str, days_overdue: { bsonType: "int" },
     closed_by_enrollment_id: ref, voluntary_declined: { bsonType: "object", properties: { by: ref, at: date } },

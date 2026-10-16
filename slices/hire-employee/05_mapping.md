@@ -5,9 +5,9 @@
 | 切片 | hire-employee |
 | 步驟 | ⑤ 投影到實作 |
 | 狀態 | 已凍結 |
-| 版本 | hire-employee/05-v3 |
+| 版本 | hire-employee/05-v4 |
 | 產出者 | AI（Claude）＋ |
-| 讀取的輸入 | 02_entities.md @ hire-employee/02-v4；03_flows.md、03_use_cases.md @ hire-employee/03-v4；04_rules.md @ hire-employee/04-v3；docs/03 平台架構約定（P4、P5、P10 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31） |
+| 讀取的輸入 | 02_entities.md @ hire-employee/02-v4；03_flows.md、03_use_cases.md @ hire-employee/03-v5；04_rules.md @ hire-employee/04-v4；docs/03 平台架構約定（P4、P5、P10 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31）；回頭修改（2026-10-14，第二次）：03_flows D-20、04_rules D-19、D-20（回頭修改中）；06_evidence/signoff.md #18～#20（impl/hire-employee @ 392b358） |
 
 <!-- 資料庫為 MongoDB（PLAN.md D-35），本文件的「表」是集合（collection），「欄位」是文件的欄位。
      概念 ID 寫 core/ 的英文識別名稱；技術欄位標 [技術]（P8）。本步先只產出這份對照表，經人確認後才產生 schema.mongo.js 與 api.yaml。 -->
@@ -110,7 +110,7 @@
 | PersonalDataArchival 各屬性 | `personal_data_archivals` | `person_id`、`data_categories[]`（code）、`archived_on`、`archived_by`；`releases[]`：`categories[]`、`released_on`、`released_by`、`reason`、`link`（錄用、個資請求或註銷的 ref，R57）；`status` | 可以只解除部分類別，每次解除一筆；`status` 依「是否還有類別在封存」推出 |
 | DataSubjectRequest 各屬性 | `data_subject_requests` | `person_id`、`request_kind`（code）、`requested_categories[]`（code）、`received_on`、`received_via`、`resolved_on`、`outcome`、`category_outcomes[]`：`category`、`result`；`refusal_basis`：`rule_id`、`rule_version`、`rule_revision`、`legal_basis`、`reason`；`status` | 部分接受時逐類記結果，R55 依類別判斷 |
 | DataSubjectRequest.extensions | `data_subject_requests` | `extensions[]`：`extended_deadline`、`reason`、`notified_on`、`recorded_by` | 每次延長一筆（03_flows D-15） |
-| ProposeEnrollmentFiling 的內容 | `enrollment_proposals` | `hire_id` 或 `employment_id`；`determined_on`（判定日 d）；`estimated`（錄用時的預估，04_rules D-18）；`allowance_decisions[]`：「其他」類固定給付算不算入的決定（`allowance_name`、`result`、`by`、`at`、`reason`）；`basis`：用到的資料版本與規則版本（含修訂）；`items[]`：`scheme_code`、`applicability`（code）、`filing_deadline`、`legal_effective_date`、`expected_grade`、`days_overdue`、`closed_by_enrollment_id`、`voluntary_declined`：`by`、`at`、`decisions[]`（就保擇一參加的決定）、`days_overdue`（R36 逾期天數）；`superseded_by` | 每種保險各自結案或被雇主拒絕；判定內容不改，結案與拒絕留變更紀錄（P2 B）；不由人作廢（03_flows X-22） |
+| ProposeEnrollmentFiling 的內容 | `enrollment_proposals` | `hire_id` 或 `employment_id`；`determined_on`（判定日 d）；`estimated`（錄用時的預估，04_rules D-18）；`allowance_decisions[]`：「其他」類固定給付算不算入的決定（`allowance_name`、`result`、`by`、`at`、`reason`）；`needs_decision[]`：判定時還沒決定的「其他」類固定給付（`kind`、`allowance_name`），屬判定內容（04_rules D-19）；`basis`：用到的資料版本與規則版本（含修訂）；`items[]`：`scheme_code`、`applicability`（code）、`filing_deadline`、`legal_effective_date`、`expected_grade`、`days_overdue`、`closed_by_enrollment_id`、`voluntary_declined`：`by`、`at`、`decisions[]`（就保擇一參加的決定）、`days_overdue`（R36 逾期天數）；`superseded_by` | 每種保險各自結案或被雇主拒絕；判定內容不改，結案與拒絕留變更紀錄（P2 B）；不由人作廢（03_flows X-22） |
 
 ### 1.3 事件紀錄（`events`，P1、P4）
 
@@ -159,7 +159,7 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | AnnulEntry | `POST /v1/annulments` | 人資；只接受 03_flows D-14 白名單上的事件 `type`（R47）；R48 擋下 |
 | RevokeAnnulment | `POST /v1/annulments/{id}/revoke` | 人資 |
 | ContractTermStarts、VoidContract、ExpireWorkAuthorization、ExpireIdentityDocument、LapseWarningOverride | 無 API：系統排程或事件處理器產生 | 系統；寫 `events`，`actor`＝system，`derived`＝true |
-| ProposeEnrollmentFiling | 系統產生；`GET /v1/enrollment-proposals`（列出，含預估、逾期天數、待人判斷）、`POST /v1/enrollment-proposals/{id}/decline-voluntary`（雇主選擇不加自願保險）、`POST /v1/enrollment-proposals/{id}/decisions`（待人判斷事項的決定，04_rules D-16） | 讀：人資、雇主；拒絕自願：雇主或人資；決定：人資 |
+| ProposeEnrollmentFiling | 系統產生；`GET /v1/enrollment-proposals`（列出，含預估、逾期天數、待人判斷）、`POST /v1/enrollment-proposals/{id}/decline-voluntary`（雇主選擇不加自願保險）、`POST /v1/enrollment-proposals/{id}/decisions`（待人判斷事項的決定，04_rules D-16；記錄後依決定重新判定，產生新的待辦取代原本那一筆，回應給新的待辦，D-22；就保擇一參加可以主動記錄，04_rules D-20） | 讀：人資、雇主；拒絕自願：雇主或人資；決定：人資 |
 | PromptStartConfirmation、ProposeAuthorizationReview、PromptDataSubjectRequestDeadline、ProposeArchival | 系統產生；`GET /v1/proposals`、`POST /v1/proposals/{id}/dismiss` | 人資；dismiss 只接受這 4 種 `kind` |
 | NotifySignificantCorrection | 系統產生；`GET /v1/significant-corrections` | 雇主（老闆）、人資；只能讀，沒有作廢或修改的 API |
 | （查詢）UC-15 勞工名卡 | `GET /v1/employments/{id}/labor-roster` | 處理人事的人資（R52）；已封存的類別不顯示 |
@@ -225,7 +225,7 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | R46、R51、R53、R56 | service | 判定後產生通知、失效事件、期限提醒、封存建議；R51 比對規則版本與修訂（`rule_versions.revision`） |
 | （所有判定與計數） | service | 被註銷的資料一律排除：人數（R23）、勞工名卡（UC-15）、期間不重疊（R04）、員工編號（R05）都只看 `annulled`＝false（D-11） |
 | R19 | 人工 | 是否為繼續性工作由人資判斷；系統只在簽定期契約時提醒並要求勾選（EQ-021） |
-| R24（擇一參加）、R39（「其他」類固定給付） | 人工 ＋ service | 受僱於兩個以上雇主時，由人決定參加哪一個，記在加保待辦 |
+| R24（擇一參加）、R39（「其他」類固定給付） | 人工 ＋ service | 受僱於兩個以上雇主時，由人決定參加哪一個，記在加保待辦；service 只依系統內的僱傭關係判成待人判斷，系統外另有雇主時由人資主動記錄（04_rules D-20）。「其他」類固定給付由人決定算不算入；未決定時適用照常、級距不給，列在待辦的 `needs_decision`（04_rules D-19） |
 
 ## 四、推導值與歷史需求 → 儲存
 <!-- 資料身分：事實／快取／凍結快照；保存方式：A／B／C／— -->
@@ -303,7 +303,7 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | UC-01 | 6、7 | （第 5 步的回應） | — | 管轄區由工作地點推出；試用期在第 5 步的 probation_until |
 | UC-01 | 8 | 見 UC-03 | employment_id | 第 5 步回應的 `employment_id` |
 | UC-02 | 1～6 | 系統產生；`GET /v1/employments/{id}/applicability?on=`、`GET /v1/enrollment-proposals?employment_id=` 或 `?hire_id=`（錄用時的預估） | employment_id 或 hire_id、判定日 | employment_id：UC-01 第 5 步回應；hire_id：UC-01 第 2 步回應；判定日：使用者輸入或今天 |
-| UC-02 | 6（待人判斷） | `POST /v1/enrollment-proposals/{id}/decisions` | enrollment_proposal_id、kind、scheme_code 或 allowance_name、result、reason | enrollment_proposal_id：`GET /enrollment-proposals` 回應的 `enrollment_proposal_id`；待判斷的項目在 items 的 `applicability`＝待人判斷；result 由人資輸入 |
+| UC-02 | 6（待人判斷） | `POST /v1/enrollment-proposals/{id}/decisions` | enrollment_proposal_id、kind、scheme_code 或 allowance_name、result、reason | enrollment_proposal_id：`GET /enrollment-proposals` 回應的 `enrollment_proposal_id`；待判斷的項目在 items 的 `applicability`＝待人判斷；result 由人資輸入；就保擇一參加看 items 的 `applicability`＝待人判斷，「其他」類固定給付看待辦的 `needs_decision`（04_rules D-19）；回應的 `proposal_id` 是依決定重新判定的新待辦（D-22） |
 | UC-03 | 1 | `POST /v1/insurance-enrollments` | employment_id、scheme_id、insurance_unit_id、filed_on、voluntary、effective_from、receipt_ref 或 no_receipt | employment_id：UC-01 第 5 步回應或加保待辦的 `employment_id`；scheme_id 查參考資料（保險制度）；insurance_unit_id 查 org-setup；其餘使用者依保險人回執輸入 |
 | UC-03 | 2 | `POST /v1/insurance-enrollments/{id}/insured-salaries` | {id}＝enrollment_id；declared_amount、grade、declared_on、effective_from | enrollment_id：第 1 步回應的 `enrollment_id`；應報級距可參考加保待辦 items 的 `expected_grade` |
 | UC-03 | 3 | `GET /v1/employments/{id}/applicability` | employment_id | 晚辦天數 `days_late`、級距不符的警告在第 2 步回應的 `warnings`（R45） |
@@ -359,6 +359,7 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | D-19 | 員工清單查詢（例：依雇主列出在職員工）本切片不設計，UC-15 從前一步回應或其他切片的清單取得 employment_id | 本切片新增清單 API | 03 沒有清單相關的 UC；列表與搜尋屬一般查詢，等需要它的切片（例：組織、出勤）再設計 | 第六區 UC-15 | AI／JiHungLin（2026-10-14） |
 | D-20 | 04_rules 版本欄為「—」的規則（沒有版本的業務規則與法規檢查），警告與警告忽略紀錄的版本，用規則所在的 04 凍結版本（例：hire-employee/04-v3）、修訂 1；規則文字在新的凍結版本改變時，之前的忽略依 R51 失效 | 版本欄「—」時警告不帶版本 | api.yaml 的警告格式要求版本（實作回報 signoff.md #16）；R51 要靠版本判斷忽略是否失效，規則文字改了，忽略就該重新評估；實作暫時的做法（填 04-v2）正好符合 | signoff.md #16；R51；P5 | AI／JiHungLin（2026-10-14） |
 | D-21 | 待人判斷事項的決定用 `POST /v1/enrollment-proposals/{id}/decisions` 記在加保待辦上；加保待辦加 `estimated`（錄用時的預估）、`days_overdue`（逾期，不能忽略）；`StartEmploymentIn`、補登加 `public_or_military_insurance_covered` | 另設集合記錄決定 | 比照雇主選擇不加自願保險的做法（03_flows D-19）；實作回報 signoff.md #13～#15、#17 | 04_rules D-15～D-18；03_flows D-19 | AI／JiHungLin（2026-10-14） |
+| D-22 | 待人判斷的決定記在原本那一筆待辦上（P2 B），記錄後在同一交易依決定重新判定，產生新的待辦取代原本那一筆；`recordProposalDecision` 回應的 `proposal_id` 是新的待辦、`event_id` 是重新判定的 ProposeEnrollmentFiling 事件；加保待辦與判定查詢加 `needs_decision`（還沒決定的「其他」類固定給付）；`api.yaml` 0.4.0 | 只記錄決定，等下一次其他觸發才重新判定；另立事件；把需要級距的保險項目標成待人判斷 | 實作回報 signoff.md #18、#19：決定之後待辦要馬上反映；03 不另立事件（03_flows D-19、D-20）；適用不受固定給付影響（04_rules D-19） | 03_flows D-20；04_rules D-19、D-20；signoff.md #18～#20 | AI／JiHungLin（2026-10-14） |
 
 ### 反例處理
 
@@ -387,6 +388,9 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | X-21 | R36 逾期警告沒有出口 | 審查者（實作回報 signoff.md #15） | 接受，已修改 | 04_rules D-17：改為判定，以 days_overdue 呈現 |
 | X-22 | 版本欄為「—」的規則，警告仍要求版本 | 審查者（實作回報 signoff.md #16） | 接受，已修改 | D-20 |
 | X-23 | 錄用時的加保待辦用哪一天沒寫 | 審查者（實作回報 signoff.md #17） | 接受，已修改 | 04_rules D-18；加保待辦加 estimated |
+| X-24 | 「其他」類固定給付未決定時，標成待人判斷會蓋掉保險的適用結果 | 審查者（實作回報 signoff.md #18，impl/hire-employee @ 392b358） | 接受，已修改 | D-22：加 `needs_decision`；04_rules D-19 |
+| X-25 | 記錄決定後要不要重新判定、`proposal_id` 回哪一筆、`event_id` 是哪個事件沒有寫 | 審查者（實作回報 signoff.md #19） | 接受，已修改 | D-22 |
+| X-26 | 受僱於兩個以上雇主只看得到系統內的僱傭關係 | 審查者（實作回報 signoff.md #20） | 接受，已修改 | 04_rules D-20：人資可主動記錄擇一參加；api.yaml 說明同步 |
 
 <!-- 來源：AI 挑錯／審查者／專家／其他切片。處理：接受，已修改／拒絕（理由必填）／轉問專家（填 EQ 編號） -->
 
@@ -396,17 +400,17 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 <!-- CHECKLIST:START -->
 | 完成標準 | AI 自評 | 審查者確認 |
 |---|---|---|
-| 每個 Entity 都有對應的表，或寫明「不落地」「由靜態參數產生」與理由 | ✓ 19 個 Entity 都有集合（1.1）；org-setup 提供的 5 個標 [靜態替代]；推導屬性（年齡、年資、人數、晚辦天數、月薪資總額）寫明不落地（AI 比對 02 的卡片） | ✓（JiHungLin 於對話中確認，2026-10-14：「直接通過吧」） |
-| 每張業務表、每支 API、每個業務欄位都指得回概念，沒有「多出來、說不出代表什麼」的表；主鍵、建立時間等技術欄位與平台需要的表，標明「技術」即可（平台 P8） | ✓ 1.2 每個欄位列出對應的概念；schema.mongo.js 每個集合的 description、api.yaml 每支 API 的 x-concept 都寫了概念；技術欄位與平台表列在第五節（AI 比對）。P7 的 erasure_records、user_accounts 是平台約定 P7 與 D-09 的需要，不是 03 的概念，已寫明依據 | ✓（JiHungLin 於對話中確認，2026-10-14：「直接通過吧」） |
-| ② 標為推導值的東西，都已依平台 P3 決定身分 | ✓ 第四節：各保險的適用、期限、級距、晚辦天數、年齡、年資、人數、月薪資總額、移工契約實際期限、法規警告、勞工名卡都標「不存，現算」；狀態與 annulled 標快取（AI 比對 02「不是 Entity」的推導值） | ✓（JiHungLin 於對話中確認，2026-10-14：「直接通過吧」） |
-| ③ 標出的歷史需求，都已依平台 P2 決定保存方式 | ✓ 第四節逐項：需要重建當時者為 A（Person、證件、僱傭關係、約定薪資、工作許可、投保、投保薪資）；需要軌跡者為 B；聯絡方式為 C（AI 比對 03 的 12 個狀態機與「不需要狀態機的東西」） | ✓（JiHungLin 於對話中確認，2026-10-14：「直接通過吧」） |
-| ③ 的每個動作與狀態變更都有對應的 API，且符合平台 P1 | ✓ 第二節：35 個事件中，人觸發的 24 個有 API，時間或條件觸發與建議層的由系統產生並有查詢 API；狀態只由事件改變，CorrectRecord 不能改狀態（2.2）（AI 比對 03 事件表） | ✓（JiHungLin 於對話中確認，2026-10-14：「直接通過吧」） |
-| ④ 的每條規則都已決定落實位置（平台 P6） | ✓ 第三節涵蓋 R01～R63（R54 已取消不列）：db constraint 4 條、人工 2 條、其餘 service（AI 比對 04 規則表） | ✓（JiHungLin 於對話中確認，2026-10-14：「直接通過吧」） |
-| 每個正式 Use Case 都已在對照表走一遍：每一步的輸入都拿得到；來自前一步回應的，`api.yaml` 該回應有這個欄位 | ✓ 第六區 15 個 UC 逐步對到 API，每一步的輸入都寫出來源；來自回應的欄位（hire_id、person_id、employment_id、enrollment_id、work_authorization_id、identity_document_id、warning_override_id、data_subject_request_id、archival_id、annulment_event_id 等）都在 api.yaml 該 API 的回應格式中（AI 比對）。UC-15 的 employment_id 來自前一步回應或其他切片的清單（D-19） | ✓（JiHungLin 於對話中確認，2026-10-14：「直接通過吧」） |
-| `api.yaml` 每支 API 的請求與回應都寫到欄位層級，業務欄位對得回對照表第一區；說明（summary）提到的欄位都在格式裡 | ✓ 37 支 API 的請求與回應都是具名 schema（79 個），有 required、巢狀物件的欄位、additionalProperties: false；業務欄位與第一區一致（AI 比對）；summary 提到的約定薪資、契約、建立項目的編號都在格式中 | ✓（JiHungLin 於對話中確認，2026-10-14：「直接通過吧」） |
-| 已做紙上驗證：每筆黃金案例依設計推演的結果與人工預期一致；不一致的已回頭修改 | ✓ 使用者選用 GC01～GC03 並填預期結果；AI 依設計推演後比對：GC01 一致；GC02、GC03 初次共 3 處不一致，使用者複核後都是預期結果需更正（勞保生效日翌日、移工時間差不警告、健保期限始日不算入），設計不需回頭修改。結果仍有前提待專家確認：EQ-003（健保、勞退生效日）、EQ-012（伙食津貼算不算入） | ✓（JiHungLin 於對話中確認，2026-10-14：「直接通過吧」） |
+| 每個 Entity 都有對應的表，或寫明「不落地」「由靜態參數產生」與理由 | ✓ 19 個 Entity 都有集合（1.1）；org-setup 提供的 5 個標 [靜態替代]；推導屬性（年齡、年資、人數、晚辦天數、月薪資總額）寫明不落地（AI 比對 02 的卡片） | ✓（JiHungLin 於對話中確認，2026-10-16：「05，一樣採用AI自評，全通過」） |
+| 每張業務表、每支 API、每個業務欄位都指得回概念，沒有「多出來、說不出代表什麼」的表；主鍵、建立時間等技術欄位與平台需要的表，標明「技術」即可（平台 P8） | ✓ 1.2 每個欄位列出對應的概念；schema.mongo.js 每個集合的 description、api.yaml 每支 API 的 x-concept 都寫了概念；技術欄位與平台表列在第五節（AI 比對）。P7 的 erasure_records、user_accounts 是平台約定 P7 與 D-09 的需要，不是 03 的概念，已寫明依據 | ✓（JiHungLin 於對話中確認，2026-10-16：「05，一樣採用AI自評，全通過」） |
+| ② 標為推導值的東西，都已依平台 P3 決定身分 | ✓ 第四節：各保險的適用、期限、級距、晚辦天數、年齡、年資、人數、月薪資總額、移工契約實際期限、法規警告、勞工名卡都標「不存，現算」；狀態與 annulled 標快取（AI 比對 02「不是 Entity」的推導值） | ✓（JiHungLin 於對話中確認，2026-10-16：「05，一樣採用AI自評，全通過」） |
+| ③ 標出的歷史需求，都已依平台 P2 決定保存方式 | ✓ 第四節逐項：需要重建當時者為 A（Person、證件、僱傭關係、約定薪資、工作許可、投保、投保薪資）；需要軌跡者為 B；聯絡方式為 C（AI 比對 03 的 12 個狀態機與「不需要狀態機的東西」） | ✓（JiHungLin 於對話中確認，2026-10-16：「05，一樣採用AI自評，全通過」） |
+| ③ 的每個動作與狀態變更都有對應的 API，且符合平台 P1 | ✓ 第二節：35 個事件中，人觸發的 24 個有 API，時間或條件觸發與建議層的由系統產生並有查詢 API；狀態只由事件改變，CorrectRecord 不能改狀態（2.2）（AI 比對 03 事件表） | ✓（JiHungLin 於對話中確認，2026-10-16：「05，一樣採用AI自評，全通過」） |
+| ④ 的每條規則都已決定落實位置（平台 P6） | ✓ 第三節涵蓋 R01～R63（R54 已取消不列）：db constraint 4 條、人工 2 條、其餘 service（AI 比對 04 規則表） | ✓（JiHungLin 於對話中確認，2026-10-16：「05，一樣採用AI自評，全通過」） |
+| 每個正式 Use Case 都已在對照表走一遍：每一步的輸入都拿得到；來自前一步回應的，`api.yaml` 該回應有這個欄位 | ✓ 第六區 15 個 UC 逐步對到 API，每一步的輸入都寫出來源；來自回應的欄位（hire_id、person_id、employment_id、enrollment_id、work_authorization_id、identity_document_id、warning_override_id、data_subject_request_id、archival_id、annulment_event_id 等）都在 api.yaml 該 API 的回應格式中（AI 比對）。UC-15 的 employment_id 來自前一步回應或其他切片的清單（D-19） | ✓（JiHungLin 於對話中確認，2026-10-16：「05，一樣採用AI自評，全通過」） |
+| `api.yaml` 每支 API 的請求與回應都寫到欄位層級，業務欄位對得回對照表第一區；說明（summary）提到的欄位都在格式裡 | ✓ 37 支 API 的請求與回應都是具名 schema（80 個；0.4.0 新增 NeedsDecision），有 required、巢狀物件的欄位、additionalProperties: false；業務欄位與第一區一致（AI 比對）；summary 提到的約定薪資、契約、建立項目的編號都在格式中 | ✓（JiHungLin 於對話中確認，2026-10-16：「05，一樣採用AI自評，全通過」） |
+| 已做紙上驗證：每筆黃金案例依設計推演的結果與人工預期一致；不一致的已回頭修改 | ✓ 使用者選用 GC01～GC03 並填預期結果；AI 依設計推演後比對：GC01 一致；GC02、GC03 初次共 3 處不一致，使用者複核後都是預期結果需更正（勞保生效日翌日、移工時間差不警告、健保期限始日不算入），設計不需回頭修改。結果仍有前提待專家確認：EQ-003（健保、勞退生效日）、EQ-012（伙食津貼算不算入） | ✓（JiHungLin 於對話中確認，2026-10-16：「05，一樣採用AI自評，全通過」） |
 <!-- CHECKLIST:END -->
 
 - 審查者（非產出者）：JiHungLin
-- 日期：2026-10-14
-- 結論：通過（JiHungLin 於對話中確認，2026-10-14：「直接通過吧」；本次為依實作回報 signoff.md #13～#17 回頭修改後重新凍結，各條未逐條說明）
+- 日期：2026-10-16
+- 結論：通過（JiHungLin 於對話中確認，2026-10-16：「05，一樣採用AI自評，全通過」）
