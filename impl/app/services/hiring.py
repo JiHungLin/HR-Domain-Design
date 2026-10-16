@@ -2,7 +2,7 @@
 
 請求已依 api.yaml 檢查（app/spec.py）；每個動作在一個多文件交易中寫入 events 與受影響的集合（PLAN.md D-35）。
 """
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from bson import Int64, ObjectId
 
@@ -224,9 +224,8 @@ def start_employment(db, actor: Actor, hire_id: str, body: dict) -> dict:
             "start_date": to_dt(start), "employee_number": number,
             "employee_category": [{"code": "EMPLOYEE_CATEGORY.FULL_TIME", "from": to_dt(start)}],
             "probation_until": to_dt(D(body.get("probation_until"))),
-            # 02 D-37：這個職務是否依法應參加公教或軍保（帶期間）；就保 R24
-            "public_or_military_insurance_covered": [{"value": body["public_or_military_insurance_covered"], "from": to_dt(start)}]
-            if "public_or_military_insurance_covered" in body else None,
+            # 02 D-37：這個職務是否依法應參加公教或軍保（帶期間，到職時必填，03_flows D-21）；就保 R24
+            "public_or_military_insurance_covered": [{"value": body["public_or_military_insurance_covered"], "from": to_dt(start)}],
             "org_unit_assignments": [{"org_unit_id": oid(org_unit_id), "from": to_dt(start)}] if org_unit_id else None,
             "work_locations": [{"work_location_id": wl["_id"], "from": to_dt(start)}],
             "status": "Active", "annulled": False,
@@ -258,6 +257,34 @@ def start_employment(db, actor: Actor, hire_id: str, body: dict) -> dict:
         return {"event_id": str(event_id), "employment_id": str(emp_id), "hire_id": str(hire["_id"]),
                 "person_id": str(person_id), "warnings": warn, "compensation_ids": comp_ids,
                 "contract_ids": contract_ids, "enrollment_proposal_id": str(proposal_id)}
+    return run_in_transaction(db, tx)
+
+
+def record_employment_period(db, actor: Actor, employment_id: str, body: dict) -> dict:
+    """RecordEmploymentPeriod（POST /v1/employments/{id}/periods，03_flows D-21、05_mapping D-23）：
+    這個職務從 from 起是否依法應參加公教或軍保。是真的改變或補上未知的值，不是更正；新增一段，
+    前一段的 to 設為新一段 from 的前一天；產生新版本的僱傭關係並觸發加保待辦重新判定。"""
+    start = D(body["from"])
+
+    def tx(s):
+        emp = get_current(db, "employments", oid(employment_id), actor.tenant_id, s)
+        ended = to_date(emp.get("ended_on"))
+        if start < to_date(emp["start_date"]) or (ended and start > ended):     # R64：起日要在僱傭期間內
+            raise Blocked("R64", "PERIOD_OUTSIDE_EMPLOYMENT", "起日要在僱傭期間內（不早於到職日、不晚於結束日）")
+        periods = [p for p in emp.get("public_or_military_insurance_covered") or [] if to_date(p["from"]) < start]
+        for p in periods:
+            if p.get("to") is None or to_date(p["to"]) >= start:
+                p["to"] = to_dt(start - timedelta(days=1))
+        periods.append({"value": body["public_or_military_insurance_covered"], "from": to_dt(start)})
+
+        event_id = record_event(db, s, tenant_id=actor.tenant_id, type="RecordEmploymentPeriod",
+                                subject=("employments", emp["entity_id"]), actor=actor.event_actor,
+                                occurred_at=DT(body.get("occurred_at")), effective_from=to_dt(start),
+                                evidence=body["evidence"])
+        nxt = new_version(db, s, "employments", emp, {"public_or_military_insurance_covered": periods}, event_id=event_id)
+        proposals.propose_enrollment_filing(db, s, ap.Subject.of_employment(nxt), start,              # 條件改變的那一天重新判定
+                                            cause_event_id=event_id)
+        return {"event_id": str(event_id), "employment_id": str(emp["entity_id"]), "warnings": []}
     return run_in_transaction(db, tx)
 
 

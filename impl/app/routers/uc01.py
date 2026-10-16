@@ -62,6 +62,11 @@ def list_enrollment_proposals(employment_id: str | None = Query(None, pattern="^
     return proposals.list_proposals(database(), actor.tenant_id, employment_id, hire_id, open, date.today())
 
 
+@_post("/employments/{id}/periods", "recordEmploymentPeriod")
+def record_employment_period(id: str, body: dict = Body(...), actor: Actor = Depends(hr)):
+    return hiring.record_employment_period(database(), actor, id, validate_request("recordEmploymentPeriod", body))
+
+
 @_post("/enrollment-proposals/{id}/decisions", "recordProposalDecision")
 def record_proposal_decision(id: str, body: dict = Body(...), actor: Actor = Depends(hr)):
     return proposals.record_decision(database(), actor, id, validate_request("recordProposalDecision", body))

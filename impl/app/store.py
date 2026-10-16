@@ -41,7 +41,8 @@ def get_shared(db, collection: str, _id: ObjectId, session=None) -> dict:
 
 def record_event(db, session, *, tenant_id, type: str, subject: tuple[str, ObjectId], actor: dict,
                  occurred_at=None, effective_from=None, rule_versions=None, reason=None,
-                 derived: bool | None = None, event_id: ObjectId | None = None) -> ObjectId:
+                 derived: bool | None = None, event_id: ObjectId | None = None,
+                 evidence: list[dict] | None = None) -> ObjectId:
     eid = event_id or ObjectId()
     ts = now()
     db.events.insert_one(clean({
@@ -49,6 +50,7 @@ def record_event(db, session, *, tenant_id, type: str, subject: tuple[str, Objec
         "subject": {"collection": subject[0], "id": subject[1]},
         "occurred_at": occurred_at, "recorded_at": ts, "effective_from": effective_from,
         "actor": actor, "rule_versions": rule_versions or None, "reason": reason, "derived": derived,
+        "evidence": evidence or None,
         "created_at": ts,
     }), session=session)
     db.outbox.insert_one({"tenant_id": tenant_id, "event_id": eid, "type": type, "created_at": ts}, session=session)

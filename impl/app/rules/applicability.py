@@ -296,7 +296,10 @@ def _applicability(db, facts: Facts, code: str, on: date, as_of, session) -> Ite
             return item
         if person.get("old_age_benefits_received"):
             return item
-        if value_on(facts.subject.public_or_military, on):                    # 應參加公教或軍保（04_rules D-15）
+        covered = value_on(facts.subject.public_or_military, on)              # 應參加公教或軍保（04_rules D-15）
+        if covered is None:                                                    # 未知（錄用時、02-v4 之前的資料）→ 資料不足（D-21，P12）
+            return insufficient("Employment.public_or_military_insurance_covered")
+        if covered:
             return item
         if value_on(employer.get("registration_exempt"), on) and not value_on(employer.get("tax_assessed_or_invoice_permit"), on):
             return item

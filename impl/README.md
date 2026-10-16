@@ -1,6 +1,6 @@
 # hire-employee 實作（MongoDB＋FastAPI）
 
-依 `slices/hire-employee/` 凍結的設計實作：`02_entities.md` @ `hire-employee/02-v4`；`03_flows.md` @ `hire-employee/03-v5`；`04_rules.md` @ `hire-employee/04-v4`；`05_mapping.md`、`schema.mongo.js`、`api.yaml`（0.4.0）@ `hire-employee/05-v4`。
+依 `slices/hire-employee/` 凍結的設計實作：`02_entities.md` @ `hire-employee/02-v4`；`03_flows.md` @ `hire-employee/03-v6`；`04_rules.md` @ `hire-employee/04-v5`；`05_mapping.md`、`schema.mongo.js`、`api.yaml`（0.5.0）@ `hire-employee/05-v5`。
 
 ## 需要
 
@@ -33,7 +33,7 @@ uv run pytest                                # 在真的 MongoDB 上跑；每次
 
 ## 範圍
 
-已實作 UC-01（錄用本國籍員工並到職）、UC-02（判定各保險，含待人判斷的決定）、UC-03（登錄實際加保與投保薪資），共 10 支 API；其餘 27 支回 501。
+已實作 UC-01（錄用本國籍員工並到職）、UC-02（判定各保險，含待人判斷的決定、登錄僱傭關係的期間屬性）、UC-03（登錄實際加保與投保薪資），共 11 支 API；其餘 27 支回 501。
 UC-01～UC-03 照 05_mapping 第六區走一遍，每一步只用前一步回應的欄位（`tests/test_gc01.py`）。
 
 尚未實作：系統排程（ContractTermStarts、ExpireWorkAuthorization、PromptStartConfirmation 等時間觸發的事件）、更正與註銷、個資相關的 API、外籍員工的工作許可登錄（R16、R18～R20、R59）。
@@ -43,6 +43,6 @@ UC-01～UC-03 照 05_mapping 第六區走一遍，每一步只用前一步回應
 程式裡的暫時做法都標了 `暫時：…（signoff.md #n）`，並列在 `slices/hire-employee/06_evidence/signoff.md`「實作時發現的設計問題」：
 
 - 等專家回覆的參數假設：#7 EQ-012、#8 EQ-003、#9 EQ-006、#10 EQ-008、#11 EQ-019、#12 EQ-023
-- 待處理的設計問題：無（#1～#6、#13～#20 已依設計修改）
+- 待處理的設計問題：無（#1～#6、#13～#21 已依設計修改）
 
 登入只是開發用（bearer token 等於 `user_accounts.user_id`）；正式的登入方式由平台決定（05_mapping D-09）。

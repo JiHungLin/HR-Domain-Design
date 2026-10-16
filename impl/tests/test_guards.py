@@ -14,7 +14,8 @@ def _hire(api, org, decided="2026-02-16", **extra):
 
 def _start(api, org, hire_id, **extra):
     return api("startEmployment", org["hr"], path={"id": hire_id},
-               json={"start_date": START, "work_location_id": str(org["location"]), **extra})
+               json={"start_date": START, "work_location_id": str(org["location"]),
+                     "public_or_military_insurance_covered": False, **extra})
 
 
 def test_r01_start_before_decision_blocked(api, org):

@@ -26,7 +26,8 @@ def judge(api, org, ref, person: dict, base="32000", docs=()):
         api("recordIdentityDocument", h, path={"id": hire["person_id"]}, expect=201,
             json={"issuing_jurisdiction_id": str(ref["tw"]), **d})
     started = api("startEmployment", h, path={"id": hire["hire_id"]}, expect=201,
-                  json={"start_date": START, "work_location_id": str(org["location"])}).json()
+                  json={"start_date": START, "work_location_id": str(org["location"]),
+                        "public_or_military_insurance_covered": False}).json()
     appl = api("getApplicability", h, path={"id": started["employment_id"]}, params={"on": START}, expect=200).json()
     return {i["scheme_code"]: i for i in appl["items"]}, appl
 

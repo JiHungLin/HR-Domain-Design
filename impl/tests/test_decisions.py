@@ -1,11 +1,14 @@
 """04 的回頭修改：公教或軍保（D-15）、待人判斷（D-16、D-19、D-20）、逾期（D-17）、錄用時的預估（D-18）。"""
 from datetime import date
 
+from bson import ObjectId
+
 from app.db import now, to_dt
 from tests.conftest import make_org
 from tests.test_applicability import EI, LI, LP, M, NA, OAI, START, national
 
 NEEDS = "APPLICABILITY.NEEDS_DECISION"
+INSUFFICIENT = "APPLICABILITY.INSUFFICIENT_DATA"
 
 
 def _hire(api, org, ref, *, allowances=(), person=None):
@@ -18,7 +21,8 @@ def _hire(api, org, ref, *, allowances=(), person=None):
 
 def _start(api, org, hire, **extra):
     return api("startEmployment", org["hr"], path={"id": hire["hire_id"]}, expect=201,
-               json={"start_date": START, "work_location_id": str(org["location"]), **extra}).json()
+               json={"start_date": START, "work_location_id": str(org["location"]),
+                     "public_or_military_insurance_covered": False, **extra}).json()
 
 
 def _current(api, org, **params):
@@ -103,6 +107,47 @@ def test_d20_choice_recorded_without_other_employer_in_system(api, db, ref):
     assert new["enrollment_proposal_id"] == out["proposal_id"]
     assert items[EI]["applicability"] == NA
     assert items[LI]["applicability"] == M                        # 其他保險不受影響
+
+
+def test_d21_public_or_military_unknown_is_insufficient_data(api, db, ref):
+    """公教或軍保未知 → 就保資料不足（04_rules D-21、docs/03 P12）；用 RecordEmploymentPeriod 補值（03_flows D-21）。"""
+    org = make_org(db, ref)
+    hire = _hire(api, org, ref)
+    pre, items = _current(api, org, hire_id=hire["hire_id"])          # 錄用時的預估：還沒登錄
+    assert items[EI]["applicability"] == INSUFFICIENT
+    assert items[LI]["applicability"] == M                         # 其他保險照常
+    # 到職時必填
+    r = api("startEmployment", org["hr"], path={"id": hire["hire_id"]},
+            json={"start_date": START, "work_location_id": str(org["location"])})
+    assert r.status_code == 422
+    started = _start(api, org, hire)
+    emp_id = started["employment_id"]
+    # 模擬 02-v4 之前建立的僱傭關係：沒有這個欄位
+    db.employments.update_one({"entity_id": ObjectId(emp_id), "is_current": True},
+                              {"$unset": {"public_or_military_insurance_covered": ""}})
+    appl = api("getApplicability", org["hr"], path={"id": emp_id}, params={"on": START}, expect=200).json()
+    assert {i["scheme_code"]: i for i in appl["items"]}[EI]["applicability"] == INSUFFICIENT
+    assert "Employment.public_or_military_insurance_covered" in appl["missing_data"]
+
+    # R64：起日要在僱傭期間內
+    r = api("recordEmploymentPeriod", org["hr"], path={"id": emp_id},
+            json={"public_or_military_insurance_covered": False, "from": "2026-03-01", "evidence": [{"kind": "聘書"}]})
+    assert r.status_code == 409 and r.json()["rule_id"] == "R64"
+    out = api("recordEmploymentPeriod", org["hr"], path={"id": emp_id}, expect=201,
+              json={"public_or_military_insurance_covered": False, "from": START, "evidence": [{"kind": "聘書"}]}).json()
+    assert out["employment_id"] == emp_id
+    _, items = _current(api, org, employment_id=emp_id)            # 補值後重新判定
+    assert items[EI]["applicability"] == M
+
+    # 職務改變：之後應參加公教或軍保，就保從那天起不適用，之前照舊
+    api("recordEmploymentPeriod", org["hr"], path={"id": emp_id}, expect=201,
+        json={"public_or_military_insurance_covered": True, "from": "2026-08-01", "evidence": [{"kind": "聘書"}]})
+    later = api("getApplicability", org["hr"], path={"id": emp_id}, params={"on": "2026-08-01"}, expect=200).json()
+    before = api("getApplicability", org["hr"], path={"id": emp_id}, params={"on": START}, expect=200).json()
+    assert {i["scheme_code"]: i for i in later["items"]}[EI]["applicability"] == NA
+    assert {i["scheme_code"]: i for i in before["items"]}[EI]["applicability"] == M
+    ev = db.events.find_one({"type": "RecordEmploymentPeriod", "subject.id": ObjectId(emp_id)})
+    assert ev["evidence"] == [{"kind": "聘書"}]
 
 
 def test_d17_overdue_is_on_proposal_not_a_warning(api, db, ref):

@@ -39,7 +39,8 @@ def uc01(api, org, ref, *, employee_number="E013", base="32000", allowances=None
     pre = api("listEnrollmentProposals", h, params={"hire_id": hire["hire_id"]}, expect=200).json()
     # 第 5 步：登錄到職
     started = api("startEmployment", h, path={"id": hire["hire_id"]}, expect=201, json={
-        "start_date": START, "work_location_id": str(org["location"]), "employee_number": employee_number}).json()
+        "start_date": START, "work_location_id": str(org["location"]), "employee_number": employee_number,
+        "public_or_military_insurance_covered": False}).json()
     return hire, pre, started
 
 

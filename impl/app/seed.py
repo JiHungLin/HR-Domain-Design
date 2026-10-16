@@ -79,7 +79,7 @@ def grading_tables() -> dict[str, list[dict]]:
 
 D2026 = date(2026, 1, 1)
 # 04_rules 版本欄為「—」的規則，以規則所在的 04 凍結版本為版本、修訂 1（05_mapping D-20）
-RULE_SET = "hire-employee/04-v4"
+RULE_SET = "hire-employee/04-v5"
 
 
 def rules() -> list[tuple]:
