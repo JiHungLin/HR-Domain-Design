@@ -9,7 +9,7 @@
 |---|---|
 | 狀態 | 已同意（JiHungLin，2026-10-05） |
 | 最後更新 | 2026-10-19 |
-| 依據 | 名詞 46 個：現場資料 23、公開來源 20、推想 3。統計按每列最高一級的依據計（見 PLAN.md D-14）；46 個中有 15 個引用了推想草稿 |
+| 依據 | 名詞 49 個：現場資料 26、公開來源 20、推想 3。統計按每列最高一級的依據計（見 PLAN.md D-14）；49 個中有 15 個引用了推想草稿 |
 
 ## 名詞
 
@@ -34,9 +34,12 @@
 | WarningOverride（警告忽略紀錄） | 見 core/entities.md | core | 針對任何會被規則檢查的資料；引用規則與版本 | 全部 | hire-employee | inputs/shared/範圍釐清_法規警告不阻擋.md；PLAN.md D-27 | 已定義 |
 | DataSubjectRequest（個資請求） | 見 core/entities.md | core | 由 Person 提出 | hire-employee、resignation | hire-employee | inputs/research/員工個人資料.md（§3）；PLAN.md D-29 | 已定義 |
 | PersonalDataArchival（個資封存） | 見 core/entities.md | core | 屬於 Person | hire-employee、resignation | hire-employee | inputs/shared/範圍釐清_個資封存與去識別.md；research/員工個人資料.md（§11） | 已定義 |
-| CompanyPolicy（公司規定） | 客戶在法令範圍內自訂、對員工更有利的規定（例：特休多給） | shared | 由 Tenant 或 Employer 訂定；調整某個 Jurisdiction 的法令規則；適用於全部或部分 Employment；可以定義 LeaveType、HolidayCalendar | annual-leave-grant、annual-leave-request、overtime、monthly-payroll、unpaid-leave-deduction、resignation、second-country-hire | annual-leave-grant | inputs/shared/範圍釐清_P-01_優於法令.md；research/勞動契約與年資.md（§1、§70 工作規則） | 草圖 |
-| LeaveType（假別） | 一種假（特休、病假、事假…），由法令或公司規定產生 | domain | 由 Jurisdiction 或 CompanyPolicy 定義；LeaveEntitlement、LeaveRequest 屬於某個假別 | annual-leave-grant、annual-leave-request、unpaid-leave-deduction、second-country-hire、assignment-leave | annual-leave-grant | inputs/research/請假.md | 草圖 |
-| LeaveEntitlement（請假權利） | 員工因年資、事件或規定取得的請假權利，有額度與有效期間 | domain | 屬於 Employment；屬於 LeaveType；來源是法令或 CompanyPolicy；被 LeaveOccurrence 扣用；年度終結或離職時轉為工資的部分產生 PayItem | annual-leave-grant、annual-leave-request、monthly-payroll、unpaid-leave-deduction、resignation、second-country-hire、assignment-leave、cross-border-transfer、seniority-recognition、leave-of-absence | annual-leave-grant | inputs/shared/範圍釐清_P-15_P-16.md（D-15）；research/特別休假.md、聯邦與紐約.md（按工時累積的病假） | 草圖 |
+| CompanyPolicy（公司規定） | 見 core/entities.md | shared | 屬於 Tenant，可以限定某個 Employer；關於某個 LeaveType（因此調整該假別所屬 Jurisdiction 的法令規則）；適用於全部或部分 Employment；可以定義 LeaveType、HolidayCalendar；是 LeaveYearAgreement 的預設 | annual-leave-grant、annual-leave-request、overtime、monthly-payroll、unpaid-leave-deduction、resignation、second-country-hire | annual-leave-grant | inputs/shared/範圍釐清_P-01_優於法令.md；research/勞動契約與年資.md（§1、§70 工作規則） | 已定義 |
+| LeaveType（假別） | 見 core/entities.md | domain | 由 Jurisdiction 或 CompanyPolicy 定義；LeaveEntitlement、LeaveRequest、LeaveYearAgreement 屬於某個假別；取得方式（依年資一次給予、依工時累積）由給予的規則決定，不放在假別上 | annual-leave-grant、annual-leave-request、unpaid-leave-deduction、second-country-hire、assignment-leave | annual-leave-grant | inputs/research/請假.md | 已定義 |
+| LeaveEntitlement（請假權利） | 見 core/entities.md | domain | 屬於 Employment；屬於 LeaveType；來源是法令或 CompanyPolicy；給予時依 LeaveYearAgreement 或 CompanyPolicy 的預設年度；遞延進來的一筆連回原來那一筆與 LeaveDeferralAgreement；額度有單位（日、小時）；被 LeaveOccurrence 扣用；年度終結或離職時轉為工資（或公司規定的部分失效）記成 LeaveConversion | annual-leave-grant、annual-leave-request、monthly-payroll、unpaid-leave-deduction、resignation、second-country-hire、assignment-leave、cross-border-transfer、seniority-recognition、leave-of-absence | annual-leave-grant | inputs/shared/範圍釐清_P-15_P-16.md（D-15）；research/特別休假.md、聯邦與紐約.md（按工時累積的病假） | 已定義 |
+| LeaveYearAgreement（特休年度約定） | 見 core/entities.md | domain | 屬於 Employment；屬於 LeaveType；沒有約定時套用 CompanyPolicy 的預設；LeaveEntitlement 給予時依據它 | annual-leave-grant、annual-leave-request | annual-leave-grant | inputs/annual-leave-grant/範圍釐清_原文對照修正.md（A）；research/特別休假.md（#02 細則 §24 第 2 項） | 已定義 |
+| LeaveDeferralAgreement（遞延協商） | 見 core/entities.md | domain | 屬於 Employment；針對一筆 LeaveEntitlement；遞延進來的 LeaveEntitlement 依據它 | annual-leave-grant、annual-leave-request、resignation | annual-leave-grant | inputs/annual-leave-grant/範圍釐清_第一次.md（第 3 點）；research/特別休假.md（#01 §38 第 4 項、#03 細則 §24-1） | 已定義 |
+| LeaveConversion（請假權利轉換） | 見 core/entities.md | domain | 來自 LeaveEntitlement；更正差額指回被更正的那一次；被 PayItem 引用 | annual-leave-grant、monthly-payroll、resignation、cross-border-transfer | annual-leave-grant | inputs/annual-leave-grant/範圍釐清_第一次.md（第 3 點）；research/特別休假.md（#01 §38 第 4 項、#03 細則 §24-1） | 已定義 |
 | LeaveRequest（請假申請） | 員工提出的請假申請 | domain | 由 Person 為某段 Employment 提出；指定 LeaveType；經過 Approval；可以附 Evidence | annual-leave-request、unpaid-leave-deduction、internal-transfer、assignment-leave | annual-leave-request | inputs/research/請假.md（請假規則 §10）；drafts/一般請假與簽核流程.md | 草圖 |
 | LeaveOccurrence（請假事實） | 實際請假的時段，會扣用請假權利 | domain | 源自 LeaveRequest；扣用 LeaveEntitlement；對應 ShiftAssignment；影響 AttendanceRecord 與 PayItem | annual-leave-request、shift-attendance、monthly-payroll、unpaid-leave-deduction、assignment-leave | annual-leave-request | inputs/drafts/一般請假與簽核流程.md | 草圖 |
 | Position（職位） | 組織中的一個職位，包含主管職；用來找出核准人 | shared | 屬於 OrgUnit；由 Employment 擔任 | annual-leave-request、overtime、unpaid-leave-deduction、internal-transfer | annual-leave-request | inputs/drafts/一般組織與法人結構.md | 草圖 |
@@ -50,7 +53,7 @@
 | Compensation（約定薪資） | 僱傭關係約定的薪資：計薪方式（月薪或時薪）、金額、幣別，會隨時間調整 | shared | 屬於 Employment；是 Payslip 的計算基礎 | monthly-payroll、social-insurance、hourly-payroll、resignation、second-country-hire、assignment-payroll | monthly-payroll | inputs/shared/範圍釐清_試用期.md；research/工資與最低工資.md（§21）、勞動契約與年資.md（細則 §7） | 草圖 |
 | PayrollPeriod（計薪期間） | 一次薪資結算涵蓋的期間（例：某年某月） | domain | 由 Employer 結算；包含 Payslip | monthly-payroll、social-insurance、unpaid-leave-deduction、hourly-payroll、resignation、second-country-hire、assignment-payroll | monthly-payroll | inputs/research/工資與最低工資.md（§23） | 草圖 |
 | Payslip（薪資單） | 某人在某計薪期間的薪資結果 | domain | 屬於 Employment 與 PayrollPeriod；由 Employer 發放；包含 PayItem | monthly-payroll、social-insurance、unpaid-leave-deduction、hourly-payroll、resignation、second-country-hire、assignment-payroll | monthly-payroll | inputs/research/工資與最低工資.md（細則 §14-1） | 草圖 |
-| PayItem（薪資項目） | 薪資單上的一行（底薪、加班費、請假扣款、保險自付額…） | domain | 屬於 Payslip；可以追溯到來源（AttendanceRecord、LeaveOccurrence、OvertimeRequest、InsuranceEnrollment、LeaveEntitlement） | monthly-payroll、social-insurance、unpaid-leave-deduction、hourly-payroll、resignation、second-country-hire、assignment-payroll | monthly-payroll | inputs/shared/範圍釐清_P-15_P-16.md（D-16）；research/工資與最低工資.md（細則 §14-1）；drafts/一般薪資結構與計薪流程.md | 草圖 |
+| PayItem（薪資項目） | 薪資單上的一行（底薪、加班費、請假扣款、保險自付額…） | domain | 屬於 Payslip；可以追溯到來源（AttendanceRecord、LeaveOccurrence、OvertimeRequest、InsuranceEnrollment、LeaveConversion） | monthly-payroll、social-insurance、unpaid-leave-deduction、hourly-payroll、resignation、second-country-hire、assignment-payroll | monthly-payroll | inputs/shared/範圍釐清_P-15_P-16.md（D-16）；research/工資與最低工資.md（細則 §14-1）；drafts/一般薪資結構與計薪流程.md | 草圖 |
 | DependentRelation（眷屬關係） | 一個人是另一個人的眷屬（例：健保依附加保） | shared | 連結兩個 Person；被 InsuranceEnrollment 涵蓋 | social-insurance | social-insurance | inputs/research/全民健康保險.md（§2） | 草圖 |
 | Evidence（佐證） | 支持一項申請或事實的文件（例：診斷證明） | core | 附於 LeaveRequest | unpaid-leave-deduction | unpaid-leave-deduction | inputs/research/請假.md（請假規則 §10） | 草圖 |
 | Separation（離職） | 僱傭關係結束這件事，包含原因與最後工作日 | shared | 結束 Employment；觸發 InsuranceEnrollment 退保、LeaveEntitlement 結算、最後一期 Payslip | hire-employee（只記錄結束日與原因，PLAN.md D-22）、resignation、cross-border-transfer、seniority-recognition | resignation | inputs/shared/範圍釐清_第一次.md（到職離職）；research/離職與資遣.md；drafts/一般離職流程.md | 草圖 |
@@ -101,9 +104,13 @@ hire-employee 正式定義這些名詞時，要能支撐下列需求；做不到
 
 ### 其他不確定
 - EmploymentContract 要不要和 Employment 合併成一個名詞，由 hire-employee 第 ② 步決定。
-- LeaveType 可能是分類值而不是 Entity；如果法令和公司規定都只是在固定清單裡選，用分類值就夠了。由 annual-leave-grant 第 ② 步決定。
+- LeaveType 可能是分類值而不是 Entity；如果法令和公司規定都只是在固定清單裡選，用分類值就夠了。由 annual-leave-grant 第 ② 步決定。→ annual-leave-grant 第 ② 步判定為 Entity（參考資料）：客戶會自訂假別，假別由管轄區訂定（02_entities D-10）。
 - 台灣的變形工時、輪班制度可能需要比 Shift 更多的名詞（例：工時制度）；目前沒有切片涵蓋，到 shift-attendance 第 ① 步再看。
 - 台灣的薪資所得扣繳是否算在 social-insurance 的「實發金額」裡，待 P-13；若是，TaxWithholdingElection 改由 social-insurance 正式定義。
+- **依工時累積的假（annual-leave-grant 02_entities D-09）**：LeaveEntitlement 的特休是「取得時凍結」的一筆（D-03）；紐約病假依工時累積 `[未核對]`，額度會隨工時增加。累積型是一年一筆、額度可以增加，還是每次累積一筆，由 second-country-hire 第 ② 步決定。
+- **以小時請以日計的假**：LeaveEntitlement 的額度有單位，衍生的量沿用它的單位；請假事實以小時記時，一日幾小時（因人因時不同）凍結在哪裡，由 annual-leave-request 第 ② 步決定（annual-leave-grant X-19）。
+- **兩種假共用一個額度**：例如某些假別併入事假的日數計算 `[未核對]`，LeaveEntitlement 目前一筆只屬於一個 LeaveType；由 unpaid-leave-deduction 第 ② 步決定怎麼表示。
+- **轉任或改組留用時，未休特休由新的僱傭關係承接（annual-leave-grant EQ-010）**：LeaveEntitlement 屬於一段 Employment，LeaveConversion 這一階段只有「轉為工資」「失效」；如果實務上由新雇主承接，由 seniority-recognition 或 cross-border-transfer 加上轉入另一筆的方式。
 - assignment-payroll 的幣別換算可能需要「匯率」這個名詞；目前不列，到該切片第 ① 步再看。
 - 同一段 Employment 有多個工作地點（例：一半遠距），目前不列，到 second-country-hire 第 ① 步再看。
 

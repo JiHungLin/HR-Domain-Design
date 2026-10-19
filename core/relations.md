@@ -42,5 +42,22 @@
 | DataSubjectRequest | fromPerson（當事人） | Person | 1 | 無 | 個資請求由當事人提出 | [候選] | hire-employee（② @ hire-employee/02-v1） | |
 | WorkAuthorization | replaces（取代） | WorkAuthorization | 0..1 | 無 | 移工轉換雇主時，新雇主的聘僱許可取代舊的；第一份許可沒有 | [候選] | hire-employee（② @ hire-employee/02-v1） | |
 | WarningOverride | concernsHire（針對錄用） | Hire | 0..1 | 無 | 到職前的警告（例：錄用時約定的月薪低於最低工資）；和 concernsEmployment 至少有一個（第 ④ 步規則） | [候選] | hire-employee（② @ hire-employee/02-v1） | |
-| WarningOverride | concernsEmployment（針對僱傭關係） | Employment | 0..1 | 無 | 到職後的警告；用來回答「哪些員工帶著未處理的警告」（Q20） | [候選] | hire-employee（② @ hire-employee/02-v1） | |
+| WarningOverride | concernsEmployment（針對僱傭關係） | Employment | 0..1 | 無 | 到職後的警告；用來回答「哪些員工帶著未處理的警告」（Q20） | [候選] | hire-employee（② @ hire-employee/02-v1） | annual-leave-grant（② @ annual-leave-grant/02-v1） |
 | PersonalDataArchival | ofPerson（封存誰的個資） | Person | 1 | 無 | 一個人可以有多次封存（例：A 公司離職封存，回任 B 公司時部分解除，之後再封存） | [候選] | hire-employee（② @ hire-employee/02-v1） | |
+| LeaveType | establishedBy（由…訂定） | Jurisdiction | 0..1 | 無 | 法令訂定的假別屬於一個管轄區；之後公司自訂的假別沒有管轄區（由公司規定訂定的關係到那時再加），所以不是 1 | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| CompanyPolicy | belongsToTenant（屬於客戶） | Tenant | 1 | 無 | 公司規定一定屬於某個客戶 | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| CompanyPolicy | ofEmployer（屬於雇主） | Employer | 0..1 | 無 | 通常由某個雇主訂定（工作規則以雇主為單位）；同集團各雇主共用的規定可以不限雇主（同 OrgUnit 的做法，D-11） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| CompanyPolicy | concernsLeaveType（關於假別） | LeaveType | 0..1 | 無 | 特休加給、特休年度預設都針對某個假別；之後其他切片的公司規定（例：加班費倍率）不一定針對假別 | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveYearAgreement | forEmployment（為哪段僱傭關係） | Employment | 1 | 無 | 約定是員工在這段僱傭關係中和雇主談的；換雇主是新的一段，要重新約定 | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveYearAgreement | ofLeaveType（屬於假別） | LeaveType | 1 | 無 | 年度是對某種假約定的；這版只有特休 | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveEntitlement | forEmployment（為哪段僱傭關係） | Employment | 1 | 無 | 特休依同一雇主的年資給，屬於一段僱傭關係；轉任或改組留用時能不能由新的一段承接，待 EQ-010（D-06） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveEntitlement | ofLeaveType（屬於假別） | LeaveType | 1 | 無 | 每一筆都是某一種假；兩種假共用一個額度（例：其他假別併入事假計算）由之後的切片判斷（ENTITY_SKETCH 不確定的地方） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveEntitlement | grantedUnderPolicy（依公司規定給予） | CompanyPolicy | 0..1 | 無 | 來源是公司規定的才有；法定的沒有（Q04、Q09）。依哪一版記在 `basis_rule_versions` | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveEntitlement | deferredFrom（遞延自） | LeaveEntitlement | 0..1 | 無 | 遞延進來的那筆指向原來的一筆；一筆原特休最多遞延出一筆（第 ④ 步規則）；補登遞延的沒有原來那筆可以指（D-05） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveEntitlement | deferredUnder（依遞延協商） | LeaveDeferralAgreement | 0..1 | 無 | 系統遞延進來的那筆一定有，而且只有一筆（一筆原特休只有一筆有效的協商，X-12）；補登遞延的、其他來歷的沒有（D-05） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveDeferralAgreement | forEmployment（為哪段僱傭關係） | Employment | 1 | 無 | 協商是員工在這段僱傭關係中和雇主談的 | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveDeferralAgreement | defersEntitlement（遞延哪一筆） | LeaveEntitlement | 1 | 無 | 每一筆特休延多少是雙方談定的事實（X-13），所以協商一筆對一筆；反過來一筆特休同一時間最多一筆有效的協商（第 ④ 步規則，X-12） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveEntitlement | appliedYearAgreement（依特休年度約定） | LeaveYearAgreement | 0..1 | 無 | 依規則給予、而且員工有個別約定時才有；和 appliedYearDefault 最多一個（第 ④ 步規則；Q03、Q09，D-04） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveEntitlement | appliedYearDefault（依公司預設的特休年度） | CompanyPolicy | 0..1 | 無 | 員工沒有個別約定、套用雇主預設時才有，看得出是套用預設（01_scope D-12）；只能指到事項為「特休年度預設」的規定（第 ④ 步規則）；兩者都沒有時怎麼辦是第 ④ 步的規則（EQ-002） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveConversion | convertsFrom（從哪一筆轉換） | LeaveEntitlement | 1 | 無 | 每次轉換都來自一筆請假權利；一筆可以有多次轉換（年度終結、更正差額、契約終止） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveConversion | correctsConversion（更正哪一次轉換） | LeaveConversion | 0..1 | 無 | 更正差額才有，指回被更正的那一次；原判定沒有（D-06） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |

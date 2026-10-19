@@ -14,6 +14,13 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-19　annual-leave-grant/02-v1　②　凍結
+- 改了什麼：初版。引用 core 的 7 個 Entity（Tenant、Person、Employer、Jurisdiction、Employment、EmploymentContract、WarningOverride），都不修改；新增 6 個 Entity：LeaveType（假別，參考資料）、CompanyPolicy（公司規定：特休加給、特休年度預設）、LeaveYearAgreement（特休年度約定，週年制或固定起始日的年度）、LeaveEntitlement（請假權利，以「一筆」為單位、額度有單位；依規則給予的是取得時凍結的事實，D-03）、LeaveDeferralAgreement（遞延協商，一筆對一筆）、LeaveConversion（請假權利轉換：轉為工資或失效，已交給薪資的不改、更正記差額，D-06）；關係 17 條；「不是 Entity」約 30 列（餘額類都是推導值，事件交第 ③ 步、規則資料交第 ④ 步）；決定 D-01～D-18；變更提案：無。專家問題 EQ-002 追加一題，新增 EQ-009、EQ-010（待問）。全局名詞草圖新增 3 個名詞、調整 4 列（記在 slices/CHANGELOG.md）
+- 依據：01_scope.md @ annual-leave-grant/01-v1；core/ @ ca04a27；slices/ENTITY_SKETCH.md、slices/PLAN.md @ ca04a27（D-09、D-15、D-27、D-28、D-31、D-38）；docs/03 P2、P3、P5、P11；inputs/research/特別休假.md #01～#04
+- 反例處理：X-01～X-19 共 19 個，來源都是 AI 挑錯（另開 context 的挑錯子代理兩輪：X-01～X-11、X-12～X-19）；接受並修改 17 個，轉問專家 2 個（X-07 → EQ-002、X-10 → EQ-010），拒絕 0 個
+- 審查期間的修改：送審後沒有逐筆記的修改（沒有改變設計）；整理性修改 1 處：D-01～D-18 的「提出／同意」由「AI／待確認」改為「AI／JiHungLin（2026-10-19）」（使用者在對話中同意）
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-19，審查重點 9 列與抽查：每張新卡都有「不是什麼」「不能跟誰合併」「主要屬性」，每個新增的 Entity 至少被一條驗收問題用到）
+
 ## 2026-10-19　annual-leave-grant/01-v1　①　凍結
 - 改了什麼：初版。範圍：依年資給予特休（勞基法第 38 條天數表），週年制或曆年制依每位員工與雇主的約定、雇主可登記預設（D-12）；公司多給只做「在取得法定特休的同一天多給」（D-13）；告知員工排定特休的 30 日期限與實際告知日；年度終結時未休天數遞延或轉為工資的判定（算到天數、依哪個年度終結計算、發給期限；金額與每年書面通知歸 monthly-payroll，PLAN.md D-38）；年度終結之前就離職的交給 resignation（D-15）；例外：補登員工、到職日更正、未滿 6 個月離職；依法應合併的年資只對一種情況警告（D-11），由 seniority-recognition 補上；留職停薪由 leave-of-absence 補上（D-07）。模式完整，大小剛好；草稿 User Story 11 個（例外 6 個，全部由 AI 撰寫）、驗收問題 14 條（P0 5 條，全部待專家確認）、決定 D-01～D-15、專家問題 EQ-001～EQ-008（待問）
 - 依據：slices/PLAN.md（annual-leave-grant 列、D-36、D-37、D-38）；inputs/annual-leave-grant/範圍釐清_第一次.md、範圍釐清_原文對照修正.md；inputs/shared/ 的範圍釐清檔（P-01、補登員工、更正不需核准、法規警告不阻擋、年資合併切片、留職停薪切片、年度終結未休工資歸屬）；inputs/research/特別休假.md #01～#04、勞動契約與年資.md #04～#08、#10、期間計算.md #02、#03、請假.md #05、#14

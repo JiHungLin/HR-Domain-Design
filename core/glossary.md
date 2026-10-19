@@ -213,3 +213,64 @@
 | AnnulEntry | 事件 | 註銷一筆誤登的事件，狀態依其餘事件重新推導 | 註銷誤登 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | RevokeAnnulment | 事件 | 撤銷一筆註銷，原事件恢復 | 撤銷註銷 | | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | NotifySignificantCorrection | 事件 | 重大更正或註銷後，通知雇主並列入重大更正清單 | 通知重大更正 | 建議層 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| LeaveType | Entity | 一種假，由某個管轄區的法令（之後也可以由公司規定）訂定 | 假別 | 不同管轄區的同名假是不同的假別（例：台灣特休與日本年次有給休暇） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveType.code | 屬性 | 假別的代碼 | 代碼 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveType.name | 屬性 | 假別的名稱 | 名稱 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| CompanyPolicy | Entity | 客戶或雇主在法令允許的範圍內訂定的一條規定 | 公司規定 | 內容是規則資料，依版本保存 | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| CompanyPolicy.name | 屬性 | 公司規定的名稱 | 名稱 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| CompanyPolicy.subject | 屬性 | 公司規定的事項（特休加給、特休年度預設等） | 規定事項 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| CompanyPolicy.source_note | 屬性 | 公司規定的依據說明（工作規則、公司公告等） | 依據說明 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| CompanyPolicy.effective_from | 屬性 | 公司規定第一次生效的日子 | 生效日 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| CompanyPolicy.effective_to | 屬性 | 公司規定的廢止日 | 廢止日 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveYearAgreement | Entity | 員工與雇主協商某種假用哪一種年度計算可休期間 | 特休年度約定 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveYearAgreement.leave_year_basis | 屬性 | 約定的年度種類：週年制或固定起始日的年度 | 年度種類 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveYearAgreement.year_start | 屬性 | 固定起始日年度的起始月日；曆年制是 1 月 1 日 | 年度起始月日 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveYearAgreement.effective_from | 屬性 | 約定從哪天起適用 | 適用起日 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveYearAgreement.agreed_on | 屬性 | 協商的日期 | 協商日 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveYearAgreement.agreement_note | 屬性 | 協商方式的說明 | 協商說明 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement | Entity | 員工在一段僱傭關係中拿到的一筆可以休的假 | 請假權利 | 權益帳的單位（PLAN.md D-15） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.source | 屬性 | 這筆假的來源：法定或公司規定 | 來源 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.origin | 屬性 | 這筆假怎麼來的：依規則給予、遞延進來、補登當期、補登遞延 | 來歷 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.period_sequence | 屬性 | 依規則給予的第幾期 | 期別 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.seniority_tier | 屬性 | 依哪一級年資給的 | 年資級別 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.acquired_on | 屬性 | 取得這筆權利的那天 | 取得日 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.quantity | 屬性 | 給予、遞延進來或補登的額度 | 額度 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.unit | 屬性 | 額度的單位：日或小時 | 單位 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.valid_from | 屬性 | 可休期間的起日 | 可休起日 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.valid_to | 屬性 | 可休期間的迄日，也就是年度終結日 | 可休迄日 | 台灣法令稱「年度終結」 | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.leave_year_basis | 屬性 | 給予時依哪一種年度 | 依據的年度種類 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.basis_rule_versions | 屬性 | 給予時依據的規則版本，每一種規則一筆 | 依據的規則版本 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.basis_seniority | 屬性 | 取得日當時算出的年資 | 依據的年資 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.basis_start_date | 屬性 | 給予時依據的到職日 | 依據的到職日 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.notified_on | 屬性 | 雇主實際告知員工排定特休的日期 | 告知日 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.notice_due_on | 屬性 | 雇主告知的期限（推導） | 告知期限 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.pre_system_used_quantity | 屬性 | 補登的那筆在開始由系統管理以前已休的數量 | 系統管理前已休 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.registered_original_year_end | 屬性 | 補登遞延的那筆，原年度的終結日 | 原年度終結日（補登） | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.used_quantity | 屬性 | 已休的數量（推導） | 已休 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.deferred_out_quantity | 屬性 | 遞延出去的數量（推導） | 遞延出去 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.converted_quantity | 屬性 | 轉為工資的數量（推導） | 轉為工資 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.expired_quantity | 屬性 | 失效的數量（推導） | 失效 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.remaining_quantity | 屬性 | 還可以休的數量（推導） | 剩餘 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveDeferralAgreement | Entity | 員工與雇主協商把一筆特休年度終結沒休完的部分遞延到下一年度 | 遞延協商 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveDeferralAgreement.agreed_on | 屬性 | 協商遞延的日期 | 協商日 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveDeferralAgreement.deferred_quantity | 屬性 | 這一筆協商遞延的額度 | 協商遞延額度 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveDeferralAgreement.agreement_note | 屬性 | 協商方式與憑據的說明 | 協商說明 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveConversion | Entity | 一筆請假權利中轉成工資或失效的一批額度 | 請假權利轉換 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveConversion.reason | 屬性 | 轉換的原因：年度終結或契約終止 | 轉換原因 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveConversion.target | 屬性 | 轉成什麼：工資或失效 | 轉換對象 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveConversion.quantity | 屬性 | 轉換的額度；更正差額可以是負數 | 轉換額度 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveConversion.determined_on | 屬性 | 判定轉換的日期 | 判定日 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveConversion.basis_rule_versions | 屬性 | 判定時依據的規則版本 | 依據的規則版本 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveConversion.correction_cause | 屬性 | 更正差額的原因 | 更正原因 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveConversion.wage_basis_date | 屬性 | 工資計算基準日，判定時算出後凍結 | 工資計算基準日 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveConversion.payment_due_on | 屬性 | 發給工資的期限，判定時算出後凍結 | 發給期限 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| concernsLeaveType | 關係 | 公司規定關於某個假別 | 關於假別 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| ofLeaveType | 關係 | 請假權利或特休年度約定屬於某個假別 | 屬於假別 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| grantedUnderPolicy | 關係 | 請假權利依某條公司規定給予 | 依公司規定給予 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| deferredFrom | 關係 | 遞延進來的請假權利來自原來的一筆 | 遞延自 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| deferredUnder | 關係 | 遞延進來的請假權利依某次遞延協商 | 依遞延協商 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| defersEntitlement | 關係 | 遞延協商針對哪一筆請假權利 | 遞延哪一筆 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| appliedYearAgreement | 關係 | 請假權利給予時依某筆特休年度約定 | 依特休年度約定 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| appliedYearDefault | 關係 | 請假權利給予時套用某條公司規定的預設年度 | 依公司預設年度 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| convertsFrom | 關係 | 轉換來自某一筆請假權利 | 轉換自 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| correctsConversion | 關係 | 更正差額指回被更正的那一次轉換 | 更正 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |

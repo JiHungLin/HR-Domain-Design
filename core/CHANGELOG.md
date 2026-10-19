@@ -2,6 +2,11 @@
 
 <!-- 只新增，最新的在最上面。記錄：切片項目以 [候選] 合併、升為 [已驗證]、套用變更提案、平行切片撞號重編。格式同切片 CHANGELOG.md -->
 
+## 2026-10-19　annual-leave-grant/02-v1　②　凍結
+- 改了什麼：entities.md 新增 6 個 Entity：LeaveType、CompanyPolicy、LeaveYearAgreement、LeaveEntitlement、LeaveDeferralAgreement、LeaveConversion；relations.md 新增 17 條關係；glossary.md 新增 61 列（Entity 6、屬性 45、關係 10）；皆 [候選]，出處 annual-leave-grant（② @ annual-leave-grant/02-v1）。被引用加上 annual-leave-grant：Entity Tenant、Person、Employer、Jurisdiction、Employment、EmploymentContract、WarningOverride，關係 WarningOverride concernsEmployment。既有項目的內容都沒有修改
+- 依據：slices/annual-leave-grant/02_entities.md @ annual-leave-grant/02-v1（D-01～D-18）
+- 產出者：AI（Claude）；審查者：JiHungLin；核心負責人：待審閱
+
 ## 2026-10-16　hire-employee/03-v6、hire-employee/04-v5　③④　凍結（回頭修改）
 - 改了什麼：flows.md 新增事件 RecordEmploymentPeriod，更新 StartEmployment、RegisterExistingEmployment（公教或軍保必填）、ProposeEnrollmentFiling（觸發來源），出處 hire-employee/03-v6；glossary.md 新增 RecordEmploymentPeriod；rules.md R24（未知 → 資料不足）、R60 更新，新增 R64，出處 hire-employee/04-v5；皆 [候選]
 - 依據：slices/hire-employee 03_flows.md D-21、04_rules.md D-21、D-22（起因：實作回報 signoff.md #21；docs/03 P12）

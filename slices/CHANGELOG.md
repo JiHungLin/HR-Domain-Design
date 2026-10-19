@@ -12,6 +12,20 @@
 - 同意者：
 -->
 
+### 2026-10-19　SKETCH　annual-leave-grant 第 ② 步凍結：6 個名詞改為已定義
+- 改了什麼：CompanyPolicy、LeaveType、LeaveEntitlement、LeaveYearAgreement、LeaveDeferralAgreement、LeaveConversion 的狀態 草圖 → 已定義，「一句意思」改為「見 core/entities.md」
+- 依據：slices/annual-leave-grant/02_entities.md @ annual-leave-grant/02-v1；core/entities.md
+- 舊 → 新：已定義的名詞 +6；名詞總數不變（49）
+- 影響：後續切片引用 core/ 的正式定義
+- 同意者：JiHungLin（2026-10-19，/domain-freeze 2）
+
+### 2026-10-19　SKETCH　annual-leave-grant 第 ② 步：新增 3 個名詞、調整 4 列
+- 改了什麼：新增 LeaveYearAgreement（特休年度約定）、LeaveDeferralAgreement（遞延協商）、LeaveConversion（請假權利轉換），都由 annual-leave-grant 定義；CompanyPolicy 的意思加上「特休年度預設」，關係改為屬於 Tenant、可以限定 Employer、關於某個 LeaveType；LeaveType 判定為 Entity（「其他不確定」那一條註明結果），取得方式不放在假別上；LeaveEntitlement 改為「一筆」為單位、額度有單位，轉為工資或失效的部分改記成 LeaveConversion；PayItem 的追溯來源 LeaveEntitlement → LeaveConversion；「其他不確定」加上依工時累積、以小時請以日計的假、共用額度、轉任或留用時的承接四條
+- 依據：slices/annual-leave-grant/02_entities.md D-04、D-05、D-06、D-09、D-10、D-11、D-18；X-05、X-06、X-10、X-12、X-13、X-19
+- 舊 → 新：名詞 46 → 49；統計 現場 23、公開 20、推想 3 → 現場 26、公開 20、推想 3；引用推想草稿的仍是 15 個
+- 影響：monthly-payroll 定義 PayItem 時引用 LeaveConversion；resignation 的離職折算用同一個 LeaveConversion（原因：契約終止）；annual-leave-request 扣用時要分得出當期與遞延進來的那一筆；second-country-hire、unpaid-leave-deduction、seniority-recognition、cross-border-transfer 的第 ② 步要處理新增的三條不確定
+- 同意者：JiHungLin（2026-10-19，第 ② 步審查通過、D-18 同意）
+
 ### 2026-10-19　PLAN、SKETCH　開頭區依據統計重新計數
 - 改了什麼：PLAN 與 SKETCH 開頭區「依據」的統計，依 D-14（每列最高一級）逐列重新計數；只改統計，切片、名詞與各列依據都沒有改
 - 依據：PLAN.md 切片表與 ENTITY_SKETCH.md 名詞表的「依據」欄；D-14
