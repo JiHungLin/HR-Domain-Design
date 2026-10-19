@@ -12,6 +12,13 @@
 - 同意者：
 -->
 
+### 2026-10-19　PLAN、SKETCH　開頭區依據統計重新計數
+- 改了什麼：PLAN 與 SKETCH 開頭區「依據」的統計，依 D-14（每列最高一級）逐列重新計數；只改統計，切片、名詞與各列依據都沒有改
+- 依據：PLAN.md 切片表與 ENTITY_SKETCH.md 名詞表的「依據」欄；D-14
+- 舊 → 新：PLAN 切片 18 條（現場 8、公開 9、推想 1；18 條中 12 條引用推想草稿）→ 20 條（現場 11、公開 8、推想 1；20 條中 12 條）。差異來源：新增 seniority-recognition、leave-of-absence 後沒更新（現場 +2）；monthly-payroll 自 2026-10-06（d3f7d6b）依據加入 inputs/shared/範圍釐清_試用期.md 後已屬現場資料，統計一直沒跟著改（公開 −1、現場 +1）。SKETCH 名詞 46 個（現場 21、公開 22、推想 3；「34 個中」15 個引用推想草稿）→ 現場 23、公開 20、推想 3；46 個中 15 個。舊的分項少算 2 個現場資料，「34 個」是更早的名詞數沒跟著改
+- 影響：無；只是統計數字
+- 同意者：JiHungLin（2026-10-19，對話中要求修正）
+
 ### 2026-10-19　PLAN、SKETCH　年度終結的未休特休工資與每年書面通知歸 monthly-payroll
 - 改了什麼：PLAN 新增 D-38；annual-leave-grant 列的情境補上年度終結的判定、會碰到的領域加人資／薪資、依據加細則 §24-1；monthly-payroll 列的情境補上特休年度終結轉為工資的天數與每年書面通知、依賴加 annual-leave-grant、依據加特別休假.md（§38 第 5 項、細則 §24-1、§24-2）。SKETCH 的 LeaveEntitlement 改為「年度終結或離職時轉為工資的部分產生 PayItem」、會用到的切片加 monthly-payroll；「特休年度可以選」改為依每位員工與雇主的約定（annual-leave-grant D-12）
 - 依據：annual-leave-grant 01_scope X-22、X-24、D-12；research/特別休假.md #01、#03、#04；inputs/shared/範圍釐清_年度終結未休工資歸屬.md
