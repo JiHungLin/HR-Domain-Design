@@ -12,6 +12,48 @@
 - 同意者：
 -->
 
+### 2026-10-19　PLAN、SKETCH　年度終結的未休特休工資與每年書面通知歸 monthly-payroll
+- 改了什麼：PLAN 新增 D-38；annual-leave-grant 列的情境補上年度終結的判定、會碰到的領域加人資／薪資、依據加細則 §24-1；monthly-payroll 列的情境補上特休年度終結轉為工資的天數與每年書面通知、依賴加 annual-leave-grant、依據加特別休假.md（§38 第 5 項、細則 §24-1、§24-2）。SKETCH 的 LeaveEntitlement 改為「年度終結或離職時轉為工資的部分產生 PayItem」、會用到的切片加 monthly-payroll；「特休年度可以選」改為依每位員工與雇主的約定（annual-leave-grant D-12）
+- 依據：annual-leave-grant 01_scope X-22、X-24、D-12；research/特別休假.md #01、#03、#04；inputs/shared/範圍釐清_年度終結未休工資歸屬.md
+- 舊 → 新：年度終結的未休工資、每年書面通知沒有切片負責 → monthly-payroll；annual-leave-grant 會碰到的領域 人資／人事 → 人資／人事、人資／薪資；特休年度「公司選的」→「每位員工與雇主約定的」
+- 影響：monthly-payroll 的業務結果變成 2 個，到它的第 ① 步確認大小；annual-leave-grant 01_scope 的「範圍外但會用到」與完成標準第 1 條和地圖一致；annual-leave-grant 第 ② 步定義 LeaveEntitlement 時要撐得起年度終結轉為工資
+- 同意者：JiHungLin（2026-10-19，選方案 A）
+
+### 2026-10-19　PLAN、SKETCH　新增兩條切片的連帶修改
+- 改了什麼：草圖新增 SeniorityRecognition（年資承認，由 seniority-recognition 定義）、LeaveOfAbsence（留職停薪，由 leave-of-absence 定義）；LeaveEntitlement、InsuranceEnrollment、EmploymentContract、Separation、Approval 的「會用到的切片」加上兩條新切片；「不確定的地方」改寫年資合併、新增留職停薪；地圖領域表的切片數改為實際值（人事 7、出勤 2、請假 4、薪資 3、跨國任用 4；原本人事、薪資、跨國任用就和切片表對不上）；D-03 的台灣主線範圍註明為 1～13
+- 依據：PLAN.md D-36、D-37；使用者要求「需要聯動的地方也一起改」
+- 舊 → 新：草圖名詞 44 → 46；領域表 4、2、4、4、3 → 7、2、4、3、4
+- 影響：兩條新切片的第 ② 步對照草圖；annual-leave-grant 第 ② 步定義 LeaveEntitlement 時，要撐得起依合併後的年資、留停規則重新判定
+- 同意者：JiHungLin（2026-10-19，對話中要求）
+
+### 2026-10-19　PLAN　新增切片 leave-of-absence（留職停薪）
+- 改了什麼：地圖新增候選切片 leave-of-absence（建議順序 12）、決定 D-37；resignation 之後 8 條切片的建議順序各加一（12～19 → 13～20）；resignation 的依賴加上 leave-of-absence；領域「人資／請假」的切片數 3 → 4；台灣主線變成 1～13（D-03）
+- 依據：inputs/shared/範圍釐清_留職停薪切片.md；審查 annual-leave-grant 第 ① 步 D-07 時，使用者指出留職停薪沒有後續規劃
+- 舊 → 新：沒有切片負責留職停薪 → 由 leave-of-absence 負責
+- 影響：annual-leave-grant 01_scope D-07 改寫為由 leave-of-absence 補上；之後 social-insurance 的續保、resignation 的年資都要考慮留停
+- 同意者：JiHungLin（2026-10-19，對話中選擇；建議順序與依賴的細節是 AI 提出的）
+
+### 2026-10-19　PLAN　新增切片 seniority-recognition（依法應合併的年資）
+- 改了什麼：地圖新增候選切片 seniority-recognition（建議順序 11）、決定 D-36；resignation、second-country-hire、assignment-leave、assignment-payroll、cross-border-transfer、org-setup、personnel-record、quota-employment 的建議順序各加一（11～18 → 12～19）；resignation、cross-border-transfer 的依賴加上 seniority-recognition；領域「人資／人事」的切片數 4 → 5；台灣主線變成 1～12（D-03）
+- 依據：inputs/shared/範圍釐清_年資合併切片.md；審查 annual-leave-grant 第 ① 步 D-11 時，使用者指出合併年資沒有後續規劃
+- 舊 → 新：沒有切片負責台灣境內的年資合併（D-25 只要求保留資料）→ 由 seniority-recognition 負責
+- 影響：annual-leave-grant 01_scope D-11 改寫為由 seniority-recognition 補上；resignation 的資遣費、特休與 cross-border-transfer 的年資承認，都改引用它
+- 同意者：JiHungLin（2026-10-19，對話中選擇；建議順序與依賴的細節是 AI 提出的）
+
+### 2026-10-19　PLAN　P-06 已回覆：特休週年制與曆年制都支援
+- 改了什麼：待釐清 P-06 的狀態 待問 → 已回覆
+- 依據：inputs/annual-leave-grant/範圍釐清_第一次.md
+- 舊 → 新：待問 → 已回覆（兩種都支援）
+- 影響：annual-leave-grant 的規則要有「計算基準」（週年／曆年）；曆年制換算細節寫成專家問題
+- 同意者：JiHungLin（2026-10-19，對話中回答）
+
+### 2026-10-19　PLAN　開始 annual-leave-grant
+- 改了什麼：切片 annual-leave-grant 的狀態 候選 → 進行中
+- 依據：依建議順序的下一條；依賴的 hire-employee 已設計完成（待驗證）
+- 舊 → 新：候選 → 進行中
+- 影響：建立 slices/annual-leave-grant/，開始第 ① 步；引用 hire-employee 的核心項目標 [引用候選]
+- 同意者：JiHungLin（2026-10-19，對話中要求開始另一條切片）
+
 ### 2026-10-14　PLAN　hire-employee 設計完成
 - 改了什麼：切片 hire-employee 的狀態 進行中 → 設計完成（待驗證）
 - 依據：hire-employee 第 ⑤ 步凍結（hire-employee/05-v1）
