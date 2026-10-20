@@ -2,6 +2,11 @@
 
 <!-- 只新增，最新的在最上面。記錄：切片項目以 [候選] 合併、升為 [已驗證]、套用變更提案、平行切片撞號重編。格式同切片 CHANGELOG.md -->
 
+## 2026-10-20　annual-leave-grant/03-v1　③　凍結
+- 改了什麼：flows.md 新增「狀態機（annual-leave-grant）」6 個（LeaveEntitlement、LeaveDeferralAgreement、LeaveYearAgreement、CompanyPolicy、LeaveConversion、LeaveType）、「推導的狀態與預估」、「事件（annual-leave-grant）」20 個、「更正方式（annual-leave-grant）」9 列；glossary.md 新增 40 列（狀態 20、事件 20）；皆 [候選]，出處 annual-leave-grant（③ @ annual-leave-grant/03-v1），驗收問題與 Use Case 寫成 annual-leave-grant:Qnn、annual-leave-grant:UC-nn。被引用加上 annual-leave-grant：狀態機 Employment，事件 OverrideWarning、WithdrawWarningOverride、CorrectRecord、AnnulEntry、RevokeAnnulment。既有項目的內容都沒有修改
+- 依據：slices/annual-leave-grant/03_flows.md @ annual-leave-grant/03-v1（D-01～D-15）
+- 產出者：AI（Claude）；審查者：JiHungLin；核心負責人：待審閱
+
 ## 2026-10-19　annual-leave-grant/02-v1　②　凍結
 - 改了什麼：entities.md 新增 6 個 Entity：LeaveType、CompanyPolicy、LeaveYearAgreement、LeaveEntitlement、LeaveDeferralAgreement、LeaveConversion；relations.md 新增 17 條關係；glossary.md 新增 61 列（Entity 6、屬性 45、關係 10）；皆 [候選]，出處 annual-leave-grant（② @ annual-leave-grant/02-v1）。被引用加上 annual-leave-grant：Entity Tenant、Person、Employer、Jurisdiction、Employment、EmploymentContract、WarningOverride，關係 WarningOverride concernsEmployment。既有項目的內容都沒有修改
 - 依據：slices/annual-leave-grant/02_entities.md @ annual-leave-grant/02-v1（D-01～D-18）

@@ -14,6 +14,13 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-20　annual-leave-grant/03-v1　③　凍結
+- 改了什麼：初版。狀態機 6 個：LeaveEntitlement（請假權利：Active、YearEnded、EndedWithEmployment、Voided；需要重建當時）、LeaveDeferralAgreement（遞延協商：Agreed、Applied、Withdrawn、Lapsed；需要重建當時）、LeaveYearAgreement（特休年度約定：Scheduled、Effective、Superseded、Ended；需要軌跡）、CompanyPolicy（公司規定：Scheduled、Effective、Repealed；需要重建當時）、LeaveConversion（請假權利轉換：Provisional、Determined、Discarded；需要重建當時）、LeaveType（假別：只需現況，不設事件）；告知狀態、之後各期的預估、法規警告是推導的，不是狀態機（D-09）；新增事件 20 個（建議層 1 個：NotifyLeaveReassessment），沿用 core 的 CorrectRecord、AnnulEntry、RevokeAnnulment、OverrideWarning、WithdrawWarningOverride，不修改 hire-employee 的內容（D-08）；決策流程 5 個；更正方式 9 列；正式 Use Case 12 個（UC-01～UC-12），草稿 US-D01～US-D11 都有涵蓋；決定 D-01～D-15；專家問題新增 EQ-011～EQ-013（待問）
+- 依據：01_scope.md @ annual-leave-grant/01-v1；02_entities.md @ annual-leave-grant/02-v1；core/ @ 9c729ce；docs/03 P1、P2、P4；inputs/research/特別休假.md #01～#04
+- 反例處理：X-01～X-15 共 15 個，來源都是 AI 挑錯（另開 context 的挑錯子代理）；接受並修改 14 個（最大的改動：更正、註銷、較晚得知造成的扣回與重新判定後補做的年度終結，先停在待確認，由人資確認後才交給薪資，D-11），轉問專家 1 個（X-08 → EQ-013），拒絕 0 個
+- 審查期間的修改：送審後沒有修改設計；整理性修改 1 處：D-01～D-15 的「提出／同意」由「AI／待確認」改為「AI／JiHungLin（2026-10-20）」（審查重點第 1～8 列涵蓋全部 D-nn，審查者逐列打勾）。同一段期間地圖新增切片 event-leave（PLAN.md D-39，記在 slices/CHANGELOG.md），不影響本步
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-20，審查重點 9 列與抽查：每個事件標了觸發來源、由人觸發的標了誰有權觸發；需要判斷的地方有決策流程，系統或 AI 的建議不直接改變狀態）
+
 ## 2026-10-19　annual-leave-grant/02-v1　②　凍結
 - 改了什麼：初版。引用 core 的 7 個 Entity（Tenant、Person、Employer、Jurisdiction、Employment、EmploymentContract、WarningOverride），都不修改；新增 6 個 Entity：LeaveType（假別，參考資料）、CompanyPolicy（公司規定：特休加給、特休年度預設）、LeaveYearAgreement（特休年度約定，週年制或固定起始日的年度）、LeaveEntitlement（請假權利，以「一筆」為單位、額度有單位；依規則給予的是取得時凍結的事實，D-03）、LeaveDeferralAgreement（遞延協商，一筆對一筆）、LeaveConversion（請假權利轉換：轉為工資或失效，已交給薪資的不改、更正記差額，D-06）；關係 17 條；「不是 Entity」約 30 列（餘額類都是推導值，事件交第 ③ 步、規則資料交第 ④ 步）；決定 D-01～D-18；變更提案：無。專家問題 EQ-002 追加一題，新增 EQ-009、EQ-010（待問）。全局名詞草圖新增 3 個名詞、調整 4 列（記在 slices/CHANGELOG.md）
 - 依據：01_scope.md @ annual-leave-grant/01-v1；core/ @ ca04a27；slices/ENTITY_SKETCH.md、slices/PLAN.md @ ca04a27（D-09、D-15、D-27、D-28、D-31、D-38）；docs/03 P2、P3、P5、P11；inputs/research/特別休假.md #01～#04

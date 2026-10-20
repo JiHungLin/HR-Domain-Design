@@ -12,6 +12,13 @@
 - 同意者：
 -->
 
+### 2026-10-20　PLAN、SKETCH　新增切片 event-leave（因事件才有的假）
+- 改了什麼：PLAN 新增候選切片 event-leave（建議順序 9）、決定 D-39；hourly-payroll 之後 12 條切片的建議順序各加一（9～20 → 10～21）；領域「人資／請假」的切片數 4 → 5；台灣主線變成 1～14（D-03）；開頭區統計 20 條 → 21 條（現場 11 → 12）。SKETCH 的 LeaveType、LeaveEntitlement、LeaveRequest、LeaveOccurrence、Approval、Evidence、PayItem 的「會用到的切片」加上 event-leave；「不確定的地方」新增「因事件才有的假」（要不要先給一筆請假權利、喪假的親屬怎麼表示）
+- 依據：inputs/shared/範圍釐清_事件假切片.md；research/請假.md（#02、#03、#06、#08、#11、#13）；審查 annual-leave-grant 第 ③ 步時，使用者問請假權利能不能涵蓋婚假等其他假別
+- 舊 → 新：沒有切片負責婚假、喪假、產假、產檢假、陪產檢及陪產假、公傷病假、公假 → 由 event-leave 負責；草圖名詞數不變（49），統計不變
+- 影響：event-leave 第 ② 步要驗證 LeaveEntitlement（annual-leave-grant 定義）撐不撐得住按事件給的假，撐不住時走變更提案；research/請假.md 各條的「用在」與 INDEX.md 的「用在」還沒寫 event-leave（已存在的檔案不修改），到 event-leave 第 ① 步時處理
+- 同意者：JiHungLin（2026-10-20，對話中要求；AI 提出的建議順序、依賴、大小估計，以及生理假與家庭照顧假留在 unpaid-leave-deduction、全勤獎金歸 monthly-payroll，同日同意）
+
 ### 2026-10-19　SKETCH　annual-leave-grant 第 ② 步凍結：6 個名詞改為已定義
 - 改了什麼：CompanyPolicy、LeaveType、LeaveEntitlement、LeaveYearAgreement、LeaveDeferralAgreement、LeaveConversion 的狀態 草圖 → 已定義，「一句意思」改為「見 core/entities.md」
 - 依據：slices/annual-leave-grant/02_entities.md @ annual-leave-grant/02-v1；core/entities.md

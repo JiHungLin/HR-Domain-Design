@@ -274,3 +274,43 @@
 | appliedYearDefault | 關係 | 請假權利給予時套用某條公司規定的預設年度 | 依公司預設年度 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
 | convertsFrom | 關係 | 轉換來自某一筆請假權利 | 轉換自 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
 | correctsConversion | 關係 | 更正差額指回被更正的那一次轉換 | 更正 | | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） |
+| LeaveEntitlement.Active | 狀態 | 請假權利可以休 | 可休 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveEntitlement.YearEnded | 狀態 | 已做年度終結判定，未休的已遞延或轉換 | 已年度終結 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveEntitlement.EndedWithEmployment | 狀態 | 年度終結前僱傭關係結束，未休的交由契約終止處理 | 隨僱傭關係結束 | 之後由 resignation 轉換 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveEntitlement.Voided | 狀態 | 重新判定後不再成立、從未取得，或遞延撤回，保留紀錄 | 已作廢 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveDeferralAgreement.Agreed | 狀態 | 已協商遞延，還沒到年度終結 | 已協商 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveDeferralAgreement.Applied | 狀態 | 年度終結時已依它產生遞延進來的那一筆 | 已遞延 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveDeferralAgreement.Withdrawn | 狀態 | 雙方取消遞延 | 已撤回 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveDeferralAgreement.Lapsed | 狀態 | 要遞延的那一筆沒有進到年度終結（離職或作廢） | 已失效 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveYearAgreement.Scheduled | 狀態 | 已約定，還沒到適用起日 | 尚未適用 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveYearAgreement.Effective | 狀態 | 目前適用的約定 | 適用中 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveYearAgreement.Superseded | 狀態 | 被下一筆約定取代 | 已取代 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveYearAgreement.Ended | 狀態 | 雙方不再個別約定，之後套用雇主預設 | 已終止 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| CompanyPolicy.Scheduled | 狀態 | 已訂定，還沒到第一次生效日 | 尚未生效 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| CompanyPolicy.Effective | 狀態 | 公司規定生效中 | 生效中 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| CompanyPolicy.Repealed | 狀態 | 公司規定已廢止 | 已廢止 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveConversion.Provisional | 狀態 | 更正造成的不利差額或依據未處理完的判定，等人資確認 | 待確認 | 還沒交給薪資 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveConversion.Determined | 狀態 | 轉換已判定，之後不再改變 | 已判定 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveConversion.Discarded | 狀態 | 待確認的轉換在確認前被重新算出的取代 | 已取代 | 保留紀錄 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveType.Active | 狀態 | 假別使用中 | 使用中 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveType.Deprecated | 狀態 | 假別已停用，不刪除 | 已停用 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| GrantLeaveEntitlement | 事件 | 取得日到達時依規則給予特休 | 給予特休 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| RegisterExistingLeaveEntitlement | 事件 | 補登開始由系統管理那天仍可以休的特休 | 補登仍可休的特休 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| RecordLeaveNotice | 事件 | 登錄雇主告知員工排定特休的日期 | 登錄告知排定特休 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| RecordLeaveYearAgreement | 事件 | 登錄員工與雇主協商的特休年度 | 登錄特休年度約定 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| ActivateLeaveYearAgreement | 事件 | 特休年度約定的適用起日到達 | 約定開始適用 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| EndLeaveYearAgreement | 事件 | 雙方不再個別約定特休年度，回到雇主預設 | 終止特休年度約定 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| EstablishCompanyPolicy | 事件 | 訂定一條公司規定 | 訂定公司規定 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| ReviseCompanyPolicy | 事件 | 公司規定新增一個版本 | 修改公司規定 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| ActivateCompanyPolicy | 事件 | 公司規定的第一次生效日到達 | 公司規定生效 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| RepealCompanyPolicy | 事件 | 登錄公司規定的廢止 | 廢止公司規定 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| ExpireCompanyPolicy | 事件 | 公司規定的廢止日到達 | 公司規定廢止生效 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| RecordLeaveDeferral | 事件 | 登錄勞雇雙方協商的遞延 | 登錄遞延協商 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| AmendLeaveDeferral | 事件 | 雙方重新協商遞延的內容 | 修改遞延協商 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| WithdrawLeaveDeferral | 事件 | 雙方取消遞延 | 撤回遞延協商 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| CloseLeaveYear | 事件 | 可休迄日過完時判定未休額度遞延或轉換 | 年度終結判定 | 台灣法令稱「年度終結」 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| RejudgeLeaveYearEnd | 事件 | 年度終結判定用到的資料改變後重新判定並記差額 | 重新判定年度終結 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| ReassessLeaveEntitlements | 事件 | 給予特休的依據被更正後重新判定 | 依據更正後重新判定特休 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| EndLeaveEntitlementsWithEmployment | 事件 | 系統得知僱傭關係結束時停止特休 | 僱傭關係結束，停止特休 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| ConfirmLeaveConversion | 事件 | 人資確認待確認的轉換，之後交給薪資 | 確認待確認的轉換 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| NotifyLeaveReassessment | 事件 | 通知重新判定的結果與要人處理的事 | 通知特休重新判定結果 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
