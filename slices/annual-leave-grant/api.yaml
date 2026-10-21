@@ -1,0 +1,2441 @@
+# annual-leave-grant ⑤ API（OpenAPI 3.1）
+openapi: 3.1.0
+info:
+  title: annual-leave-grant API
+  version: 0.1.0
+  description: 依 slices/annual-leave-grant/05_mapping.md 產生的設計文件，不是實作。請求與回應寫到欄位層級；每支 API 標 x-concept（概念，P8）、x-roles（誰可以做）、x-rules（檢查的規則）。所有寫入在一個多文件交易中寫入 events 與受影響的集合，先更新 leave_locks、先處理那段僱傭關係的重新判定佇列（05_mapping
+    D-05、D-18），並檢查每個引用屬於呼叫者的客戶、存在且為目前版本（hire-employee 05_mapping D-06）。更正、註銷、警告忽略沿用 hire-employee 的 /v1/corrections、/v1/annulments、/v1/warning-overrides（05_mapping D-11）。給予、年度終結、開始適用與廢止生效由每日排程產生，沒有 API（05_mapping
+    D-03）。
+servers:
+- url: https://{host}
+  variables:
+    host:
+      default: hr.example.local
+security:
+- bearer: []
+paths:
+  /v1/leave-entitlements/backfill:
+    post:
+      operationId: registerExistingLeaveEntitlement
+      summary: 補登開始由系統管理那天仍可休的一筆特休（每次一筆）
+      x-concept: RegisterExistingLeaveEntitlement
+      x-roles:
+      - HR
+      x-rules:
+      - R97
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BackfillEntitlementIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackfillEntitlementOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+  /v1/leave-entitlements/{id}/notices:
+    post:
+      operationId: recordLeaveNotice
+      summary: 登錄雇主實際告知排定特休的日期；回應告知狀態與期限
+      x-concept: RecordLeaveNotice
+      x-roles:
+      - HR
+      - EMPLOYER
+      x-rules:
+      - R80
+      - R81
+      - R98
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordNoticeIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoticeOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+  /v1/leave-year-agreements:
+    post:
+      operationId: recordLeaveYearAgreement
+      summary: 登錄特休年度約定；適用起日早於已給予的取得日時同一交易重新判定
+      x-concept: RecordLeaveYearAgreement
+      x-roles:
+      - HR
+      x-rules:
+      - R72
+      - R75
+      - R98
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/YearAgreementIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/YearAgreementOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+    get:
+      operationId: listLeaveYearAgreements
+      summary: 特休年度約定
+      x-concept: LeaveYearAgreement
+      x-roles:
+      - HR
+      - EMPLOYER
+      parameters:
+      - name: employment_id
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/YearAgreementList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/leave-year-agreements/{id}/end:
+    post:
+      operationId: endLeaveYearAgreement
+      summary: 終止特休年度約定（之後套用雇主預設）
+      x-concept: EndLeaveYearAgreement
+      x-roles:
+      - HR
+      x-rules:
+      - R75
+      - R98
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndYearAgreementIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/YearAgreementOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+  /v1/company-policies:
+    post:
+      operationId: establishCompanyPolicy
+      summary: 訂定公司規定（含第一版內容）；影響的僱傭關係寫進重新判定佇列
+      x-concept: EstablishCompanyPolicy
+      x-roles:
+      - HR
+      - EMPLOYER
+      x-rules:
+      - R73
+      - R76
+      - R78
+      - R98
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstablishPolicyIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyWriteOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+    get:
+      operationId: listCompanyPolicies
+      summary: 公司規定
+      x-concept: CompanyPolicy
+      x-roles:
+      - HR
+      - EMPLOYER
+      parameters:
+      - name: employer_id
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      - name: subject
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/company-policies/{id}/versions:
+    post:
+      operationId: reviseCompanyPolicy
+      summary: 新增公司規定的版本；帶 corrects_version 是修訂（只限人資，觸發重新判定）
+      x-concept: ReviseCompanyPolicy
+      x-roles:
+      - HR
+      - EMPLOYER
+      x-rules:
+      - R73
+      - R76
+      - R78
+      - R91
+      - R92
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyVersionIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyWriteOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+  /v1/company-policies/{id}/repeal:
+    post:
+      operationId: repealCompanyPolicy
+      summary: 廢止公司規定（廢止日在未來的到那天生效）
+      x-concept: RepealCompanyPolicy
+      x-roles:
+      - HR
+      - EMPLOYER
+      x-rules:
+      - R76
+      - R98
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RepealPolicyIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyWriteOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+  /v1/leave-deferral-agreements:
+    post:
+      operationId: recordLeaveDeferral
+      summary: 登錄遞延協商；那一筆已年度終結時同一交易重新判定年度終結
+      x-concept: RecordLeaveDeferral
+      x-roles:
+      - HR
+      x-rules:
+      - R82
+      - R83
+      - R84
+      - R92
+      - R98
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeferralIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeferralOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+  /v1/leave-deferral-agreements/{id}/amend:
+    post:
+      operationId: amendLeaveDeferral
+      summary: 修改遞延協商（雙方重新談）
+      x-concept: AmendLeaveDeferral
+      x-roles:
+      - HR
+      x-rules:
+      - R82
+      - R83
+      - R84
+      - R92
+      - R98
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmendDeferralIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeferralOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+  /v1/leave-deferral-agreements/{id}/withdraw:
+    post:
+      operationId: withdrawLeaveDeferral
+      summary: 撤回遞延協商
+      x-concept: WithdrawLeaveDeferral
+      x-roles:
+      - HR
+      x-rules:
+      - R84
+      - R92
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawDeferralIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeferralOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+  /v1/leave-conversions/{id}/confirm:
+    post:
+      operationId: confirmLeaveConversion
+      summary: 確認待確認的轉換；確認後經 outbox 交給薪資
+      x-concept: ConfirmLeaveConversion
+      x-roles:
+      - HR
+      x-rules:
+      - R94
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmConversionIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmConversionOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 狀態不是待確認；已被取代時回 Superseded（給 discarded_by_id）
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/Blocked'
+                - $ref: '#/components/schemas/Superseded'
+  /v1/leave-entitlements/{id}/used-quantity-fixture:
+    post:
+      operationId: loadUsedQuantityFixture
+      summary: '[靜態替代] 登錄或改正一筆特休的已休；已年度終結的同一交易重新判定'
+      x-concept: LoadUsedQuantityFixture（[靜態替代] LeaveEntitlement.used_quantity）
+      x-roles:
+      - HR
+      x-rules:
+      - R92
+      - R96
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsedQuantityFixtureIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteResult'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+  /v1/employments/{id}/ending-fixture:
+    post:
+      operationId: loadEmploymentEndingFixture
+      summary: '[靜態替代] 載入一般離職的結束日；同一交易停止特休'
+      x-concept: LoadEmploymentEndingFixture（[靜態替代] resignation 的離職）
+      x-roles:
+      - HR
+      x-rules:
+      - R02
+      - R85
+      - R95
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndingFixtureIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndingFixtureOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Blocked'
+  /v1/employments/{id}/leave-entitlements:
+    get:
+      operationId: listLeaveEntitlements
+      summary: 某一天這位員工有哪幾筆特休（含推導的數量、告知期限與告知狀態）
+      x-concept: LeaveEntitlement
+      x-roles:
+      - HR
+      - EMPLOYER
+      x-rules:
+      - R81
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      - name: 'on'
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: 預設今天
+      - name: leave_type_code
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+      - name: as_of
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 只看這個時間以前登錄的版本與事件（05_mapping D-16）
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitlementList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/leave-entitlements/{id}:
+    get:
+      operationId: getLeaveEntitlement
+      summary: 一筆特休的明細：各版本、依據、年度終結的判定內容、轉換、遞延協商
+      x-concept: LeaveEntitlement
+      x-roles:
+      - HR
+      - EMPLOYER
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      - name: as_of
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 只看這個時間以前登錄的版本與事件（05_mapping D-16）
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitlementDetail'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/employments/{id}/leave-forecast:
+    get:
+      operationId: getLeaveForecast
+      summary: 之後各期的預估（預計取得日、天數、可休期間）
+      x-concept: LeaveEntitlement（預估，推導）
+      x-roles:
+      - HR
+      - EMPLOYER
+      x-rules:
+      - R65
+      - R66
+      - R69
+      - R70
+      - R77
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      - name: until
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+        description: 預估到哪一天
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Forecast'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/employments/{id}/leave-year-basis:
+    get:
+      operationId: getLeaveYearBasis
+      summary: 某一天適用哪一種特休年度，依約定或雇主預設
+      x-concept: LeaveYearAgreement（推導：某天適用哪一種）
+      x-roles:
+      - HR
+      - EMPLOYER
+      x-rules:
+      - R68
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      - name: 'on'
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: 預設今天
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/YearBasisOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/employments/{id}/leave-warnings:
+    get:
+      operationId: listLeaveWarnings
+      summary: 這位員工的法規警告、資料不足（現算）
+      x-concept: 法規警告（推導）
+      x-roles:
+      - HR
+      - EMPLOYER
+      x-rules:
+      - R71
+      - R76
+      - R81
+      - R83
+      - R84
+      - R94
+      - R96
+      - R99
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveWarningsOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/leave-work-items:
+    get:
+      operationId: listLeaveWorkItems
+      summary: 跨員工的待處理清單：未忽略的警告、資料不足、待確認的轉換、重新判定失敗
+      x-concept: 待處理清單（推導）
+      x-roles:
+      - HR
+      - EMPLOYER
+      parameters:
+      - name: employer_id
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkItemsOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/leave-conversions:
+    get:
+      operationId: listLeaveConversions
+      summary: 轉換清單；薪資切片以 status=Determined 讀取
+      x-concept: LeaveConversion
+      x-roles:
+      - HR
+      - EMPLOYER
+      parameters:
+      - name: employment_id
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      - name: employer_id
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - Provisional
+          - Determined
+          - Discarded
+      - name: payment_due_before
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/leave-reassessment-notices:
+    get:
+      operationId: listLeaveReassessmentNotices
+      summary: 重新判定的通知；用 root_event_id 查同一次動作產生的每一份
+      x-concept: NotifyLeaveReassessment
+      x-roles:
+      - HR
+      - EMPLOYER
+      parameters:
+      - name: employer_id
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      - name: employment_id
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      - name: root_event_id
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      - name: since
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoticeList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/leave-reassessment-notices/{id}:
+    get:
+      operationId: getLeaveReassessmentNotice
+      summary: 一份重新判定的通知
+      x-concept: NotifyLeaveReassessment
+      x-roles:
+      - HR
+      - EMPLOYER
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoticeView'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/company-policies/{id}:
+    get:
+      operationId: getCompanyPolicy
+      summary: 一條公司規定：各版本與 R78 警告
+      x-concept: CompanyPolicy
+      x-roles:
+      - HR
+      - EMPLOYER
+      x-rules:
+      - R78
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyDetail'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/leave-types:
+    get:
+      operationId: listLeaveTypes
+      summary: 假別（全平台參考資料）
+      x-concept: LeaveType
+      x-roles:
+      - HR
+      - EMPLOYER
+      - EMPLOYEE
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveTypeList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      description: 使用者帳號對應 user_accounts（角色、客戶、Person）
+  schemas:
+    Warning:
+      type: object
+      additionalProperties: false
+      properties:
+        rule_id:
+          type: string
+        rule_version:
+          type: string
+          description: 規則版本；04_rules 版本欄為「—」的規則填 annual-leave-grant/04-v1（05_mapping D-12，同 hire-employee D-20）
+        rule_revision:
+          type: integer
+        message_code:
+          type: string
+        subject:
+          $ref: '#/components/schemas/SubjectRef'
+        warned_value: {}
+      required:
+      - rule_id
+      - rule_version
+      - rule_revision
+      - message_code
+      description: 提醒類規則；可用 hire-employee 的 OverrideWarning 忽略（R78 除外）
+    SubjectRef:
+      type: object
+      additionalProperties: false
+      properties:
+        collection:
+          type: string
+        id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        field:
+          type: string
+      required:
+      - collection
+      - id
+    Blocked:
+      type: object
+      additionalProperties: false
+      properties:
+        rule_id:
+          type: string
+        message_code:
+          type: string
+        detail:
+          type: string
+      required:
+      - message_code
+    Superseded:
+      type: object
+      additionalProperties: false
+      properties:
+        message_code:
+          type: string
+        discarded_by_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+          description: 取代它的那一筆轉換
+      required:
+      - message_code
+      - discarded_by_id
+      description: 待確認的轉換已被重算取代（Discarded）
+    EvidenceIn:
+      type: object
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+        attachment_ref:
+          type: string
+      required:
+      - kind
+    RuleVersionRef:
+      type: object
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+          enum:
+          - RULE
+          - COMPANY_POLICY
+        rule_id:
+          type: string
+        policy_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        version:
+          type: string
+        revision:
+          type: integer
+      required:
+      - kind
+      - version
+      - revision
+    MonthDay:
+      type: object
+      additionalProperties: false
+      properties:
+        month:
+          type: integer
+          minimum: 1
+          maximum: 12
+        day:
+          type: integer
+          minimum: 1
+          maximum: 31
+      required:
+      - month
+      - day
+    WriteResult:
+      type: object
+      additionalProperties: false
+      properties:
+        event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+        reassessment_notice_ids:
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+      required:
+      - event_id
+      - warnings
+      - reassessment_notice_ids
+      description: 每個寫入動作共同的回應欄位
+    BackfillEntitlementIn:
+      type: object
+      additionalProperties: false
+      properties:
+        employment_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        leave_type_code:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        source:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        policy_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+          description: source 為公司規定時必填
+        origin:
+          type: string
+          enum:
+          - ENTITLEMENT_ORIGIN.REGISTERED_CURRENT
+          - ENTITLEMENT_ORIGIN.REGISTERED_DEFERRED
+        quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        unit:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        pre_system_used_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        valid_from:
+          type: string
+          format: date
+        valid_to:
+          type: string
+          format: date
+        registered_original_year_end:
+          type: string
+          format: date
+          description: 補登遞延的必填（R97）
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceIn'
+      required:
+      - employment_id
+      - leave_type_code
+      - source
+      - origin
+      - quantity
+      - unit
+      - pre_system_used_quantity
+      - valid_from
+      - valid_to
+    BackfillEntitlementOut:
+      type: object
+      additionalProperties: false
+      properties:
+        event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        entitlement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        status:
+          type: string
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+      required:
+      - event_id
+      - entitlement_id
+      - status
+      - warnings
+    RecordNoticeIn:
+      type: object
+      additionalProperties: false
+      properties:
+        notified_on:
+          type: string
+          format: date
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceIn'
+      required:
+      - notified_on
+    NoticeOut:
+      type: object
+      additionalProperties: false
+      properties:
+        event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        entitlement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        notified_on:
+          type: string
+          format: date
+        notice_due_on:
+          type: string
+          format: date
+        notice_status:
+          $ref: '#/components/schemas/NoticeStatus'
+        recorded_at:
+          type: string
+          format: date-time
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+      required:
+      - event_id
+      - entitlement_id
+      - notified_on
+      - notice_due_on
+      - notice_status
+      - recorded_at
+      - warnings
+    NoticeStatus:
+      type: string
+      enum:
+      - NOTICE_STATUS.PENDING
+      - NOTICE_STATUS.NOTIFIED
+      - NOTICE_STATUS.OVERDUE
+      - NOTICE_STATUS.NOTIFIED_LATE
+      - NOT_APPLICABLE
+      - INSUFFICIENT_DATA
+      description: R81 決策表；不判定的那一筆為 NOT_APPLICABLE，取得日未知為 INSUFFICIENT_DATA（core R60）
+    YearAgreementIn:
+      type: object
+      additionalProperties: false
+      properties:
+        employment_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        leave_type_code:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        leave_year_basis:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        year_start:
+          $ref: '#/components/schemas/MonthDay'
+        effective_from:
+          type: string
+          format: date
+        agreed_on:
+          type: string
+          format: date
+        agreement_note:
+          type: string
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceIn'
+      required:
+      - employment_id
+      - leave_type_code
+      - leave_year_basis
+      - effective_from
+      - agreed_on
+    EndYearAgreementIn:
+      type: object
+      additionalProperties: false
+      properties:
+        ended_from:
+          type: string
+          format: date
+          description: 終止日（EndLeaveYearAgreement 的生效時間）
+        agreed_on:
+          type: string
+          format: date
+        agreement_note:
+          type: string
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceIn'
+      required:
+      - ended_from
+      - agreed_on
+    YearAgreementOut:
+      type: object
+      additionalProperties: false
+      properties:
+        event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        leave_year_agreement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        status:
+          type: string
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+        reassessment_notice_ids:
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+      required:
+      - event_id
+      - leave_year_agreement_id
+      - status
+      - warnings
+      - reassessment_notice_ids
+    PolicyParams:
+      type: object
+      additionalProperties: false
+      properties:
+        company_extra_days:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              from_months:
+                type: integer
+              to_months:
+                type: integer
+                description: 不含；空白＝以上
+              days:
+                type: string
+                pattern: ^-?\d+(\.\d+)?$
+                description: 數量（Decimal128 以字串傳）
+            required:
+            - from_months
+            - days
+        company_extra_eligibility:
+          type: object
+          additionalProperties: false
+          properties:
+            employee_categories:
+              type: array
+              items:
+                type: string
+                pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        company_extra_year_end_treatment:
+          type: string
+          enum:
+          - CONVERSION_TARGET.WAGES
+          - CONVERSION_TARGET.FORFEITED
+        company_extra_deferrable:
+          type: boolean
+        company_default_leave_year:
+          type: object
+          additionalProperties: false
+          properties:
+            leave_year_basis:
+              type: string
+              pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+            year_start:
+              $ref: '#/components/schemas/MonthDay'
+          required:
+          - leave_year_basis
+      description: 參數名稱照 04 參數表；沒有給的欄位＝那一版沒有寫（04 R79 決策表），不補預設值
+    EstablishPolicyIn:
+      type: object
+      additionalProperties: false
+      properties:
+        employer_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        leave_type_code:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        name:
+          type: string
+        subject:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        source_note:
+          type: string
+        effective_from:
+          type: string
+          format: date
+        first_version:
+          $ref: '#/components/schemas/PolicyParams'
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceIn'
+      required:
+      - name
+      - subject
+      - effective_from
+      - first_version
+    PolicyVersionIn:
+      type: object
+      additionalProperties: false
+      properties:
+        effective_from:
+          type: string
+          format: date
+          description: 新版本的生效日；修訂時省略，沿用被修訂的那一版
+        params:
+          $ref: '#/components/schemas/PolicyParams'
+        corrects_version:
+          type: string
+          description: 修訂（登錄錯誤）時填被修訂的版本；只限人資，觸發重新判定（05_mapping D-19）
+        source_note:
+          type: string
+        reason:
+          type: string
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceIn'
+      required:
+      - params
+    RepealPolicyIn:
+      type: object
+      additionalProperties: false
+      properties:
+        effective_to:
+          type: string
+          format: date
+          description: 廢止日
+        source_note:
+          type: string
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceIn'
+      required:
+      - effective_to
+    PolicyWriteOut:
+      type: object
+      additionalProperties: false
+      properties:
+        event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        policy_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        version:
+          type: string
+        revision:
+          type: integer
+        status:
+          type: string
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+        reassessment_queued:
+          type: integer
+          description: 寫進重新判定佇列的僱傭關係數（05_mapping D-18）
+      required:
+      - event_id
+      - policy_id
+      - status
+      - warnings
+      - reassessment_queued
+    DeferralIn:
+      type: object
+      additionalProperties: false
+      properties:
+        entitlement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        agreed_on:
+          type: string
+          format: date
+        deferred_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        agreement_note:
+          type: string
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceIn'
+      required:
+      - entitlement_id
+      - agreed_on
+      - deferred_quantity
+    AmendDeferralIn:
+      type: object
+      additionalProperties: false
+      properties:
+        agreed_on:
+          type: string
+          format: date
+          description: 新的協商日
+        deferred_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        agreement_note:
+          type: string
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceIn'
+      required:
+      - agreed_on
+      - deferred_quantity
+    WithdrawDeferralIn:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceIn'
+      required:
+      - reason
+    DeferralOut:
+      type: object
+      additionalProperties: false
+      properties:
+        event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        deferral_agreement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        status:
+          type: string
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+        reassessment_notice_ids:
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+      required:
+      - event_id
+      - deferral_agreement_id
+      - status
+      - warnings
+      - reassessment_notice_ids
+    ConfirmConversionIn:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          description: 人資處理過的事（已休、遞延協商、告知日）
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceIn'
+      required:
+      - reason
+    ConfirmConversionOut:
+      type: object
+      additionalProperties: false
+      properties:
+        event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        conversion_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        status:
+          type: string
+      required:
+      - event_id
+      - conversion_id
+      - status
+    UsedQuantityFixtureIn:
+      type: object
+      additionalProperties: false
+      properties:
+        used_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        reason:
+          type: string
+      required:
+      - used_quantity
+      - reason
+    EndingFixtureIn:
+      type: object
+      additionalProperties: false
+      properties:
+        ended_on:
+          type: string
+          format: date
+        end_reason:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        reason:
+          type: string
+      required:
+      - ended_on
+      - end_reason
+      - reason
+    EndingFixtureOut:
+      type: object
+      additionalProperties: false
+      properties:
+        event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        employment_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        reassessment_notice_ids:
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+      required:
+      - event_id
+      - employment_id
+      - reassessment_notice_ids
+      - warnings
+    DerivedQuantities:
+      type: object
+      additionalProperties: false
+      properties:
+        used_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        used_quantity_basis:
+          type: string
+          description: '[靜態替代] 目前累計（帶 on 時也用目前累計）'
+        deferred_out_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        converted_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        expired_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        remaining_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+      required:
+      - used_quantity
+      - used_quantity_basis
+      - deferred_out_quantity
+      - converted_quantity
+      - expired_quantity
+      - remaining_quantity
+      description: 推導值，查詢時現算（05_mapping D-06）；C01
+    EntitlementView:
+      type: object
+      additionalProperties: false
+      properties:
+        entitlement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        employment_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        leave_type_code:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        source:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        origin:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        period_sequence:
+          type: integer
+        seniority_tier:
+          type: integer
+          description: 滿幾個月
+        acquired_on:
+          type: string
+          format: date
+        quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        unit:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        valid_from:
+          type: string
+          format: date
+        valid_to:
+          type: string
+          format: date
+        leave_year_basis:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        basis_rule_versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleVersionRef'
+        no_rule_version:
+          type: boolean
+        basis_seniority:
+          type: object
+          additionalProperties: false
+          properties:
+            months:
+              type: integer
+            days:
+              type: integer
+          required:
+          - months
+          - days
+        basis_start_date:
+          type: string
+          format: date
+        notified_on:
+          type: string
+          format: date
+        notice_due_on:
+          type: string
+          format: date
+        notice_status:
+          $ref: '#/components/schemas/NoticeStatus'
+        pre_system_used_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        registered_original_year_end:
+          type: string
+          format: date
+        policy_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        deferred_from_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        deferred_under_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        applied_year_agreement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        applied_year_default_policy_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        status:
+          type: string
+          enum:
+          - Active
+          - YearEnded
+          - EndedWithEmployment
+          - Voided
+        quantities:
+          $ref: '#/components/schemas/DerivedQuantities'
+        revision:
+          type: integer
+      required:
+      - entitlement_id
+      - employment_id
+      - leave_type_code
+      - source
+      - origin
+      - acquired_on
+      - quantity
+      - unit
+      - valid_from
+      - valid_to
+      - basis_rule_versions
+      - notice_status
+      - status
+      - quantities
+      - revision
+    EntitlementList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntitlementView'
+        reassessment_pending:
+          type: boolean
+          description: 佇列還有沒處理完的重新判定（05_mapping D-18）
+      required:
+      - items
+      - reassessment_pending
+    EntitlementVersion:
+      type: object
+      additionalProperties: false
+      properties:
+        revision:
+          type: integer
+        recorded_at:
+          type: string
+          format: date-time
+        event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        event_type:
+          type: string
+        actor:
+          type: string
+        snapshot:
+          $ref: '#/components/schemas/EntitlementView'
+      required:
+      - revision
+      - recorded_at
+      - event_id
+      - event_type
+      - snapshot
+    YearEndJudgment:
+      type: object
+      additionalProperties: false
+      properties:
+        event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        event_type:
+          type: string
+          enum:
+          - CloseLeaveYear
+          - RejudgeLeaveYearEnd
+        determined_on:
+          type: string
+          format: date
+        used_quantity_known:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        unused_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        deferral_agreement_ref:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              pattern: ^[0-9a-f]{24}$
+            version_event_id:
+              type: string
+              pattern: ^[0-9a-f]{24}$
+          required:
+          - id
+        deferred_in_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        deferred_in_entitlement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        conversion_ids:
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+        late:
+          type: boolean
+      required:
+      - event_id
+      - event_type
+      - determined_on
+      - used_quantity_known
+      - unused_quantity
+      - conversion_ids
+      - late
+      description: 年度終結的判定內容（events.payload.year_end，05_mapping D-07）
+    ConversionView:
+      type: object
+      additionalProperties: false
+      properties:
+        conversion_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        employment_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        entitlement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        corrects_conversion_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        corrects_judgment_event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        reason:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        target:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        determined_on:
+          type: string
+          format: date
+        basis_rule_versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleVersionRef'
+        correction_cause:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        wage_basis_date:
+          type: string
+          format: date
+        payment_due_on:
+          type: string
+          format: date
+        status:
+          type: string
+          enum:
+          - Provisional
+          - Determined
+          - Discarded
+        discarded_by_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      required:
+      - conversion_id
+      - employment_id
+      - entitlement_id
+      - reason
+      - target
+      - quantity
+      - determined_on
+      - basis_rule_versions
+      - status
+    ConversionList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversionView'
+      required:
+      - items
+    DeferralView:
+      type: object
+      additionalProperties: false
+      properties:
+        deferral_agreement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        entitlement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        agreed_on:
+          type: string
+          format: date
+        deferred_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        agreement_note:
+          type: string
+        status:
+          type: string
+        revision:
+          type: integer
+      required:
+      - deferral_agreement_id
+      - entitlement_id
+      - agreed_on
+      - deferred_quantity
+      - status
+      - revision
+    EntitlementDetail:
+      type: object
+      additionalProperties: false
+      properties:
+        entitlement:
+          $ref: '#/components/schemas/EntitlementView'
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntitlementVersion'
+        year_end_judgments:
+          type: array
+          items:
+            $ref: '#/components/schemas/YearEndJudgment'
+        conversions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversionView'
+        deferral_agreements:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeferralView'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+      required:
+      - entitlement
+      - versions
+      - year_end_judgments
+      - conversions
+      - deferral_agreements
+      - warnings
+    ForecastItem:
+      type: object
+      additionalProperties: false
+      properties:
+        source:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        policy_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        period_sequence:
+          type: integer
+        expected_acquired_on:
+          type: string
+          format: date
+        seniority_tier:
+          type: integer
+        quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 數量（Decimal128 以字串傳）
+        valid_from:
+          type: string
+          format: date
+        valid_to:
+          type: string
+          format: date
+        leave_year_basis:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        rule_versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleVersionRef'
+      required:
+      - source
+      - expected_acquired_on
+      - quantity
+      - valid_from
+      - valid_to
+    Forecast:
+      type: object
+      additionalProperties: false
+      properties:
+        employment_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        computed_at:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForecastItem'
+        insufficient_data:
+          type: array
+          items:
+            type: string
+      required:
+      - employment_id
+      - computed_at
+      - items
+      - insufficient_data
+      description: 預估，不建立請假權利（03_flows D-01）
+    YearBasisOut:
+      type: object
+      additionalProperties: false
+      properties:
+        employment_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        'on':
+          type: string
+          format: date
+        leave_year_basis:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        year_start:
+          $ref: '#/components/schemas/MonthDay'
+        applied_by:
+          type: string
+          enum:
+          - AGREEMENT
+          - EMPLOYER_DEFAULT
+          - NONE
+        leave_year_agreement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        policy_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      required:
+      - employment_id
+      - 'on'
+      - leave_year_basis
+      - applied_by
+      description: R68
+    WarningView:
+      type: object
+      additionalProperties: false
+      properties:
+        warning:
+          $ref: '#/components/schemas/Warning'
+        warning_override_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+          description: 已忽略時才有
+      required:
+      - warning
+    LeaveWarningsOut:
+      type: object
+      additionalProperties: false
+      properties:
+        employment_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarningView'
+        insufficient_data:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              rule_id:
+                type: string
+              missing:
+                type: array
+                items:
+                  type: string
+            required:
+            - rule_id
+            - missing
+        reassessment_pending:
+          type: boolean
+      required:
+      - employment_id
+      - items
+      - insufficient_data
+      - reassessment_pending
+    WorkItem:
+      type: object
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+          enum:
+          - WARNING
+          - INSUFFICIENT_DATA
+          - PROVISIONAL_CONVERSION
+          - QUEUE_FAILED
+        employment_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        warning:
+          $ref: '#/components/schemas/Warning'
+        conversion_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        missing:
+          type: array
+          items:
+            type: string
+        last_error:
+          type: string
+      required:
+      - kind
+      - employment_id
+    WorkItemsOut:
+      type: object
+      additionalProperties: false
+      properties:
+        employer_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        computed_at:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkItem'
+      required:
+      - employer_id
+      - computed_at
+      - items
+      description: 現算，不存（05_mapping X-07、X-20）
+    ActionItem:
+      type: object
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+          enum:
+          - NOTICE_ACTION.USED_ON_VOIDED
+          - NOTICE_ACTION.RENOTIFY
+          - NOTICE_ACTION.REDEFER
+          - NOTICE_ACTION.USED_OVER_QUANTITY
+          - NOTICE_ACTION.BACKFILL_OVERLAP_OR_GAP
+          - NOTICE_ACTION.NOTICE_BEFORE_ACQUIRED
+          - NOTICE_ACTION.DEFERRAL_OVER_UNUSED
+          - NOTICE_ACTION.CONVERSION_DATES_CHANGED
+        entitlement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        detail:
+          type: string
+      required:
+      - kind
+    NoticeView:
+      type: object
+      additionalProperties: false
+      properties:
+        notice_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        employment_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        trigger_event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        root_event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        changed:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              entitlement_id:
+                type: string
+                pattern: ^[0-9a-f]{24}$
+              before:
+                type: object
+              after:
+                type: object
+            required:
+            - entitlement_id
+        added_ids:
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+        voided_ids:
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+        conversion_ids:
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+        provisional_conversion_ids:
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+        action_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionItem'
+        notified_to:
+          type: array
+          items:
+            type: string
+            enum:
+            - HR
+            - EMPLOYER
+        notified_at:
+          type: string
+          format: date-time
+      required:
+      - notice_id
+      - employment_id
+      - trigger_event_id
+      - root_event_id
+      - changed
+      - added_ids
+      - voided_ids
+      - conversion_ids
+      - provisional_conversion_ids
+      - action_items
+      - notified_at
+    NoticeList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoticeView'
+        pending_count:
+          type: integer
+          description: 同一 root_event_id 還在佇列中沒處理完的僱傭關係數
+      required:
+      - items
+      - pending_count
+    YearAgreementView:
+      type: object
+      additionalProperties: false
+      properties:
+        leave_year_agreement_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        employment_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        leave_type_code:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        leave_year_basis:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        year_start:
+          $ref: '#/components/schemas/MonthDay'
+        effective_from:
+          type: string
+          format: date
+        ended_from:
+          type: string
+          format: date
+        agreed_on:
+          type: string
+          format: date
+        agreement_note:
+          type: string
+        status:
+          type: string
+      required:
+      - leave_year_agreement_id
+      - employment_id
+      - leave_type_code
+      - leave_year_basis
+      - effective_from
+      - agreed_on
+      - status
+    YearAgreementList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/YearAgreementView'
+      required:
+      - items
+    PolicyVersionView:
+      type: object
+      additionalProperties: false
+      properties:
+        version:
+          type: string
+        revision:
+          type: integer
+        effective_from:
+          type: string
+          format: date
+        params:
+          $ref: '#/components/schemas/PolicyParams'
+        recorded_at:
+          type: string
+          format: date-time
+        supersedes_revision:
+          type: integer
+      required:
+      - version
+      - revision
+      - effective_from
+      - params
+      - recorded_at
+    PolicyView:
+      type: object
+      additionalProperties: false
+      properties:
+        policy_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        employer_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        leave_type_code:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        name:
+          type: string
+        subject:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        source_note:
+          type: string
+        effective_from:
+          type: string
+          format: date
+        effective_to:
+          type: string
+          format: date
+        status:
+          type: string
+      required:
+      - policy_id
+      - name
+      - subject
+      - effective_from
+      - status
+    PolicyList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyView'
+      required:
+      - items
+    PolicyDetail:
+      type: object
+      additionalProperties: false
+      properties:
+        policy:
+          $ref: '#/components/schemas/PolicyView'
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyVersionView'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+      required:
+      - policy
+      - versions
+      - warnings
+      description: warnings 含 R78（公司規定少於法定；不能忽略）
+    LeaveTypeList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              code:
+                type: string
+                pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+              jurisdiction_id:
+                type: string
+                pattern: ^[0-9a-f]{24}$
+              status:
+                type: string
+            required:
+            - code
+            - status
+      required:
+      - items
+  responses:
+    Forbidden:
+      description: 角色不符，或引用的資料不屬於呼叫者的客戶
+    NotFound:
+      description: 引用的資料不存在或不是目前版本
+    Blocked:
+      description: 違反「擋下」類規則，或狀態不允許這個動作（P1）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Blocked'

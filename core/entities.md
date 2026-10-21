@@ -16,7 +16,7 @@
   - `name`（客戶名稱）
 - 對應驗收問題：hire-employee:Q11（同一客戶內認出同一人）、hire-employee:Q22（個資歸屬與封存）
 - 備註：建立與維護屬 org-setup，本切片以固定資料提供 [靜態替代]
-- 被引用：（無）
+- 被引用：annual-leave-grant（② @ annual-leave-grant/02-v1）
 
 ### Person（人） [候選]
 - 出處：hire-employee（② @ hire-employee/02-v1）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
@@ -39,7 +39,7 @@
   - `civil_registrations`（在各管轄區的戶籍或居住登記與期間：哪個管轄區、登記日、除籍日；台灣本版用到在台戶籍，美國州稅會用到居住州；Q06、D-05）
   - `age`（年齡）[推導]
 - 對應驗收問題：hire-employee:Q01、hire-employee:Q06、hire-employee:Q10、hire-employee:Q11、hire-employee:Q22
-- 被引用：（無）
+- 被引用：annual-leave-grant（② @ annual-leave-grant/02-v1）
 
 ### IdentityDocument（身分證件） [候選]
 - 出處：hire-employee（② @ hire-employee/02-v1）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
@@ -72,7 +72,7 @@
   - `code`（代碼，例：TW）
   - `level`（層級，分類值：國家、州、市）
 - 對應驗收問題：hire-employee:Q04
-- 被引用：（無）
+- 被引用：annual-leave-grant（② @ annual-leave-grant/02-v1）
 
 ### Employer（雇主） [候選]
 - 出處：hire-employee（② @ hire-employee/02-v3）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
@@ -95,7 +95,7 @@
   - `headcount_on(date)`（某一天的在職員工人數）[推導]：工作規則、其他國家依雇主規模分級的規則會用到（ENTITY_SKETCH「雇主規模會影響規則」）
 - 對應驗收問題：hire-employee:Q01、hire-employee:Q05、hire-employee:Q12、hire-employee:Q16（工作許可是否發給這個雇主）、hire-employee:Q21（補登的界線）
 - 備註：建立與維護屬 org-setup，本切片以固定資料提供 [靜態替代]
-- 被引用：（無）
+- 被引用：annual-leave-grant（② @ annual-leave-grant/02-v1）
 
 ### InsuranceUnit（投保單位） [候選]
 - 出處：hire-employee（② @ hire-employee/02-v1）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
@@ -184,7 +184,7 @@
   - `historical_basis_note`（當時依據說明：既有員工補登時，到職當時依據的文字說明，例：「當時適用勞退舊制」；供人工查證，系統不依它判定；Q21、D-12）
   - `seniority`（年資）[推導]：本切片只由本段到職日算；承認前段年資時，以做年資合併的切片定義的「年資承認」為準（D-28）
 - 對應驗收問題：hire-employee:Q01、hire-employee:Q04、hire-employee:Q08、hire-employee:Q11、hire-employee:Q12、hire-employee:Q18、hire-employee:Q21
-- 被引用：（無）
+- 被引用：annual-leave-grant（② @ annual-leave-grant/02-v1）
 
 ### EmploymentContract（勞動契約） [候選]
 - 出處：hire-employee（② @ hire-employee/02-v3）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
@@ -202,7 +202,7 @@
   - `term_end`（契約上寫的迄日；不定期契約、或契約沒寫期限時為空。移工契約沒寫期限時的實際期限由第 ④ 步規則推出，不存在這裡，Q19、D-36）
   - `in_writing`（是否為書面契約；移工必須是書面，Q19）
 - 對應驗收問題：hire-employee:Q19
-- 被引用：（無）
+- 被引用：annual-leave-grant（② @ annual-leave-grant/02-v1）
 
 ### Compensation（約定薪資） [候選] [靜態替代]
 - 出處：hire-employee（② @ hire-employee/02-v3）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
@@ -314,7 +314,7 @@
   - `withdrawn_by`（誰撤回的：系統使用者；沒有撤回則空）
   - `withdrawn_at`（何時撤回）
 - 對應驗收問題：hire-employee:Q20
-- 被引用：（無）
+- 被引用：annual-leave-grant（② @ annual-leave-grant/02-v1）
 
 ### PersonalDataArchival（個資封存） [候選]
 - 出處：hire-employee（② @ hire-employee/02-v1）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
@@ -351,4 +351,129 @@
   - `refusal_basis`（拒絕或部分拒絕的依據：引用的規則與版本或法條，例：勞工名卡離職後保存五年；只用於拒絕，D-35）
   - `extensions`（延長紀錄，每次延長一筆：延長後的處理期限、延長原因、以書面通知當事人的日期；沒有延長則空；次數不限，總日數受第 ④ 步規則限制，D-35）
 - 對應驗收問題：hire-employee:Q22
+- 被引用：（無）
+
+### LeaveType（假別） [候選]
+- 出處：annual-leave-grant（② @ annual-leave-grant/02-v1）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
+- 層：domain
+- 定義：一種假（例：台灣的特別休假），由某個管轄區的法令訂定，之後也可以由公司規定訂定
+- 身分：代碼；管轄區訂定的假別全平台共用（參考資料，同 Jurisdiction 的做法，PLAN.md D-31）；公司自訂的假別之後在客戶內認同一個
+- 何時開始：系統開始支援這種假（法令施行、或公司規定建立）
+- 何時結束：法令廢止或公司規定停用；標「已停用」，不刪除（docs/01 0.2 第 1 級）
+- 不是什麼：不是一筆請假權利（LeaveEntitlement）——假別是「哪一種假」，請假權利是某位員工某一期拿到的額度；不是公司規定（CompanyPolicy）——公司規定可以對某個假別多給，但假別本身不因此變成另一種；不是取得方式——同一個假別可能因雇主不同而一次給予或依工時累積（D-09）
+- 不能跟誰合併：CompanyPolicy——同一個假別可以有好幾條公司規定，公司規定停用時假別還在；跨國的同名假（台灣特休、日本年次有給休暇）是不同管轄區的不同假別，不能合併（docs/01 ② 命名與多語對照）
+- 主要屬性：
+  - `code`（代碼）
+  - `name`（名稱）
+- 對應驗收問題：annual-leave-grant:Q01（這位員工有哪幾筆特休）
+- 被引用：（無）
+
+### CompanyPolicy（公司規定） [候選]
+- 出處：annual-leave-grant（② @ annual-leave-grant/02-v1）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
+- 層：shared
+- 定義：客戶（或客戶底下的某個雇主）在法令允許的範圍內訂定的一條規定，例：「到職滿 1 年多給 2 天特休」「特休年度預設採曆年制」；規定的內容（多給幾天、預設哪一種年度）是規則資料，依版本保存（docs/03 P5）
+- 身分：由系統指定編號；客戶內（PLAN.md D-31）。內容修改是同一條規定的新版本（版本與各版的生效日是規則資料，第 ④ 步），不是另一條
+- 何時開始：規定第一次生效（`effective_from`）
+- 何時結束：規定廢止（`effective_to`）；已經依它給予的特休不受影響
+- 不是什麼：不是法令；不是規定的內容本身（天數、條件、版本屬第 ④ 步的規則資料）；不是某位員工和雇主的個別約定（LeaveYearAgreement）——公司規定的特休年度只是預設（01_scope D-12）
+- 不能跟誰合併：LeaveYearAgreement——公司改了預設，已經個別約定的員工不跟著改；LeaveType（見 LeaveType）
+- 主要屬性：
+  - `name`（名稱）
+  - `subject`（規定的事項，分類值：特休加給、特休年度預設；其他切片再加。同一雇主、同一假別同一天只能有一條有效的「特休年度預設」，第 ④ 步規則；D-11）
+  - `source_note`（依據說明，例：工作規則第 12 條、公司公告；未滿 30 人的雇主不一定有工作規則，勞基法第 70 條，勞動契約與年資#10 `[未核對]`）
+  - `effective_from`（第一次生效日；Q10）
+  - `effective_to`（廢止日，沒有廢止則空；Q10）
+- 對應驗收問題：annual-leave-grant:Q04（公司多給幾天）、annual-leave-grant:Q09（依哪一條公司規定給的）、annual-leave-grant:Q10（公司規定修改後依哪一版）
+- 備註：「只能往對員工有利的方向調」的判斷（PLAN.md D-09、P-10）與適用對象（全體或某些員工類型）是第 ④ 步的規則；建立與維護的畫面不在本切片，這版以固定資料提供 [靜態替代]
+- 被引用：（無）
+
+### LeaveYearAgreement（特休年度約定） [候選]
+- 出處：annual-leave-grant（② @ annual-leave-grant/02-v1）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
+- 層：domain
+- 定義：某位員工與雇主協商，某種假用哪一種年度計算可以休的期間（週年制或曆年制），從哪天起適用（勞基法施行細則第 24 條第 2 項：「勞工得於勞雇雙方協商之下列期間內，行使特別休假權利」，特別休假#02 `[未核對]`）
+- 身分：由系統指定編號；同一段僱傭關係、同一假別，同一天只有一筆有效（第 ④ 步規則）；改用另一種是新的一筆，舊的保留
+- 何時開始：約定開始適用的那天（`effective_from`）
+- 何時結束：被下一筆約定取代，或僱傭關係結束
+- 不是什麼：不是公司規定的預設（CompanyPolicy）——沒有個別約定時才套用預設，而且要看得出是套用的（01_scope D-12）；不是一筆特休；不是「某天適用哪一種」的結果（那是推導值，見「不是 Entity」）
+- 不能跟誰合併：Employment——同一段僱傭關係可以改用另一種年度，改之前給的特休依原來的年度（Q03、Q14、US-D10）；CompanyPolicy（見 CompanyPolicy）
+- 主要屬性：
+  - `leave_year_basis`（年度的種類，分類值：週年制、固定起始日的年度；Q03）
+  - `year_start`（固定起始日年度的起始月日；這版只有 1 月 1 日，也就是曆年制；不把 1 月 1 日寫死，之後可以支援會計年度等約定年度（01_scope D-03））
+  - `effective_from`（從哪天起適用；Q03）
+  - `agreed_on`（協商的日期，由人輸入）
+  - `agreement_note`（協商方式的說明，例：個別書面約定；工作規則或公司統一規定算不算協商，待 [待專家確認: EQ-002]）
+- 對應驗收問題：annual-leave-grant:Q03、annual-leave-grant:Q14
+- 被引用：（無）
+
+### LeaveEntitlement（請假權利） [候選]
+- 出處：annual-leave-grant（② @ annual-leave-grant/02-v1）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
+- 層：domain
+- 定義：某位員工在某段僱傭關係中，拿到的一筆可以休的假：多少、從哪天到哪天可以休、從哪裡來（法令或哪一條公司規定）。本切片處理台灣特休；它是權益帳（PLAN.md D-15）的單位，之後的切片從它扣用、轉換
+- 身分：由系統指定編號。依規則給予的：同一段僱傭關係、同一假別、同一來源（法定，或同一條公司規定）、同一個可休期間只有一筆有效。依據改變而重新判定時，新舊怎麼對應（對得上的更正並保留更正前的內容，對不上的作廢與新增）交給第 ③ 步，不用期別寫死（Q11，D-03，X-15）。遞延進來的：每一筆原特休最多一筆。補登的：每次登錄一筆
+- 何時開始：員工取得這筆權利的那天（`acquired_on`；勞基法施行細則第 24 條第 1 項「於符合……特別休假條件時，取得特別休假之權利」，特別休假#02 `[未核對]`）；遞延進來的是原年度終結的隔天；補登的是開始由系統管理那天
+- 何時結束：可休期間結束（年度終結）時判定未休的去向；僱傭關係在年度終結前結束的，交給 resignation（01_scope D-15）；重新判定後不再成立的那一期、或遞延協商撤回後的遞延進來那一筆，作廢但保留紀錄；作廢的那筆不算進任何推導值，上面已休的怎麼處理交給第 ③、④ 步（X-17）
+- 不是什麼：不是剩餘額度（推導值）；不是請假申請或請假事實（annual-leave-request）；不是假別；不是轉為工資或失效的那一批（LeaveConversion）；不是遞延協商（LeaveDeferralAgreement）
+- 不能跟誰合併：同一位員工的其他筆——當期的和遞延進來的、法定的和公司多給的，期間、扣用順序與終結時的處理不同（01_scope 交給第 ② 步的觀察第 1、2 點，D-01、D-02）；LeaveConversion——轉換由薪資切片引用、有自己的判定日與依據，一筆特休可能有好幾次轉換（年度終結、更正差額、之後的離職結算）
+- 主要屬性：
+  - `source`（來源，分類值：法定、公司規定；Q04）
+  - `origin`（怎麼來的，分類值：依規則給予、遞延進來、補登當期、補登遞延；之後依工時累積的假別再加，D-09；Q12）
+  - `period_sequence`（第幾期，依規則給予的才有；例：週年制第 1 期是滿 6 個月那一筆）
+  - `seniority_tier`（依哪一級年資給的，例：滿 6 個月、滿 1 年；依規則給予的才有；Q01）[待專家確認: EQ-002]（曆年制下一筆可能跨兩級）
+  - `acquired_on`（取得日：符合特休條件、取得權利的那天；給予時依規則算出，之後凍結使用；Q02、Q07）[待專家確認: EQ-002]（曆年制下一筆可能對應兩次符合條件）
+  - `quantity`（額度：給予、遞延進來或補登的數量；Q01、Q04。額度的更正是改正這一筆並保留歷史，第 ③ 步要標成需要重建當時，D-07）
+  - `unit`（單位，分類值：日、小時；台灣特休依法以日計，其他假別或其他管轄區可能以小時計；由這一筆衍生的量（已休、遞延、轉換）都沿用它的單位，以小時請以日計的特休時怎麼換算交給 annual-leave-request，D-09、X-19）
+  - `valid_from`（可休期間的起日；Q01、Q06）
+  - `valid_to`（可休期間的迄日，也就是這一筆的年度終結日（勞基法施行細則第 24-1 條：「年度終結，為前條第二項期間屆滿之日」，特別休假#03 `[未核對]`）；Q01、Q05、Q06）
+  - `leave_year_basis`（給予時依哪一種年度；Q03、Q09）
+  - `basis_rule_versions`（給予時依據的規則版本，每一種規則一筆：法令的天數表、公司加給規定、特休年度預設；補登的沒有，寫「無對應規則版本」（PLAN.md D-28）；Q09、Q10）
+  - `basis_seniority`（取得日當時算出的年資，凍結使用；之後合併前段年資、扣除留停期間時，年資不再只由一個起算日決定，所以記算出的年資，不記起算日；Q02、Q09，D-03、X-16）
+  - `basis_start_date`（給予時依據的到職日；這版年資只由它算；之後的年資依據（年資承認、留職停薪）由 seniority-recognition、leave-of-absence 加上；Q09、Q11）
+  - `notified_on`（雇主實際告知員工排定特休的日期，由人輸入；只有依規則給予的法定特休要判定（勞基法第 38 條第 3 項，特別休假#01 `[未核對]`），補登的不判定（01_scope D-09）；Q07）[待專家確認: EQ-002]（曆年制下可能要告知兩次）
+  - `notice_due_on`（告知期限：取得日起 30 日內，特別休假#02 `[未核對]`）[推導]
+  - `pre_system_used_quantity`（補登的：開始由系統管理那天以前已經休的數量，由人登錄；Q12）
+  - `registered_original_year_end`（補登遞延的：原年度的終結日，由人登錄；轉為工資時依它計算（特別休假#03 `[未核對]`）；Q05、Q12）
+  - `used_quantity`（已休）[推導] [靜態替代]：之後由 annual-leave-request 的請假事實推出；這版以固定資料提供（01_scope「範圍外但會用到」，D-13）；補登的含 `pre_system_used_quantity`
+  - `deferred_out_quantity`（遞延出去的：遞延進來、而且沒有作廢的那一筆的額度）[推導]
+  - `converted_quantity`（轉為工資的：轉換對象為工資的各次轉換加總，含更正差額）[推導]
+  - `expired_quantity`（失效的：轉換對象為失效的各次轉換加總；只可能用在公司規定的特休，待 [待專家確認: EQ-005]）[推導]
+  - `remaining_quantity`（還可以休的）[推導]
+- 對應驗收問題：annual-leave-grant:Q01、annual-leave-grant:Q02、annual-leave-grant:Q04、annual-leave-grant:Q05、annual-leave-grant:Q06、annual-leave-grant:Q07、annual-leave-grant:Q08、annual-leave-grant:Q09、annual-leave-grant:Q10、annual-leave-grant:Q11、annual-leave-grant:Q12、annual-leave-grant:Q13
+- 備註：守恆式（第 ④ 步）：`quantity` ＝ `remaining_quantity` ＋ `used_quantity` ＋ `deferred_out_quantity` ＋ `converted_quantity` ＋ `expired_quantity`。PLAN.md D-15 式子裡的「調整」由轉換的更正差額表示（D-07）
+- 被引用：（無）
+
+### LeaveDeferralAgreement（遞延協商） [候選]
+- 出處：annual-leave-grant（② @ annual-leave-grant/02-v1）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
+- 層：domain
+- 定義：員工與雇主協商，把一筆特休在年度終結時沒休完的部分，遞延到下一個年度休（勞基法第 38 條第 4 項：「年度終結未休之日數，經勞雇雙方協商遞延至次一年度實施者」，特別休假#01 `[未核對]`）
+- 身分：由系統指定編號；一筆特休同一時間只有一筆有效的遞延協商（第 ④ 步規則）。之後再談（改天數、另簽一份同意書）都是這一筆的修改，保留歷史，不另立一筆（X-12）。一份書面同意涵蓋法定與公司多給的兩筆時，每一筆各記一筆協商，協商日與憑據說明相同（X-13）
+- 何時開始：雙方談定（`agreed_on`）；年度終結後才補的協商算不算數，待 [待專家確認: EQ-003]
+- 何時結束：不結束（歷史事實）；可以撤回，撤回要記錄誰、何時（第 ③ 步）
+- 不是什麼：不是遞延進來的那一筆特休（那是協商在年度終結時產生的結果）；不是特休年度約定
+- 不能跟誰合併：LeaveEntitlement——協商在年度終結前就存在，遞延進來的那一筆要到年度終結才出現；協商會修改、撤回，遞延進來的那筆已經被休或轉換；雇主負舉證責任時要拿得出協商本身與修改經過（勞基法第 38 條第 6 項，特別休假#01 `[未核對]`）
+- 主要屬性：
+  - `agreed_on`（協商的日期，由人輸入；Q05）
+  - `deferred_quantity`（這一筆協商遞延的額度，由人輸入；單位沿用那一筆特休；不能超過年度終結時的未休、公司多給的部分能不能延，是第 ④ 步的規則（EQ-005）；Q05，01_scope D-06）
+  - `agreement_note`（協商方式與憑據的說明，例：書面同意書）
+- 對應驗收問題：annual-leave-grant:Q05、annual-leave-grant:Q06
+- 被引用：（無）
+
+### LeaveConversion（請假權利轉換） [候選]
+- 出處：annual-leave-grant（② @ annual-leave-grant/02-v1）；文中的 D-nn、X-nn 指該切片 02_entities.md 的決定與反例
+- 層：domain
+- 定義：一筆請假權利中，有一批額度不再能休，轉成別的東西：工資，或失效（只可能用在公司規定的特休，EQ-005）；記下轉了多少、為什麼轉、依哪一天計算工資，交給薪資切片計算金額與發放（PLAN.md D-38）
+- 身分：由系統指定編號；每次判定一筆。判定交給薪資切片後，發現要更正時不改那一筆，另記一筆差額指回它，並記更正原因（D-06、X-18）
+- 何時開始：判定的那天（年度終結的判定；契約終止的由 resignation 判定）
+- 何時結束：不結束（歷史事實）
+- 不是什麼：不是請假權利本身；不是薪資單上的一行（PayItem，monthly-payroll 定義）——PayItem 會引用它；不是金額
+- 不能跟誰合併：LeaveEntitlement（見 LeaveEntitlement）；PayItem——轉換是額度與工資基準日的判定，金額要等薪資切片依一日工資計算，而且可以在不同月份發；被更正的那一筆——已經交給薪資的不能改，差額要能另外發或處理（EQ-009）
+- 主要屬性：
+  - `reason`（原因，分類值：年度終結、契約終止；這版只判定年度終結，契約終止由 resignation 使用；Q05、Q06）
+  - `target`（轉成什麼，分類值：工資、失效；PLAN.md D-15 預留之後的其他轉換，例：轉入另一段僱傭關係的特休，待 [待專家確認: EQ-010]）
+  - `quantity`（轉換的額度：判定時算出，之後凍結使用；更正差額可以是負數，多發時怎麼處理待 [待專家確認: EQ-009]；Q05、Q08）
+  - `determined_on`（判定日；Q05）
+  - `basis_rule_versions`（判定時依據的規則版本，例：公司規定的特休能不能過期依哪一版；Q09、Q10）
+  - `correction_cause`（更正原因，更正差額才有；分類值：依據更正（例：到職日）、遞延協商修改或撤回、年度終結後才登錄的請假、其他；X-18）
+  - `wage_basis_date`（工資計算基準日：年度終結的當期是這一筆的年度終結日；遞延進來的是原年度的終結日；契約終止的當期是契約終止日，由 resignation 使用（勞基法施行細則第 24-1 條，特別休假#03 `[未核對]`）；對象為失效的沒有。判定時依規則算出，之後凍結使用：之後到職日更正改了那一筆的年度終結日，已發的這一次仍依原來的日子，差額另依新的日子（X-14））
+  - `payment_due_on`（發給期限：年度終結的是契約約定的工資給付日或年度終結後 30 日內，兩者怎麼擇一待 [待專家確認: EQ-003]；契約終止的依施行細則第 9 條，由 resignation 定義（特別休假#03 `[未核對]`）。判定時算出，之後凍結使用，雇主之後改工資給付日不影響已判定的；更正差額的期限與負數差額怎麼處理是第 ④ 步與 monthly-payroll 的規則（EQ-009，X-14））
+- 對應驗收問題：annual-leave-grant:Q05、annual-leave-grant:Q06、annual-leave-grant:Q08、annual-leave-grant:Q11
 - 被引用：（無）
