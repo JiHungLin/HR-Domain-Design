@@ -35,7 +35,7 @@ def ref(db):
 
 
 def make_org(db, ref, *, name="飲料公司", existing_employees=12, lsa=True,
-             category="LI_INDUSTRY.LIA6_02_TW", registered_on=date(2018, 5, 1)):
+             category="LI_INDUSTRY.LIA6_02_TW", registered_on=date(2018, 5, 1), system_managed_from=date(2026, 1, 1)):
     """org-setup 提供的資料 [靜態替代]：客戶、雇主、投保單位、帳號，以及既有在職員工。"""
     ts = now()
     tenant = db.tenants.insert_one({"name": name, "created_at": ts}).inserted_id
@@ -44,7 +44,7 @@ def make_org(db, ref, *, name="飲料公司", existing_employees=12, lsa=True,
         "registrations": [{"kind": "REGISTRATION_KIND.COMPANY_TW", "registered_on": to_dt(registered_on)}],
         "labor_insurance_industry_category": [{"code": category, "from": to_dt(registered_on)}],
         "labor_standards_act_applicable": [{"value": lsa, "from": to_dt(registered_on)}],
-        "system_managed_from": to_dt(date(2026, 1, 1)), "created_at": ts}).inserted_id
+        "system_managed_from": to_dt(system_managed_from), "created_at": ts}).inserted_id
     location = db.work_locations.insert_one({"tenant_id": tenant, "name": "總店", "jurisdiction_id": ref["tw"],
                                              "created_at": ts}).inserted_id
     units = {

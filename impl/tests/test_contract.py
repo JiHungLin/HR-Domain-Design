@@ -1,4 +1,4 @@
-"""實作與 api.yaml 一致（P8、05_mapping D-18）：每個操作都有註冊，請求、回應格式與 x- 欄位直接取自 api.yaml。
+"""實作與 api.yaml（hire-employee、annual-leave-grant 兩份）一致（P8、05_mapping D-18）：每個操作都有註冊，請求、回應格式與 x- 欄位直接取自 api.yaml。
 
 回應內容是否符合格式，由 tests/conftest.py 的 Api 在每次呼叫時檢查。
 """
@@ -11,7 +11,8 @@ def _ops(paths):
 
 
 def test_every_operation_matches_spec():
-    spec_ops, impl_ops = _ops(spec.spec()["paths"]), _ops(app.openapi()["paths"])
+    spec_ops = {(m, p): o for p, m, o in spec.paths()}
+    impl_ops = _ops(app.openapi()["paths"])
     assert set(spec_ops) == set(impl_ops)
     for k, o in spec_ops.items():
         impl = impl_ops[k]
@@ -26,7 +27,7 @@ def test_every_operation_matches_spec():
 
 
 def test_components_from_spec():
-    assert app.openapi()["components"] == spec.spec()["components"]
+    assert app.openapi()["components"] == spec.components()
 
 
 def test_request_rejected_when_not_in_spec(api, org):
