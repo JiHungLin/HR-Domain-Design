@@ -243,15 +243,15 @@
 
 | 對象 | 更正事件 | 誰發現 | 誰核准 | 與原紀錄的關係 | 狀態 | 出處 |
 |---|---|---|---|---|---|---|
-| 錄用與到職資料的值（到職日、工作地點、組織單位、試用期、員工編號） | CorrectRecord | 人資或員工 | 不需核准，留紀錄；到職日的更正一律算重大更正 | 原值保留，記更正者、時間、理由；依更正後的資料重新判定各保險，更正前、當時系統知道的判定仍查得到（Q15）；依賴它的警告忽略紀錄依條件失效 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| 錄用與到職資料的值（到職日、工作地點、組織單位、試用期、員工編號） | CorrectRecord | 人資或員工 | 不需核准，留紀錄；到職日的更正一律算重大更正 | 原值保留，記更正者、時間、理由；依更正後的資料重新判定各保險，更正前、當時系統知道的判定仍查得到（hire-employee:Q15）；依賴它的警告忽略紀錄依條件失效 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | 雇主 | 不能用 CorrectRecord；AnnulEntry 註銷原本的到職（或補登），再對正確的雇主登錄 | 人資 | 不需核准，留紀錄；重大更正通知雇主 | 換雇主就是另一段僱傭關係（02 D-03）；原紀錄保留並標為已註銷 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | 僱傭關係或錄用登錯人（例：重複建了一個人） | CorrectRecord（改指到正確的人） | 人資 | 不需核准，留紀錄；重大更正通知雇主 | 原本指向的人保留紀錄；兩筆人確認是同一人時的合併做法，第 ⑤ 步設計 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
-| 誤登到職（其實從未提供勞務） | AnnulEntry（註銷 StartEmployment），再登錄 CancelHire | 人資 | 不需核准，留紀錄；重大更正通知雇主 | 原到職事件保留並標為已註銷；這段僱傭關係視為不存在，不計入人數、年資、勞工名卡（01_scope D-12、Q14、Q18）；已加保的提醒向保險人處理（EQ-017）；後面依賴它的事件（例：到職後立刻離開）一起註銷 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| 誤登到職（其實從未提供勞務） | AnnulEntry（註銷 StartEmployment），再登錄 CancelHire | 人資 | 不需核准，留紀錄；重大更正通知雇主 | 原到職事件保留並標為已註銷；這段僱傭關係視為不存在，不計入人數、年資、勞工名卡（01_scope D-12、hire-employee:Q14、hire-employee:Q18）；已加保的提醒向保險人處理（EQ-017）；後面依賴它的事件（例：到職後立刻離開）一起註銷 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | 誤登取消（其實已經到職） | AnnulEntry（註銷 CancelHire），再登錄 StartEmployment | 人資 | 不需核准，留紀錄；重大更正通知雇主 | 原取消事件保留並標為已註銷；錄用回到 Hired、契約依其餘事件重新推導，再到職；已封存的個資由人資解除（ReleaseArchival 連到這筆註銷） | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | 誤登到職後立刻離開（其實仍在職） | AnnulEntry（註銷 RecordEarlyDeparture） | 人資 | 不需核准，留紀錄；重大更正通知雇主 | 原事件保留並標為已註銷；僱傭關係回到 Active；契約依日期重新推導（起日已過的回到 InForce） | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | 誤補登的既有員工 | AnnulEntry（註銷 RegisterExistingEmployment） | 人資 | 不需核准，留紀錄；重大更正通知雇主 | 原事件保留並標為已註銷；這段僱傭關係視為不存在 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | 註銷錯了 | RevokeAnnulment | 人資 | 不需核准，留紀錄；重大更正通知雇主 | 原事件與它建立的紀錄恢復，身分不變 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
-| 人的勞工名卡項目、身分證件、工作許可、契約、約定薪資 | CorrectRecord；整筆登錯用 AnnulEntry | 人資或員工（員工可經由個資請求，Q22） | 不需核准，留紀錄；重大更正通知雇主 | 原值保留；依賴它的判定、警告與依日期推導的狀態重新推導 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
+| 人的勞工名卡項目、身分證件、工作許可、契約、約定薪資 | CorrectRecord；整筆登錯用 AnnulEntry | 人資或員工（員工可經由個資請求，hire-employee:Q22） | 不需核准，留紀錄；重大更正通知雇主 | 原值保留；依賴它的判定、警告與依日期推導的狀態重新推導 | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | 實際辦理日、保險人核定的生效日、申報的投保薪資 | CorrectRecord；整筆登錯用 AnnulEntry | 人資 | 不需核准，留紀錄；重大更正通知雇主 | 要附保險人回執或標示「無回執」；原值保留；晚辦天數從有變成沒有時，通知雇主（老闆）；只更正系統內的登錄錯誤，向保險人申請更正加保日不在本切片（01_scope 不做）；同一生效日先誤報再更正投保薪資，是對同一筆的更正（02 InsuredSalary 卡） | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 | 結束日、結束原因（到職後立刻離開） | CorrectRecord | 人資 | 不需核准，留紀錄；重大更正通知雇主 | 原值保留；結束日不能早於到職日（資料矛盾，阻擋） | [候選] | hire-employee（③ @ hire-employee/03-v1） |
 
@@ -353,7 +353,7 @@
 
 說明：
 - 需要軌跡，不需要重建當時：「這位員工某天適用哪一種」由各筆約定的適用起日與終止日就看得出來（annual-leave-grant:Q03）；每一筆特休給予時依哪一種已經凍結在那一筆上（`leave_year_basis` 與 appliedYearAgreement，02_entities D-04），所以約定本身只要知道誰、何時登錄或更正。
-- 改用另一種的那一年怎麼換算是第 ④ 步的規則 [待專家確認: EQ-002]；已經給予的特休不因為改用另一種而改變（annual-leave-grant:Q14、US-D10）。
+- 改用另一種的那一年怎麼換算是第 ④ 步的規則 [待專家確認: EQ-002]；已經給予的特休不因為改用另一種而改變（annual-leave-grant:Q14、annual-leave-grant:US-D10）。
 - 僱傭關係結束時約定不另外轉換狀態：結束後不再給予，約定也不會再被用到。
 - 雇主改了預設，沒有個別約定的員工之後就套用新的預設；年度是勞雇雙方協商的結果（01_scope D-12），所以預設改變時，對還在套用預設的員工成立警告，不同意的員工由人資替他登錄一筆維持原年度的約定（D-13）。工作規則改預設算不算協商 [待專家確認: EQ-002]。
 
@@ -424,7 +424,7 @@
 | 一筆法定特休的告知狀態（只有依規則給予的法定特休；補登的不判定，01_scope D-09；隨僱傭關係結束、作廢的不判定，④ D-24） | 待告知（期限內）／已告知／逾期未告知／逾期後告知 | 取得日、告知期限（`notice_due_on`）、實際告知日（`notified_on`）與今天；告知日被更正過的看得出來（core CorrectRecord 保留原值）；逾期是法規警告，可以忽略（core OverrideWarning），不阻擋。符合條件之前就告知算不算數 [待專家確認: EQ-006]；曆年制一筆可能要告知兩次 [待專家確認: EQ-002] | annual-leave-grant:Q07 |
 | 還可以休的、已休、遞延出去、轉為工資、失效 | 數量 | 02_entities 的推導值；已休這版以固定資料提供 [靜態替代] | annual-leave-grant:Q05、annual-leave-grant:Q08 |
 | 某天適用哪一種特休年度 | 週年制、曆年制（固定起始日的年度） | 當天有效的個別約定；沒有就用當天有效的雇主預設 | annual-leave-grant:Q03 |
-| 之後各期的預估（還沒取得的） | 預計取得日、天數、可休期間 | 依目前的到職日、特休年度與目前的規則版本試算；只是預估，不建立請假權利，取得日到達才由 GrantLeaveEntitlement 給予（D-01）；規則改版、到職日更正、改用另一種年度後預估會變 | annual-leave-grant:Q01、annual-leave-grant:Q02（US-D01） |
+| 之後各期的預估（還沒取得的） | 預計取得日、天數、可休期間 | 依目前的到職日、特休年度與目前的規則版本試算；只是預估，不建立請假權利，取得日到達才由 GrantLeaveEntitlement 給予（D-01）；規則改版、到職日更正、改用另一種年度後預估會變 | annual-leave-grant:Q01、annual-leave-grant:Q02（annual-leave-grant:US-D01） |
 | 法規警告：告知逾期、可能應合併年資、曆年制換算少於法定、公司規定少於法定、年度終結後才登錄遞延協商（看登錄時間）、協商遞延額度超過未休、雇主預設的特休年度改變而員工還在套用預設、待確認的轉換超過發給期限 | 成立／不成立 | 依資料與規則推出，資料改正就消失；忽略時用 core 的 OverrideWarning（02_entities D-16）；判斷條件是第 ④ 步的規則 | annual-leave-grant:Q02、annual-leave-grant:Q05、annual-leave-grant:Q07、annual-leave-grant:Q14 |
 
 ## 事件（annual-leave-grant）

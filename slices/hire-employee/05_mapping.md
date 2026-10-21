@@ -5,9 +5,9 @@
 | 切片 | hire-employee |
 | 步驟 | ⑤ 投影到實作 |
 | 狀態 | 已凍結 |
-| 版本 | hire-employee/05-v5 |
+| 版本 | hire-employee/05-v6 |
 | 產出者 | AI（Claude）＋ |
-| 讀取的輸入 | 02_entities.md @ hire-employee/02-v4；03_flows.md、03_use_cases.md @ hire-employee/03-v6；04_rules.md @ hire-employee/04-v5；docs/03 平台架構約定（P4、P5、P10 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31）；回頭修改（2026-10-14，第二次）：03_flows D-20、04_rules D-19、D-20（回頭修改中）；06_evidence/signoff.md #18～#20（impl/hire-employee @ 392b358）；回頭修改（2026-10-16）：03_flows D-21、04_rules D-21、06_evidence/signoff.md #21（impl/hire-employee @ ccc0bf8）、docs/03 P12（工具包 @ d301ec6） |
+| 讀取的輸入 | 02_entities.md @ hire-employee/02-v4；03_flows.md、03_use_cases.md @ hire-employee/03-v6；04_rules.md @ hire-employee/04-v5；docs/03 平台架構約定（P4、P5、P10 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31）；回頭修改（2026-10-14，第二次）：03_flows D-20、04_rules D-19、D-20（回頭修改中）；06_evidence/signoff.md #18～#20（impl/hire-employee @ 392b358）；回頭修改（2026-10-16）：03_flows D-21、04_rules D-21、06_evidence/signoff.md #21（impl/hire-employee @ ccc0bf8）、docs/03 P12（工具包 @ d301ec6）；回頭修改（2026-10-21）：docs/02 ⑥「候選與不採用」、tools/lint.py 黃金案例檢查（工具包 @ 8b5f2bd） |
 
 <!-- 資料庫為 MongoDB（PLAN.md D-35），本文件的「表」是集合（collection），「欄位」是文件的欄位。
      概念 ID 寫 core/ 的英文識別名稱；技術欄位標 [技術]（P8）。本步先只產出這份對照表，經人確認後才產生 schema.mongo.js 與 api.yaml。 -->
@@ -418,9 +418,9 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | ④ 的每條規則都已決定落實位置（平台 P6） | ✓ 第三節涵蓋 R01～R64（R54 已取消不列）：db constraint 4 條、人工 2 條、其餘 service（AI 比對 04 規則表） | ✓（JiHungLin 於對話中確認，2026-10-16：「全通過」） |
 | 每個正式 Use Case 都已在對照表走一遍：每一步的輸入都拿得到；來自前一步回應的，`api.yaml` 該回應有這個欄位 | ✓ 第六區 15 個 UC 逐步對到 API，每一步的輸入都寫出來源；來自回應的欄位（hire_id、person_id、employment_id、enrollment_id、work_authorization_id、identity_document_id、warning_override_id、data_subject_request_id、archival_id、annulment_event_id 等）都在 api.yaml 該 API 的回應格式中（AI 比對）。UC-15 的 employment_id 來自前一步回應或其他切片的清單（D-19） | ✓（JiHungLin 於對話中確認，2026-10-16：「全通過」） |
 | `api.yaml` 每支 API 的請求與回應都寫到欄位層級，業務欄位對得回對照表第一區；說明（summary）提到的欄位都在格式裡 | ✓ 38 支 API 的請求與回應都是具名 schema（81 個；0.4.0 新增 NeedsDecision，0.5.0 新增 RecordEmploymentPeriodIn），有 required、巢狀物件的欄位、additionalProperties: false；業務欄位與第一區一致（AI 比對）；summary 提到的約定薪資、契約、建立項目的編號都在格式中 | ✓（JiHungLin 於對話中確認，2026-10-16：「全通過」） |
-| 已做紙上驗證：每筆黃金案例依設計推演的結果與人工預期一致；不一致的已回頭修改 | ✓ 使用者選用 GC01～GC03 並填預期結果；AI 依設計推演後比對：GC01 一致；GC02、GC03 初次共 3 處不一致，使用者複核後都是預期結果需更正（勞保生效日翌日、移工時間差不警告、健保期限始日不算入），設計不需回頭修改。結果仍有前提待專家確認：EQ-003（健保、勞退生效日）、EQ-012（伙食津貼算不算入） | ✓（JiHungLin 於對話中確認，2026-10-16：「全通過」） |
+| 已做紙上驗證：每筆黃金案例依設計推演的結果與人工預期一致；不一致的已回頭修改 | ✓ 使用者選用 GC01～GC03 並填預期結果；AI 依設計推演後比對：GC01 一致；GC02、GC03 初次共 3 處不一致，使用者複核後都是預期結果需更正（勞保生效日翌日、移工時間差不警告、健保期限始日不算入），設計不需回頭修改。結果仍有前提待專家確認：EQ-003（健保、勞退生效日）、EQ-012（伙食津貼算不算入）。2026-10-21：沒選用的 GC04、GC05 依 docs/02 ⑥「候選與不採用」，「紙上判定」「判定」由 [未執行] 改為「不採用」，推演與判定結果不變（lint 黃金案例檢查通過） | ✓（JiHungLin 於對話中確認，2026-10-21：「OK，那都通過」） |
 <!-- CHECKLIST:END -->
 
 - 審查者（非產出者）：JiHungLin
 - 日期：2026-10-16
-- 結論：通過（JiHungLin 於對話中確認，2026-10-16：「全通過」；本次為依實作回報 signoff.md #21 回頭修改後重新凍結，各條未逐條說明）
+- 結論：通過（JiHungLin 於對話中確認，2026-10-16：「全通過」；本次為依實作回報 signoff.md #21 回頭修改後重新凍結，各條未逐條說明）；2026-10-21 回頭修改（格式，GC04、GC05 不採用）：通過（JiHungLin 於對話中確認，2026-10-21：「OK，那都通過」）

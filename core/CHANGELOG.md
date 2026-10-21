@@ -2,6 +2,11 @@
 
 <!-- 只新增，最新的在最上面。記錄：切片項目以 [候選] 合併、升為 [已驗證]、套用變更提案、平行切片撞號重編。格式同切片 CHANGELOG.md -->
 
+## 2026-10-21　hire-employee/03-v7、hire-employee/05-v6、annual-leave-grant/05-v2　③⑤　凍結（回頭修改，格式）
+- 改了什麼：只改格式，項目內容、出處、狀態都不變。rules.md 守恆式表的分隔列原本在 C02 之後，移到表頭下（C01、C02 才會被解析）。沒有切片前綴的 Qnn、US-Dnn、UC-nn 依所在項目的出處加前綴：hire-employee 57 處（entities.md Tenant～DataSubjectRequest、flows.md「更正方式（hire-employee）」、relations.md、rules.md R52 的 UC-14、UC-15），annual-leave-grant 48 處（entities.md LeaveType～LeaveConversion、flows.md 兩處 US-D、relations.md、rules.md R75 的 US-D10）
+- 依據：tools/lint.py「表格」「core 前綴」檢查（工具包 @ 8b5f2bd）；docs/02 第六節
+- 產出者：AI（Claude）；審查者：JiHungLin；核心負責人：待審閱
+
 ## 2026-10-21　annual-leave-grant/03-v3、annual-leave-grant/04-v2　③④　凍結（回頭修改）
 - 改了什麼：flows.md CompanyPolicy 狀態機 Effective → Effective（ReviseCompanyPolicy）改寫、新增 Repealed → Repealed（ReviseCompanyPolicy，只限修訂），說明改寫，出處改 03-v3；推導的狀態「告知狀態」列（隨僱傭關係結束、作廢的不判定）；事件 ReviseCompanyPolicy、RejudgeLeaveYearEnd、ReassessLeaveEntitlements、NotifyLeaveReassessment 與更正方式「公司規定」列，出處改 03-v3。rules.md R69、R80、R81、R90、R91、R92、R96 改寫，出處改 04-v2。沒有新增或刪除項目，狀態仍是 [候選]
 - 依據：slices/annual-leave-grant/03_flows.md D-16 @ annual-leave-grant/03-v3；04_rules.md D-22～D-25、EQ-014 答覆 @ annual-leave-grant/04-v2

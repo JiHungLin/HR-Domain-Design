@@ -14,6 +14,23 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-21　annual-leave-grant/05-v2　⑤　凍結
+- 改了什麼：lint 既有格式問題的回頭修改（第 0 級）後重新凍結，內容見「（未凍結）⑤ 回頭修改（第 0 級）：lint 抓到的既有格式問題」那一筆。相對 annual-leave-grant/05-v1：黃金案例 GC02、GC03、GC05 不採用、完成標準「已做紙上驗證」的自評補一句、新增「審查重點（2026-10-21 回頭修改）」。設計不變
+- 依據：annual-leave-grant/05-v1；tools/lint.py（工具包 @ 8b5f2bd）；docs/02 ⑥
+- 反例處理：無
+- 審查方式：審查重點第 1 列打勾；抽查由審查者寫理由略過（「這次只改 golden_cases 的內容修復，不需要再跑 AI 自評」）
+- lint --freeze 剩 1 個紅燈，使用者同意照樣凍結（2026-10-21）：core R52（hire-employee 的規則）套用對象「查看個資（hire-employee:UC-14、hire-employee:UC-15）」，lint 先濾掉其他切片的編號，剩下沒有編號而亮紅燈；是工具誤報，待工具包修 lint
+- 合併進 core/：core/ 中 annual-leave-grant 的 48 處 Qnn、US-Dnn 加前綴（entities.md、flows.md、relations.md、rules.md R75）；內容不變、出處不變、仍為 [候選]
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-21，通過）
+
+## 2026-10-21　（未凍結）　⑤　回頭修改（第 0 級）：lint 抓到的既有格式問題
+- 改了什麼：⑤ 06_evidence/golden_cases.md 沒挑的 GC02、GC03、GC05，「紙上判定」「判定」由 [未執行] 改為「不採用」，檔頭的挑選紀錄同步；05_mapping.md 完成標準「已做紙上驗證」的 AI 自評補一句，新增「審查重點（2026-10-21 回頭修改）」；狀態 → 待檢查。questions.md：EQ-002、EQ-006 的「影響」把「03_flows 推導的狀態」寫成段落全名「推導的狀態與預估」（lint 對不上）；EQ-009 補 04_rules R94。inputs/research 6 個條目的「用在」追加 annual-leave-grant（勞動契約與年資#06、#10，期間計算#02、#03，特別休假#03，請假#05；只追加；INDEX.md 請假、期間計算同步）
+- 依據：tools/lint.py（工具包 @ 8b5f2bd）的 EQ 影響、黃金案例、用在檢查；docs/02 ⑥「候選與不採用」
+- 凍結時一併套用到 core/（內容不變）：core/ 中沒有切片前綴的 Qnn、US-Dnn 依所在項目的出處加前綴，annual-leave-grant 的 48 處（entities.md LeaveType～LeaveConversion、flows.md 第 356、427 行附近的 US-D10、US-D01、relations.md、rules.md R75 的 US-D10）；hire-employee 的與 rules.md 守恆式表記在 hire-employee CHANGELOG 同日那一筆
+- 舊 → 新：設計不變；lint 紅燈 7 → 4（剩下的都在 core/：R52 的 UC-14、UC-15 與守恆式表，凍結時清掉）
+- 影響與回歸：沒有改設計；①～④ 維持凍結；還沒實作
+- 產出者：AI（Claude）；審查者：（待審查）
+
 ## 2026-10-21　annual-leave-grant/03-v3、annual-leave-grant/04-v2、annual-leave-grant/05-v1　③④⑤　凍結
 - 改了什麼：
   - ⑤ 初版（05-v1）：05_mapping.md（集合 13 個：業務 8、固定資料 2、平台 3；事件 → API、Use Case → API、可更正欄位與可註銷事件；規則 R65～R99 與 C01、C02 的落實位置；參數放置；推導值與歷史需求；UC-01～UC-12 走一遍；決定 D-01～D-22）；schema.mongo.js（MongoDB 驗證規則與索引）；api.yaml（OpenAPI 3.1，24 個路徑、26 個操作、56 個格式）；06_evidence/golden_cases.md（候選 6 個，JiHungLin 挑 GC01、GC04、GC06 並填預期結果，紙上驗證 3 個一致）。

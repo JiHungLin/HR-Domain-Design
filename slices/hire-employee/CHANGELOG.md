@@ -12,6 +12,22 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-21　hire-employee/03-v7、hire-employee/05-v6　③⑤　凍結
+- 改了什麼：lint 既有格式問題的回頭修改（第 0 級）後重新凍結，內容見「（未凍結）③⑤ 回頭修改（第 0 級）：lint 抓到的既有格式問題」那一筆。相對 hire-employee/03-v6：03_flows.md 決定表的空行、D-19～D-21 的欄數（03_use_cases.md 沒改，只更新版本）。相對 hire-employee/05-v5：黃金案例 GC04、GC05 不採用、完成標準「已做紙上驗證」的自評補一句。設計不變
+- 依據：hire-employee/03-v6、hire-employee/05-v5；tools/lint.py（工具包 @ 8b5f2bd）；docs/02 ⑥
+- 反例處理：無
+- 審查方式：使用者說「OK，那都通過」（2026-10-21），舊格式檢查紀錄依此記錄；03_flows 沒有受影響的完成標準
+- 合併進 core/：rules.md 守恆式表分隔列移到表頭下；core/ 中 hire-employee 的 57 處 Qnn、UC-nn 加前綴（entities.md、flows.md、relations.md、rules.md R52）；內容不變、出處不變、仍為 [候選]
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-21，通過）
+
+## 2026-10-21　（未凍結）　③⑤　回頭修改（第 0 級）：lint 抓到的既有格式問題
+- 改了什麼：③ 03_flows.md「決定與理由」D-11 後多一行空行，表格斷開，D-12～D-21 沒被解析：刪除空行；接上後看出 D-19～D-21 多一欄（新格式的「提出／同意」，這張是舊格式 5 欄），併入「依據」寫成「AI 提出，JiHungLin 同意（日期）」（同 02_entities D-37 的寫法），內容不變；狀態 → 待檢查。⑤ 06_evidence/golden_cases.md 沒選用的 GC04、GC05，「紙上判定」「判定」由 [未執行] 改為「不採用」，檔頭註明；05_mapping.md 完成標準「已做紙上驗證」的 AI 自評補一句、審查者確認清空；狀態 → 待檢查。questions.md：EQ-001～EQ-023 的「影響」改成「<檔名> 項目；…」的寫法（原本大多沒有檔名，lint 對不上），並補上 ③④⑤ 後來標了、沒回填的項目（03_use_cases UC-02、UC-04～UC-06、UC-08、UC-12、UC-15；04_rules R22～R24、R29、R33、R34、R39、R44、R61；02_entities InsuranceUnit、D-02；05_mapping 第四節）。inputs/research 11 個條目的「用在」追加 hire-employee（只追加；INDEX.md 工資與最低工資同步）
+- 依據：tools/lint.py（工具包 @ 8b5f2bd）的表格、EQ 影響、黃金案例、用在檢查；docs/02 ⑥「候選與不採用」
+- 凍結時一併套用到 core/（凍結才寫入 core/，內容不變）：① rules.md 守恆式表的分隔列在 C02 之後，移到表頭下面（C01、C02 才會被解析）；② core/ 中沒有切片前綴的 Qnn、US-Dnn、UC-nn 依所在項目的出處加前綴，hire-employee 的 57 處（entities.md Tenant～DataSubjectRequest、flows.md「更正方式（hire-employee）」、relations.md、rules.md R52 的 UC-14、UC-15）；annual-leave-grant 的另記在該切片 CHANGELOG。core/CHANGELOG 記一筆
+- 舊 → 新：設計不變；lint 紅燈 56 → 2（剩下的都在 core/ rules.md 守恆式表，凍結時清掉；表格接上後才看到的 D-19～D-21 欄數問題已一併修）
+- 影響與回歸：沒有改設計，後面步驟與實作不受影響；實作不用改。②④ 與 03_use_cases.md 沒改，維持凍結
+- 產出者：AI（Claude）；審查者：（待審查）
+
 ## 2026-10-16　hire-employee/05-v5　⑤　凍結
 - 改了什麼：依實作回報 signoff.md #21 回頭修改後重新凍結（內容見「（未凍結）③④⑤ 回頭修改：signoff.md #21」那一筆）。相對 hire-employee/05-v4：新增 `POST /v1/employments/{id}/periods`（RecordEmploymentPeriod，x-rules R24、R64）；到職、補登的請求把公教或軍保改為必填；第四區新增「既有資料（P12）」；R64 的落實位置；第六區 UC-01、UC-02、UC-11 同步；api.yaml 0.4.0 → 0.5.0（API 37 → 38、schema 80 → 81）；新增 D-23、X-27
 - 依據：hire-employee/05-v4；hire-employee/03-v6、hire-employee/04-v5；signoff.md #21；docs/03 P12

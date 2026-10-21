@@ -5,9 +5,9 @@
 | 切片 | annual-leave-grant |
 | 步驟 | ⑤ 投影到實作 |
 | 狀態 | 已凍結 |
-| 版本 | annual-leave-grant/05-v1 |
+| 版本 | annual-leave-grant/05-v2 |
 | 產出者 | AI（Claude）＋ |
-| 讀取的輸入 | 02_entities.md @ annual-leave-grant/02-v1；03_flows.md、03_use_cases.md @ annual-leave-grant/03-v3（本步回頭修改 D-16，一起凍結）；04_rules.md @ annual-leave-grant/04-v2（本步回頭修改 D-22～D-25，一起凍結）；core/ @ b341be2；docs/03 平台架構約定（P4、P5、P10、P12 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31）；slices/hire-employee/05_mapping.md、api.yaml @ hire-employee/05-v5（共用的集合、`events`、更正與註銷、警告忽略的 API 與格式） |
+| 讀取的輸入 | 02_entities.md @ annual-leave-grant/02-v1；03_flows.md、03_use_cases.md @ annual-leave-grant/03-v3（本步回頭修改 D-16，一起凍結）；04_rules.md @ annual-leave-grant/04-v2（本步回頭修改 D-22～D-25，一起凍結）；core/ @ b341be2；docs/03 平台架構約定（P4、P5、P10、P12 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31）；slices/hire-employee/05_mapping.md、api.yaml @ hire-employee/05-v5（共用的集合、`events`、更正與註銷、警告忽略的 API 與格式）；回頭修改（2026-10-21）：docs/02 ⑥「候選與不採用」、tools/lint.py 黃金案例檢查（工具包 @ 8b5f2bd） |
 
 <!-- 資料庫為 MongoDB（PLAN.md D-35），本文件的「表」是集合（collection），「欄位」是文件的欄位。
      概念 ID 寫 core/ 的英文識別名稱；技術欄位標 [技術]（P8）。本步先只產出這份對照表，經人確認後才產生 schema.mongo.js 與 api.yaml。
@@ -394,7 +394,7 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | ④ 的每條規則都已決定落實位置（平台 P6） | 修正線索 | ✓ 第三節 3.1 涵蓋 R65～R99 共 35 條與守恆式 C01、C02（AI 用程式比對；第一次比對漏 R75，已補）；db constraint ＋ service 3 條，其餘 service；沒有「人工」：要人處理的都是規則算出待確認後交給人（R79、R93）。17 個參數的存放位置在 3.2 |
 | 每個正式 Use Case 都已在對照表走一遍：每一步的輸入都拿得到；來自前一步回應的，`api.yaml` 該回應有這個欄位 | 品質檢查 | ✓ 第六區 UC-01～UC-12 逐步寫出 API 與輸入來源（AI 用程式確認 12 個都有）；第六區提到的回應欄位都在 api.yaml 該 API 的回應格式中（AI 用程式比對 api.yaml 所有 properties；hire-employee 的回應欄位對照它的 api.yaml）。UC-06 例外改寫為 409 Blocked |
 | `api.yaml` 每支 API 的請求與回應都寫到欄位層級，業務欄位對得回對照表第一區；說明（summary）提到的欄位都在格式裡 | 修正線索 | ✓ 26 個操作的請求與回應都是具名 schema（56 個），有 required、巢狀物件的欄位、additionalProperties: false；沒有只寫 type: object 的（AI 用程式檢查，只有 before、after、warned_value 刻意不限）；所有 $ref 都有定義、每個 schema 都有被用到。業務欄位與第一區一致（AI 比對）；summary 提到的告知狀態、期限、推導的數量都在格式中。沒有 OpenAPI 驗證工具可用（openapi_spec_validator 未安裝），結構只由上述程式檢查 |
-| 已做紙上驗證：每筆黃金案例依設計推演的結果與人工預期一致；不一致的已回頭修改 | 關鍵決定 | 部分：已推演 GC01、GC04、GC06（JiHungLin 挑選並填預期結果）。GC04 第一次不一致，回頭修改（04 D-25、本檔 D-22）後一致；GC06 一致（推演時發現的告知警告已回頭修改，04 D-24）；GC01 只剩 ② 預期結果那一行的日期待計算者改正（計算過程已是 2025-10-02），③ 依使用者決定情境改回預設 30 日內後一致（由 AI 比對 06_evidence/golden_cases.md） |
+| 已做紙上驗證：每筆黃金案例依設計推演的結果與人工預期一致；不一致的已回頭修改 | 關鍵決定 | 部分：已推演 GC01、GC04、GC06（JiHungLin 挑選並填預期結果）。GC04 第一次不一致，回頭修改（04 D-25、本檔 D-22）後一致；GC06 一致（推演時發現的告知警告已回頭修改，04 D-24）；GC01 只剩 ② 預期結果那一行的日期待計算者改正（計算過程已是 2025-10-02），③ 依使用者決定情境改回預設 30 日內後一致（由 AI 比對 06_evidence/golden_cases.md）。2026-10-21：沒挑的 GC02、GC03、GC05 依 docs/02 ⑥「候選與不採用」，「紙上判定」「判定」由 [未執行] 改為「不採用」，推演結果不變 |
 
 ### 審查重點（人）
 
@@ -415,6 +415,19 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | 12 | 紙上驗證後的回頭修改：重新判定的通知多一種要人處理的事（已判定轉換的基準日或發給期限改變，D-22）；告知狀態不判定隨僱傭關係結束、作廢的那一筆（04 D-24，查詢時現算，表與 API 不用改） | D-22；schema.mongo.js、api.yaml 的 `NOTICE_ACTION.CONVERSION_DATES_CHANGED` | ✓ |
 | 抽查 | （審查者自選 1～2 條 AI 自評 ✓ 的完成標準，寫出是哪幾條與結果） | `api.yaml` 每支 API 的請求與回應都寫到欄位層級，業務欄位對得回對照表第一區；說明（summary）提到的欄位都在格式裡。  ② 標為推導值的東西，都已依平台 P3 決定身分 | ✓ |
 <!-- CHECKLIST:END -->
+
+- 審查者（非產出者）： JiHungLin
+- 日期： 20261021
+- 結論：通過
+
+### 審查重點（2026-10-21 回頭修改）
+
+修 lint 抓到的既有格式問題（第 0 級），不改設計；只看這次的差異。
+
+| # | 要看的 | 在哪裡 | 審查者確認 |
+|---|---|---|---|
+| 1 | 你沒挑的 GC02、GC03、GC05：保留編號與全部欄位，「紙上判定」「判定」由 [未執行] 改為「不採用」（docs/02 ⑥「候選與不採用」），檔頭的挑選紀錄同步改寫；之後要用，改回 [未執行] | 06_evidence/golden_cases.md 檔頭、GC02、GC03、GC05 | ✓ |
+| 抽查 | （審查者自選 1～2 條 AI 自評 ✓ 的完成標準，寫出是哪幾條與結果） | 這次只改golden_cases的內容修復，不需要再跑AI自評 | ✓ |
 
 - 審查者（非產出者）： JiHungLin
 - 日期： 20261021
