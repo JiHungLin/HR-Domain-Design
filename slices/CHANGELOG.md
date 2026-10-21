@@ -12,6 +12,13 @@
 - 同意者：
 -->
 
+### 2026-10-21　PLAN　annual-leave-grant 設計完成（待驗證）
+- 改了什麼：PLAN 切片列 annual-leave-grant 的狀態：進行中 → 設計完成（待驗證）
+- 依據：annual-leave-grant/05-v1 凍結（同時凍結 03-v3、04-v2）
+- 舊 → 新：進行中 → 設計完成（待驗證）；第 ⑥ 步等有系統時再做
+- 影響：建議順序的下一條切片可以開始；hire-employee 的程式要加呼叫特休重新判定的掛勾（annual-leave-grant 05_mapping D-04），實作時處理
+- 同意者：JiHungLin（2026-10-21，/domain-freeze 3,4,5）
+
 ### 2026-10-20　PLAN、SKETCH　新增切片 event-leave（因事件才有的假）
 - 改了什麼：PLAN 新增候選切片 event-leave（建議順序 9）、決定 D-39；hourly-payroll 之後 12 條切片的建議順序各加一（9～20 → 10～21）；領域「人資／請假」的切片數 4 → 5；台灣主線變成 1～14（D-03）；開頭區統計 20 條 → 21 條（現場 11 → 12）。SKETCH 的 LeaveType、LeaveEntitlement、LeaveRequest、LeaveOccurrence、Approval、Evidence、PayItem 的「會用到的切片」加上 event-leave；「不確定的地方」新增「因事件才有的假」（要不要先給一筆請假權利、喪假的親屬怎麼表示）
 - 依據：inputs/shared/範圍釐清_事件假切片.md；research/請假.md（#02、#03、#06、#08、#11、#13）；審查 annual-leave-grant 第 ③ 步時，使用者問請假權利能不能涵蓋婚假等其他假別

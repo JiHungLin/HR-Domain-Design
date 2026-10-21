@@ -5,7 +5,7 @@
 | 切片 | annual-leave-grant |
 | 步驟 | ③ 流程與狀態（Use Case） |
 | 狀態 | 已凍結 |
-| 版本 | annual-leave-grant/03-v2 |
+| 版本 | annual-leave-grant/03-v3 |
 | 讀取的輸入 | 01_scope.md @ annual-leave-grant/01-v1；02_entities.md @ annual-leave-grant/02-v1；03_flows.md（本步產出） |
 
 <!-- 完成標準與檢查紀錄寫在 03_flows.md -->
@@ -35,10 +35,10 @@
 - 參與者：人資或雇主（老闆）、系統
 - 前提：雇主訂定了特休加給的公司規定（例：滿 1 年多給 2 天；這版以固定資料提供）
 - 主流程：EstablishCompanyPolicy（Scheduled 或 Effective）→ 第一次生效日到達，ActivateCompanyPolicy → 員工取得法定特休的同一天，GrantLeaveEntitlement 另給予公司規定的一筆（來源：公司規定，連到那條規定，記下版本）→ 查詢時法定與公司多給分成兩筆
-- 例外：公司規定修改（ReviseCompanyPolicy）→ 已給予的依原版本，之後取得的依新版本（Q10）；年度終結時公司加給能不能失效依哪一版 [待專家確認: EQ-013]；生效日或廢止日登錄錯誤，更正後 ReassessLeaveEntitlements 補上或拿掉那段期間的加給（03_flows D-14）；公司規定廢止（RepealCompanyPolicy）→ 已給予的不受影響；公司規定少於法定 → 法規警告；員工類型更正後適用的規定不同 → ReassessLeaveEntitlements（見 UC-08）
+- 例外：公司規定修改（ReviseCompanyPolicy）→ 已給予的依原版本，之後取得的依新版本（Q10）；年度終結時公司加給能不能失效依哪一版 [待專家確認: EQ-013]；生效日或廢止日登錄錯誤，更正後 ReassessLeaveEntitlements 補上或拿掉那段期間的加給（03_flows D-14）；版本內容（多給幾天、適用對象）登錄錯誤 → 人資 ReviseCompanyPolicy 新增修訂，ReassessLeaveEntitlements、RejudgeLeaveYearEnd 依修訂重新判定（03_flows D-16）；公司規定廢止（RepealCompanyPolicy）→ 已給予的不受影響；公司規定少於法定 → 法規警告；員工類型更正後適用的規定不同 → ReassessLeaveEntitlements（見 UC-08）
 - 用到的 Entity：CompanyPolicy、LeaveEntitlement、Employment
-- 用到的事件：EstablishCompanyPolicy、ActivateCompanyPolicy、ReviseCompanyPolicy、RepealCompanyPolicy、ExpireCompanyPolicy、GrantLeaveEntitlement、ReassessLeaveEntitlements、CorrectRecord
-- 規則：R77、R78、R79
+- 用到的事件：EstablishCompanyPolicy、ActivateCompanyPolicy、ReviseCompanyPolicy、RepealCompanyPolicy、ExpireCompanyPolicy、GrantLeaveEntitlement、ReassessLeaveEntitlements、RejudgeLeaveYearEnd、CorrectRecord
+- 規則：R77、R78、R79、R91、R92
 
 ## UC-04 告知員工排定特休
 - 對應草稿：US-D06

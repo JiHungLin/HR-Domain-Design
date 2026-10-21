@@ -5,7 +5,7 @@
 | 切片 | annual-leave-grant |
 | 步驟 | ③ 流程與狀態 |
 | 狀態 | 已凍結 |
-| 版本 | annual-leave-grant/03-v2 |
+| 版本 | annual-leave-grant/03-v3 |
 | 產出者 | AI（Claude） |
 | 讀取的輸入 | 01_scope.md @ annual-leave-grant/01-v1；02_entities.md @ annual-leave-grant/02-v1；core/ @ 9c729ce（hire-employee 的狀態機、事件與更正方式：CorrectRecord、AnnulEntry、RevokeAnnulment、OverrideWarning、Employment 的狀態）；docs/03 P1、P2、P4；inputs/research/特別休假.md #01～#04 @ 9c729ce |
 
@@ -105,13 +105,14 @@
 | （無） | Effective | EstablishCompanyPolicy | 人資或雇主（老闆） | 第一次生效日不在未來；早於已經給予的特休取得日時，觸發 ReassessLeaveEntitlements（補上那段期間應有的加給，D-14） | R73、R76、R78、R98 |
 | Scheduled | Scheduled | ReviseCompanyPolicy | 人資或雇主（老闆） | 還沒生效前修改內容（新的版本） | R73、R78 |
 | Scheduled | Effective | ActivateCompanyPolicy | 系統 | 第一次生效日到達 | R76 |
-| Effective | Effective | ReviseCompanyPolicy | 人資或雇主（老闆） | 內容修改是同一條規定的新版本，有自己的生效日（版本是規則資料，第 ④ 步，平台 P5）；已經依舊版給予的特休不變（Q10）；年度終結時依哪一版處理見 [待專家確認: EQ-013] | R73、R76、R78、R79 |
+| Effective | Effective | ReviseCompanyPolicy | 人資或雇主（老闆） | 內容修改是同一條規定的新版本，有自己的生效日（版本是規則資料，第 ④ 步，平台 P5）；已經依舊版給予的特休不變（Q10）；年度終結時依哪一版處理見 [待專家確認: EQ-013]。版本內容登錄錯誤時新增一筆修訂（只限人資），是依據更正，接著 ReassessLeaveEntitlements、RejudgeLeaveYearEnd（D-16） | R73、R76、R78、R79、R91、R92 |
 | Effective | Effective | RepealCompanyPolicy | 人資或雇主（老闆） | 登錄廢止，廢止日在未來（到那天由 ExpireCompanyPolicy 轉換） | R98 |
 | Scheduled | Repealed | RepealCompanyPolicy | 人資或雇主（老闆） | 還沒生效就取消 | R98 |
 | Effective | Repealed | RepealCompanyPolicy | 人資或雇主（老闆） | 廢止日不在未來；已經依它給予的特休不受影響 | R76、R98 |
 | Effective | Repealed | ExpireCompanyPolicy | 系統 | 廢止日到達 | R76 |
+| Repealed | Repealed | ReviseCompanyPolicy | 人資 | 只限修訂已登錄的版本內容（登錄錯誤）；依它給予的特休可能還在可休；接著 ReassessLeaveEntitlements、RejudgeLeaveYearEnd（D-16） | R73、R78、R91、R92 |
 
-說明：需要重建當時：特休要能說出「依哪一條公司規定的哪一版」給的（Q09），公司規定改版或廢止後，已給予的依原版本（Q10）。公司規定本身的生效日、廢止日是登錄的事實，打錯更正時和到職日一樣觸發重新判定（D-14）；版本內容（多給幾天）登錄錯誤怎麼處理由第 ④ 步決定（02_entities D-03）。
+說明：需要重建當時：特休要能說出「依哪一條公司規定的哪一版」給的（Q09），公司規定改版或廢止後，已給予的依原版本（Q10）。公司規定本身的生效日、廢止日是登錄的事實，打錯更正時和到職日一樣觸發重新判定（D-14）；版本內容（多給幾天、適用對象、年度終結處理）登錄錯誤時新增一筆修訂，也是依據更正，觸發重新判定；改版（新的版本）不觸發（02_entities D-03，D-16）。
 
 ### LeaveConversion（請假權利轉換）（歷史需求：需要重建當時，依 Q05、Q08、Q11）
 狀態：Provisional（待確認）→ Determined（已判定）／Discarded（未確認即被取代）
@@ -146,7 +147,7 @@
 
 | 項目 | 可能的值 | 怎麼推出來 | 依哪條 Q |
 |---|---|---|---|
-| 一筆法定特休的告知狀態（只有依規則給予的法定特休；補登的不判定，01_scope D-09） | 待告知（期限內）／已告知／逾期未告知／逾期後告知 | 取得日、告知期限（`notice_due_on`）、實際告知日（`notified_on`）與今天；告知日被更正過的看得出來（core CorrectRecord 保留原值）；逾期是法規警告，可以忽略（core OverrideWarning），不阻擋。符合條件之前就告知算不算數 [待專家確認: EQ-006]；曆年制一筆可能要告知兩次 [待專家確認: EQ-002] | Q07 |
+| 一筆法定特休的告知狀態（只有依規則給予的法定特休；補登的不判定，01_scope D-09；隨僱傭關係結束、作廢的不判定，④ D-24） | 待告知（期限內）／已告知／逾期未告知／逾期後告知 | 取得日、告知期限（`notice_due_on`）、實際告知日（`notified_on`）與今天；告知日被更正過的看得出來（core CorrectRecord 保留原值）；逾期是法規警告，可以忽略（core OverrideWarning），不阻擋。符合條件之前就告知算不算數 [待專家確認: EQ-006]；曆年制一筆可能要告知兩次 [待專家確認: EQ-002] | Q07 |
 | 還可以休的、已休、遞延出去、轉為工資、失效 | 數量 | 02_entities 的推導值；已休這版以固定資料提供 [靜態替代] | Q05、Q08 |
 | 某天適用哪一種特休年度 | 週年制、曆年制（固定起始日的年度） | 當天有效的個別約定；沒有就用當天有效的雇主預設 | Q03 |
 | 之後各期的預估（還沒取得的） | 預計取得日、天數、可休期間 | 依目前的到職日、特休年度與目前的規則版本試算；只是預估，不建立請假權利，取得日到達才由 GrantLeaveEntitlement 給予（D-01）；規則改版、到職日更正、改用另一種年度後預估會變 | Q01、Q02（US-D01） |
@@ -166,7 +167,7 @@
 | ActivateLeaveYearAgreement（約定開始適用） | 時間或條件到達（適用起日到達） | 發生 | LeaveYearAgreement | Scheduled → Effective；同一段僱傭關係、同一假別的前一筆 Effective → Superseded | 適用起日 | 不可撤銷；適用起日更正時重新推導 | 生效 |
 | EndLeaveYearAgreement（終止特休年度約定） | 人的動作（人資，依雙方協商的結果） | 決定 | LeaveYearAgreement | Scheduled 或 Effective → Ended；之後套用雇主預設；終止日早於已給予的取得日時觸發 ReassessLeaveEntitlements | 協商日、說明 | 值用 CorrectRecord；登錯用 AnnulEntry | 發生（協商日）、得知、生效（終止日） |
 | EstablishCompanyPolicy（訂定公司規定） | 人的動作（人資或雇主（老闆）） | 決定 | CompanyPolicy | （無）→ Scheduled 或 Effective；第一版的內容（第 ④ 步的規則資料）；生效日早於已給予的取得日時觸發 ReassessLeaveEntitlements | 依據說明（例：工作規則第 12 條、公司公告） | 值用 CorrectRecord；整筆登錯用 AnnulEntry | 發生、得知、生效 |
-| ReviseCompanyPolicy（修改公司規定） | 人的動作（人資或雇主（老闆）） | 決定 | CompanyPolicy | 不改變狀態；新增一個版本，有自己的生效日；已經依舊版給予的特休不變；事項為特休年度預設的，對還在套用預設的員工成立警告（D-13） | 依據說明 | 版本內容要更正是新的修訂（平台 P5、第 ④ 步） | 發生、得知、生效 |
+| ReviseCompanyPolicy（修改公司規定） | 人的動作（人資或雇主（老闆）） | 決定 | CompanyPolicy | 不改變狀態；新增一個版本，有自己的生效日；已經依舊版給予的特休不變；事項為特休年度預設的，對還在套用預設的員工成立警告（D-13）；修訂（登錄錯誤，只限人資）觸發 ReassessLeaveEntitlements、RejudgeLeaveYearEnd（D-16） | 依據說明 | 版本內容要更正是新的修訂（平台 P5，D-16） | 發生、得知、生效 |
 | ActivateCompanyPolicy（公司規定生效） | 時間或條件到達（第一次生效日到達） | 發生 | CompanyPolicy | Scheduled → Effective | 第一次生效日 | 不可撤銷；生效日更正時重新推導 | 生效 |
 | RepealCompanyPolicy（廢止公司規定） | 人的動作（人資或雇主（老闆）） | 決定 | CompanyPolicy | 登錄廢止日；廢止日不在未來的 Scheduled 或 Effective → Repealed，在未來的到那天由 ExpireCompanyPolicy 轉換；已給予的特休不受影響 | 依據說明 | 值用 CorrectRecord；整筆登錯用 AnnulEntry | 發生、得知、生效（廢止日） |
 | ExpireCompanyPolicy（公司規定廢止生效） | 時間或條件到達（廢止日到達） | 發生 | CompanyPolicy | Effective → Repealed | 廢止日 | 不可撤銷；廢止日更正時重新推導 | 生效 |
@@ -174,11 +175,11 @@
 | AmendLeaveDeferral（修改遞延協商） | 人的動作（人資，依雙方重新協商的結果） | 決定 | LeaveDeferralAgreement | 不改變狀態（Agreed 或 Applied 不變）；改協商日與遞延額度，原內容保留；已 Applied 的觸發 RejudgeLeaveYearEnd | 新的協商日、憑據說明 | 可以再修改或撤回 | 發生（新的協商日）、得知 |
 | WithdrawLeaveDeferral（撤回遞延協商） | 人的動作（人資，依雙方取消遞延） | 決定 | LeaveDeferralAgreement | Agreed 或 Applied → Withdrawn；已 Applied 的觸發 RejudgeLeaveYearEnd | 撤回理由 | 不可撤銷；要再遞延是新的一筆協商 | 發生、得知 |
 | CloseLeaveYear（年度終結判定） | 時間或條件到達（一筆請假權利的可休迄日過完，且系統已知的僱傭關係到那天仍在職） | 發生 | LeaveEntitlement | 那一筆 Active → YearEnded；依「已協商」的遞延協商產生遞延進來的一筆（Active，額度見 D-12），協商 Agreed → Applied；其餘未休額度產生轉換（LeaveConversion：轉為工資，或公司規定的失效），記工資計算基準日與發給期限（02_entities D-06）；由重新判定新增的那一筆，轉換是待確認（D-11） | 判定當時已知的已休（記下當時的數字，D-15）、遞延協商的內容、規則版本 | 不可撤銷；判定用到的資料之後改變時由 RejudgeLeaveYearEnd 記差額 | 發生（年度終結日）、得知（判定日） |
-| RejudgeLeaveYearEnd（重新判定年度終結） | 其他單位個體的變化（已年度終結的那一筆：已休改變（含這版固定資料的改正）、遞延協商修改、撤回或事後登錄、額度就地更正） | 發生 | LeaveEntitlement | YearEnded 不變；遞延進來的那一筆新增、更正額度或作廢；轉換另記差額，指回被更正的那一次，記更正原因，負數的待確認（D-11）；待確認還沒確認的被取代；產生 NotifyLeaveReassessment | 改變了什麼、判定當時與現在的資料 | 不可撤銷；資料再改變時再重新判定 | 發生（年度終結日）、得知 |
-| ReassessLeaveEntitlements（依據更正後重新判定特休） | 其他單位個體的變化（到職日更正；特休年度約定登錄、終止、更正或註銷；員工類型等決定適用哪一條公司規定的資料更正；公司規定的生效日、廢止日登錄或更正；僱傭關係的到職或結束被註銷、撤銷註銷；結束日更正；補登的特休被註銷或撤銷註銷） | 發生 | LeaveEntitlement | 依新依據重算每一期，和既有的依規則給予的逐筆對應（D-04）：對得上的就地更正（保留更正前內容；已年度終結的接著 RejudgeLeaveYearEnd）、對不上的作廢、多出來的新增；已年度終結的回到可休或作廢時，轉換記差額（待確認）；遞延協商依對應結果失效或恢復；產生 NotifyLeaveReassessment。規則改版不觸發（02_entities D-03） | 被更正的依據（更正前、更正後）、更正者 | 不可撤銷；依據再更正時再重新判定 | 發生（依據被更正的時間）、得知 |
+| RejudgeLeaveYearEnd（重新判定年度終結） | 其他單位個體的變化（已年度終結的那一筆：已休改變（含這版固定資料的改正）、遞延協商修改、撤回或事後登錄、額度就地更正、依據的公司規定版本被修訂（D-16）） | 發生 | LeaveEntitlement | YearEnded 不變；遞延進來的那一筆新增、更正額度或作廢；轉換另記差額，指回被更正的那一次，記更正原因，負數的待確認（D-11）；待確認還沒確認的被取代；產生 NotifyLeaveReassessment | 改變了什麼、判定當時與現在的資料 | 不可撤銷；資料再改變時再重新判定 | 發生（年度終結日）、得知 |
+| ReassessLeaveEntitlements（依據更正後重新判定特休） | 其他單位個體的變化（到職日更正；特休年度約定登錄、終止、更正或註銷；員工類型等決定適用哪一條公司規定的資料更正；公司規定的生效日、廢止日登錄或更正；公司規定版本內容的修訂（D-16）；僱傭關係的到職或結束被註銷、撤銷註銷；結束日更正；補登的特休被註銷或撤銷註銷） | 發生 | LeaveEntitlement | 依新依據重算每一期，和既有的依規則給予的逐筆對應（D-04）：對得上的就地更正（保留更正前內容；已年度終結的接著 RejudgeLeaveYearEnd）、對不上的作廢、多出來的新增；已年度終結的回到可休或作廢時，轉換記差額（待確認）；遞延協商依對應結果失效或恢復；產生 NotifyLeaveReassessment。規則改版不觸發（02_entities D-03） | 被更正的依據（更正前、更正後）、更正者 | 不可撤銷；依據再更正時再重新判定 | 發生（依據被更正的時間）、得知 |
 | EndLeaveEntitlementsWithEmployment（僱傭關係結束，停止特休） | 其他單位個體的變化（系統得知僱傭關係 Active → Ended：core 的 RecordEarlyDeparture，或 resignation 定義的離職；這版一般離職以固定資料提供 [靜態替代]，載入結束日視同這個變化） | 發生 | LeaveEntitlement | 取得日不晚於結束日、可休迄日晚於結束日的每一筆 Active → EndedWithEmployment；取得日晚於結束日的（結束日較晚得知）→ Voided；年度終結判定之後才得知的，那一筆 YearEnded → EndedWithEmployment、遞延進來的那筆作廢、Applied 的協商 Lapsed、已做的轉換記負數差額（待確認）；Agreed 的遞延協商 → Lapsed；之後不再給予（01_scope D-15，D-05） | 結束日 | 不可撤銷；結束被註銷或結束日更正時由 ReassessLeaveEntitlements 重新推導 | 發生（結束日）、得知 |
 | ConfirmLeaveConversion（確認待確認的轉換） | 人的動作（人資） | 決定 | LeaveConversion | Provisional → Determined；確認後交給薪資切片（D-11） | 確認者、時間；人資處理過的事（已休、遞延協商、告知日） | 不可撤銷；確認後發現要更正，另記差額 | 發生、得知 |
-| NotifyLeaveReassessment（通知特休重新判定結果） | 其他單位個體的變化（ReassessLeaveEntitlements、RejudgeLeaveYearEnd 改變了額度、期間、狀態，或產生轉換差額；CloseLeaveYear 遇到協商遞延額度超過未休） | 建議 | LeaveEntitlement | 不改變狀態；列出改了哪幾筆（更正前、更正後）、新增或作廢的、轉換差額與待確認的轉換，以及要人處理的：作廢的那筆上已休的天數、要重新登錄的告知日、要重新登錄的遞延協商、已休超過更正後額度的、補登的那筆和依規則重算的期間重疊或有空檔的；通知人資與雇主（老闆）（D-04） | 重新判定的紀錄 | 不可作廢（保留紀錄） | 得知 |
+| NotifyLeaveReassessment（通知特休重新判定結果） | 其他單位個體的變化（ReassessLeaveEntitlements、RejudgeLeaveYearEnd 改變了額度、期間、狀態，或產生轉換差額；CloseLeaveYear 遇到協商遞延額度超過未休） | 建議 | LeaveEntitlement | 不改變狀態；列出改了哪幾筆（更正前、更正後）、新增或作廢的、轉換差額與待確認的轉換，以及要人處理的：作廢的那筆上已休的天數、要重新登錄的告知日、要重新登錄的遞延協商、已休超過更正後額度的、補登的那筆和依規則重算的期間重疊或有空檔的、已判定轉換的工資計算基準日或發給期限依新依據會不同的（原 → 新，④ D-25）；通知人資與雇主（老闆）（D-04） | 重新判定的紀錄 | 不可作廢（保留紀錄） | 得知 |
 
 沿用 core 的事件（不重新定義）：CorrectRecord（更正資料）、AnnulEntry（註銷誤登）、RevokeAnnulment（撤銷註銷）、OverrideWarning（忽略警告）、WithdrawWarningOverride（撤回忽略），這些依 core 只有人資可以做；觸發本切片的 core 事件：RecordEarlyDeparture、StartEmployment、RegisterExistingEmployment（D-08）。
 
@@ -235,7 +236,7 @@
 | 實際告知日 | CorrectRecord（core）；整筆登錯用 AnnulEntry（註銷 RecordLeaveNotice） | 人資或雇主（老闆） | 不需核准，留紀錄（由人資執行） | 原值保留；告知狀態重推，看得出更正過 |
 | 遞延協商登錄時打錯（協商日、額度） | CorrectRecord（core） | 人資 | 不需核准，留紀錄 | 原值保留；已 Applied 的由 RejudgeLeaveYearEnd 記差額。雙方重新談不是更正，用 AmendLeaveDeferral（D-06） |
 | 已判定的轉換（額度、工資計算基準日、發給期限） | RejudgeLeaveYearEnd 或 ReassessLeaveEntitlements 記一筆差額 | 系統（依據改變時）或人資 | 不需核准，留紀錄；負數差額由人資確認後才交給薪資 | 不改原判定；差額指回被更正的那一次，記更正原因（02_entities D-06）；不能用 CorrectRecord 直接改 |
-| 公司規定的名稱、依據說明、生效日、廢止日 | CorrectRecord（core）；整筆登錯用 AnnulEntry（註銷 EstablishCompanyPolicy） | 人資 | 不需核准，留紀錄 | 原值保留；生效日、廢止日改變時接著 ReassessLeaveEntitlements（D-14）；版本內容（多給幾天）的登錄錯誤由第 ④ 步決定（02_entities D-03） |
+| 公司規定的名稱、依據說明、生效日、廢止日 | CorrectRecord（core）；整筆登錯用 AnnulEntry（註銷 EstablishCompanyPolicy） | 人資 | 不需核准，留紀錄 | 原值保留；生效日、廢止日改變時接著 ReassessLeaveEntitlements（D-14）；版本內容的登錄錯誤用 ReviseCompanyPolicy 新增修訂（只限人資），接著 ReassessLeaveEntitlements、RejudgeLeaveYearEnd（D-16） |
 | 已休（這版的固定資料） | RejudgeLeaveYearEnd（人資改正固定資料 [靜態替代] 後，對已年度終結的那一筆） | 人資 | 不需核准，留紀錄 | 固定資料的改正也記誰、何時、理由；判定當時的已休記在那次判定上，不會被改正蓋掉（D-15）；正式的請假更正由 annual-leave-request 定義 |
 
 本切片可以註銷的事件：RegisterExistingLeaveEntitlement、RecordLeaveNotice、RecordLeaveYearAgreement、EndLeaveYearAgreement、EstablishCompanyPolicy、RepealCompanyPolicy。不能註銷的：遞延協商的三個事件（用修改、撤回、更正處理，D-06）、ReviseCompanyPolicy（版本更正是新的修訂）、ConfirmLeaveConversion（確認後的更正記差額）、所有由時間或條件、其他單位個體的變化觸發的事件（推導的，依據改了就重新推導或記差額）、建議層的 NotifyLeaveReassessment（D-08）。
@@ -306,6 +307,7 @@
 | D-13 | 雇主改了特休年度的預設（ReviseCompanyPolicy），沒有個別約定的員工之後套用新的預設；改版時對這些員工成立警告，不同意的員工由人資登錄一筆維持原年度的個別約定；新增 EndLeaveYearAgreement，讓員工可以從個別約定回到預設 | 預設改版只適用之後到職的員工；預設改版時自動替每位現有員工建立維持原年度的約定 | 年度是勞雇雙方協商的結果（01_scope D-12），雇主改預設等於單方替還在套用預設的員工換年度（X-11）；但工作規則改預設算不算協商還待 EQ-002，所以先警告、不自動處理。自動替每人建立約定會把雇主的預設變成好像每個人都個別談過 | 01_scope D-12；EQ-002；X-11 | AI／JiHungLin（2026-10-20） |
 | D-14 | 公司規定的生效日、廢止日是登錄的事實：登錄或更正時日期早於已給予的特休取得日，觸發 ReassessLeaveEntitlements（補上或拿掉那段期間的加給）；版本內容（多給幾天）的登錄錯誤仍由第 ④ 步決定 | 一律不重新判定（初稿，交第 ④ 步） | 生效日打錯（例：7 月生效登成隔年 1 月），7～12 月滿年資的員工就默默少拿加給（X-14）；生效日、廢止日是 CompanyPolicy 卡上的屬性（事實），不是規則版本，依 02_entities D-03「依據的事實被更正」應該重新判定 | 02_entities D-03、CompanyPolicy 卡；X-14 | AI／JiHungLin（2026-10-20） |
 | D-15 | 年度終結判定時，把當時已知的已休記在那次判定上；這版已休的固定資料改正也要記誰、何時、理由，改正後觸發 RejudgeLeaveYearEnd | 只在需要時讀固定資料的目前值 | 固定資料被覆寫時，回答不了「判定當時以為休了幾天、誰何時改成幾天」（Q05、Q11），雇主舉證也拿不出依據（X-07） | Q05、Q11；X-07 | AI／JiHungLin（2026-10-20） |
+| D-16 | 〔回頭修改，2026-10-21，⑤ X-03〕公司規定版本內容的登錄錯誤（多給幾天、適用對象、年度終結處理、年度預設）用 ReviseCompanyPolicy 新增一筆修訂，只限人資；修訂是依據更正：取得日落在那一版有效期間的特休（含原本因條件不符沒給的）ReassessLeaveEntitlements，已年度終結的 RejudgeLeaveYearEnd，更正原因為依據更正；已廢止的規定也可以修訂。改版（新的版本）仍不影響已給予的 | 修訂也不影響已給予的，只警告；不允許修訂 | 打錯 5 天實際 3 天時不重新判定，就會一直多給、多發工資，和到職日打錯的處理不一致；原本這件事交給第 ④ 步，④ 沒有寫（⑤ X-03、X-15） | 05_mapping D-19；02_entities D-03；D-14 | AI／JiHungLin（2026-10-21） |
 
 ### 反例處理
 
@@ -378,6 +380,20 @@
 | 3 | 遞延協商從「失效」恢復的條件改為看那一筆是否已經做過年度終結判定（看狀態，不看日期）（④ X-23） | LeaveDeferralAgreement 狀態機 Lapsed → Agreed | ✓ |
 | 4 | 狀態轉換「規則」欄與 UC「規則」已回填 ④ 的規則編號（只有 Agreed → Withdrawn 沒有規則） | 各狀態機的「規則」欄；03_use_cases.md 各 UC；04_rules.md「回填紀錄」 | ✓ |
 | 抽查 | （審查者自選 1～2 條 AI 自評 ✓ 的完成標準，寫出是哪幾條與結果） | 每個正式 Use Case 都註明了用到的 Entity、事件。核准」和「發生」是分開的兩件事 | ✓ |
+
+- 審查者（非產出者）： JiHungLin
+- 日期： 20261021
+- 結論：通過
+
+### 審查重點（2026-10-21 回頭修改）
+
+第 ⑤ 步挑錯後回頭修改第 ③ 步（⑤ X-03、X-15，05_mapping D-19）；只看這次的差異。
+
+| # | 要看的 | 在哪裡 | 審查者確認 |
+|---|---|---|---|
+| 1 | 新增 D-16：公司規定的內容打錯（例：加給打成 5 天，實際是 3 天）時，人資新增一筆修訂，已給予的特休跟著重新判定（含因條件打錯而原本沒給的），已年度終結的重新判定年度終結；已廢止的規定也可以修訂。改成新的版本（改版）仍不影響已給予的 | D-16；CompanyPolicy 狀態機兩列（Effective → Effective 的前提、新增 Repealed → Repealed）與說明；事件表 ReviseCompanyPolicy、RejudgeLeaveYearEnd、ReassessLeaveEntitlements 的觸發來源；更正方式「公司規定」列；UC-03 例外 | ✓ |
+| 2 | ⑤ 紙上驗證後的兩處：告知狀態不判定隨僱傭關係結束、作廢的那一筆（④ D-24）；重新判定的通知多列「已判定轉換的基準日或發給期限：原 → 新」（④ D-25） | 推導的狀態表「告知狀態」列；事件表 NotifyLeaveReassessment | ✓ |
+| 抽查 | （審查者自選 1～2 條 AI 自評 ✓ 的完成標準，寫出是哪幾條與結果） | 第 ① 步每個草稿 User Story，都至少被一個正式 Use Case 涵蓋。每個事件標了觸發來源；由人觸發的，標了誰有權觸發 | ✓ |
 
 - 審查者（非產出者）： JiHungLin
 - 日期： 20261021
