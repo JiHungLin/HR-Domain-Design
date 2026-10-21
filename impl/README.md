@@ -28,6 +28,7 @@ uv run pytest                                # 在真的 MongoDB 上跑；每次
 | `app/store.py` | 寫事件、只新增的版本（A）、覆寫＋變更紀錄（B）、引用檢查 | P1、P2、D-06、D-10 |
 | `app/rules/` | 各保險的適用、期限、級距（R22～R44、R60）；提醒類規則（R11、R14、R15、R21、R45、R61） | 04_rules |
 | `app/services/` | 各動作：一個動作一個多文件交易 | 05_mapping 第二節 |
+| `app/hooks.py` | 其他切片在 hire-employee 動作的同一交易中執行的處理（掛勾）。目前只有到職（StartEmployment）會呼叫；更正、註銷、到職後立刻離開等 API 實作時要照 hooks.py 的種類呼叫。annual-leave-grant 還沒實作，沒有註冊任何處理 | annual-leave-grant 05_mapping D-04、「core 事件的連鎖」 |
 | `app/routers/uc01.py` | 已實作的 API | api.yaml |
 | `app/stubs.py` | api.yaml 中還沒實作的 API，回 501 | api.yaml |
 

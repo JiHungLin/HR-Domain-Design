@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 
 from bson import Int64, ObjectId
 
+from app import hooks
 from app.auth import Actor
 from app.db import oid, run_in_transaction, to_date, to_dec128, to_dt
 from app.errors import Blocked
@@ -254,6 +255,9 @@ def start_employment(db, actor: Actor, hire_id: str, body: dict) -> dict:
             warn.append(warnings.warning(db, "R21", start, "MISSING_CONTRACT", subject=("employments", emp_id), session=s))
 
         proposal_id = proposals.propose_enrollment_filing(db, s, subj, start, cause_event_id=event_id)
+        # annual-leave-grant 05_mapping D-04：到職日在過去時，同一交易補上已到的特休給予
+        hooks.publish(db, s, hooks.HookEvent(hooks.EMPLOYMENT_STARTED, tenant_id=t, event_id=event_id,
+                                             employment_id=emp_id, employer_id=employer_id))
         return {"event_id": str(event_id), "employment_id": str(emp_id), "hire_id": str(hire["_id"]),
                 "person_id": str(person_id), "warnings": warn, "compensation_ids": comp_ids,
                 "contract_ids": contract_ids, "enrollment_proposal_id": str(proposal_id)}
