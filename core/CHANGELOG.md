@@ -2,6 +2,12 @@
 
 <!-- 只新增，最新的在最上面。記錄：切片項目以 [候選] 合併、升為 [已驗證]、套用變更提案、平行切片撞號重編。格式同切片 CHANGELOG.md -->
 
+## 2026-10-21　annual-leave-grant/03-v2、annual-leave-grant/04-v1　③④　凍結
+- 改了什麼：rules.md 新增規則 35 列（R65～R99）、守恆式 2 列（C01、C02）、分類值 26 列，皆 [候選]，出處 annual-leave-grant（④ @ annual-leave-grant/04-v1）；規則文字中的 `參數名稱` 與決策表留在出處切片的 04_rules.md（core 格式沒有參數與決策表區）。flows.md「狀態機（annual-leave-grant）」56 列更新（「規則」欄回填；LeaveEntitlement 三列就地更正、LeaveConversion 兩列 CloseLeaveYear、LeaveDeferralAgreement Lapsed → Agreed 的前提改寫），6 個狀態機的出處改為 03-v2；事件 StartEmployment、SignContract 的被引用加上 annual-leave-grant（R99）；Employment 狀態機的「被引用」補上漏掉的冒號（03-v1 合併時的筆誤）。
+- 被引用但沒有欄位可記：規則 R02、R51、R60 被 annual-leave-grant 的 ④ 引用（rules.md 規則表沒有「被引用」欄）。
+- 依據：slices/annual-leave-grant/04_rules.md @ annual-leave-grant/04-v1（D-01～D-21）；03_flows.md @ annual-leave-grant/03-v2（D-04 改寫）
+- 產出者：AI（Claude）；審查者：JiHungLin；核心負責人：待審閱
+
 ## 2026-10-20　annual-leave-grant/03-v1　③　凍結
 - 改了什麼：flows.md 新增「狀態機（annual-leave-grant）」6 個（LeaveEntitlement、LeaveDeferralAgreement、LeaveYearAgreement、CompanyPolicy、LeaveConversion、LeaveType）、「推導的狀態與預估」、「事件（annual-leave-grant）」20 個、「更正方式（annual-leave-grant）」9 列；glossary.md 新增 40 列（狀態 20、事件 20）；皆 [候選]，出處 annual-leave-grant（③ @ annual-leave-grant/03-v1），驗收問題與 Use Case 寫成 annual-leave-grant:Qnn、annual-leave-grant:UC-nn。被引用加上 annual-leave-grant：狀態機 Employment，事件 OverrideWarning、WithdrawWarningOverride、CorrectRecord、AnnulEntry、RevokeAnnulment。既有項目的內容都沒有修改
 - 依據：slices/annual-leave-grant/03_flows.md @ annual-leave-grant/03-v1（D-01～D-15）

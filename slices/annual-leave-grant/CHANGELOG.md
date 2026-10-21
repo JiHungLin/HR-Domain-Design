@@ -14,6 +14,38 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-21　annual-leave-grant/03-v2、annual-leave-grant/04-v1　③④　凍結
+- 改了什麼：
+  - ④ 初版（04-v1）：規則 35 條（R65～R99；前提條件 14、計算 11、判定 10），分取得日與天數、公司多給、告知、遞延協商、年度終結、重新判定與待確認、補登與資料一致、合併年資警告八組；決策表 6 張（R67、R68、R79、R81、R85、R93）；守恆式 2 條（C01、C02）；參數 17 個；分類值 26 個；決定 D-01～D-21。
+  - ③ 第二版（03-v2）相對 03-v1：56 個狀態轉換的「規則」欄與 UC-01～UC-12 的「規則」回填；D-04 重新判定的新舊對應改為「同一來源、同一期別，而且新舊可休期間有重疊」；LeaveEntitlement 三列就地更正的前提、UC-08 主流程同步；LeaveConversion 兩列 CloseLeaveYear 的前提改為「補做的年度終結」看判定日；LeaveDeferralAgreement Lapsed → Agreed 改看狀態（逐筆見下方 2026-10-20 的回頭修改紀錄）。
+- 依據：slices/annual-leave-grant/04_rules.md @ annual-leave-grant/04-v1；03_flows.md、03_use_cases.md @ annual-leave-grant/03-v2；inputs/research 特別休假 #01～#04、勞動契約與年資 #05、#07、#08、期間計算 #02、#03
+- 反例處理：④ 兩輪挑錯共 31 個（第一輪 19、第二輪 12），全部接受並修改，沒有拒絕或轉問專家；③ 的修改來自 ④ 的 X-06、X-20、X-23、X-31。
+- 決定：③ D-04 與 ④ D-01～D-21 由 JiHungLin 於 2026-10-21 同意。
+- 審查期間的修改（④ 第一次凍結）：送審後沒有再修改內容，審查者只填寫審查重點、抽查與結論；送審前改變設計的修改已逐筆記 2 筆（2026-10-20 的 ③ 回頭修改、questions.md）。
+- 仍待處理：規則與參數全部 [未核對]；引用的 research 條目原文也都 [未核對]；[待專家確認] 涉及 EQ-002、003、005、006、009、011～014，EQ 全部「待問」。
+- 產出者：AI（Claude）；審查者：JiHungLin
+
+## 2026-10-20　（未凍結）　③　回頭修改（第 0 級）：第 ④ 步回填規則與挑錯後調整
+- 改了什麼：03_flows.md 狀態轉換的「規則」欄回填 56 列（CompanyPolicy 的 Establish、Activate、Repeal、Expire 4 列另加 R76）；03_use_cases.md UC-01～UC-12 的「規則」回填。挑錯後修改：D-04 重新判定的新舊對應由「同一來源、同一可休期間」改為「同一來源、同一期別，而且新舊可休期間有重疊」，提出／同意改回 AI／待確認；LeaveEntitlement 三列就地更正的前提、UC-08 主流程同步；LeaveConversion（無）→ Determined、（無）→ Provisional 兩列 CloseLeaveYear 的前提改為「補做的年度終結、公司多給失效、找不到版本」先待確認；LeaveDeferralAgreement Lapsed → Agreed 改看狀態。兩份狀態改回「待檢查」，03_flows.md 加「審查重點（2026-10-20 回頭修改）」
+- 依據：04_rules.md「回填紀錄」；04_rules.md X-06、X-20、X-23、X-31、D-15、D-20
+- 舊 → 新：D-04「同一可休期間」→「同一期別＋期間重疊」；補做年度終結的判斷由「由重新判定新增」→「判定日晚於可休迄日的隔天」
+- 影響與回歸：③ 要重新審查差異並重新凍結（annual-leave-grant/03-v2），和 ④ 一起；core/flows.md 的對應內容在凍結時更新；其他切片還沒有引用這些候選項目
+- 產出者：AI（Claude）；審查者：（待審查）
+
+## 2026-10-20　（未凍結）　①②③　回頭修改（第 0 級）：questions.md 新增 EQ-014、更新 EQ-012 與影響欄
+- 改了什麼：新增 EQ-014（告知期限、發給期限的日數從哪天算、末日遇休息日；週年制第一筆可休期間和滿 1 年那筆重疊）；EQ-012 的「這版的做法」改為就地更正、告知日留在原來那一筆；EQ-002、003、005～009、011～013 的「影響」欄加上 04_rules 的規則、決策表、參數與決定
+- 依據：04_rules.md X-02、X-16、X-21、X-27、X-31
+- 舊 → 新：專家問題 13 題 → 14 題
+- 影響與回歸：無；EQ 都還沒送出
+- 產出者：AI（Claude）；審查者：（待審查）
+
+## 2026-10-20　（未凍結）　①②③　回頭修改（第 0 級）
+- 改了什麼：questions.md 的「影響」欄，EQ-001～EQ-013 依實際的 `[待專家確認]` 標記補齊，加上檔名前綴（01_scope、02_entities、03_flows、03_use_cases）；決定或事件依賴答案、但內文沒有加標記的，另列「內文未標」：03_flows D-01、D-02、D-05、D-10、D-12、ConfirmLeaveConversion、EndLeaveEntitlementsWithEmployment、推導的狀態（告知狀態），以及會用到答案的其他切片
+- 依據：使用者要求確認答覆回來時能不能找全受影響的地方；原本的「影響」欄只寫了提出那一步的項目，之後各步新增的引用沒有回填
+- 舊 → 新：只改 questions.md 的「影響」欄；交付物的內文、設計都沒有改，「內文未標」的地方沒有補標記（補標記要改已凍結的 01～03，等答覆回來處理時一起改）
+- 影響與回歸：無；/domain-expert-reply 比對答覆時以「影響」欄為準
+- 產出者：AI（Claude）；審查者：（使用者要求，未另行審查）
+
 ## 2026-10-20　annual-leave-grant/03-v1　③　凍結
 - 改了什麼：初版。狀態機 6 個：LeaveEntitlement（請假權利：Active、YearEnded、EndedWithEmployment、Voided；需要重建當時）、LeaveDeferralAgreement（遞延協商：Agreed、Applied、Withdrawn、Lapsed；需要重建當時）、LeaveYearAgreement（特休年度約定：Scheduled、Effective、Superseded、Ended；需要軌跡）、CompanyPolicy（公司規定：Scheduled、Effective、Repealed；需要重建當時）、LeaveConversion（請假權利轉換：Provisional、Determined、Discarded；需要重建當時）、LeaveType（假別：只需現況，不設事件）；告知狀態、之後各期的預估、法規警告是推導的，不是狀態機（D-09）；新增事件 20 個（建議層 1 個：NotifyLeaveReassessment），沿用 core 的 CorrectRecord、AnnulEntry、RevokeAnnulment、OverrideWarning、WithdrawWarningOverride，不修改 hire-employee 的內容（D-08）；決策流程 5 個；更正方式 9 列；正式 Use Case 12 個（UC-01～UC-12），草稿 US-D01～US-D11 都有涵蓋；決定 D-01～D-15；專家問題新增 EQ-011～EQ-013（待問）
 - 依據：01_scope.md @ annual-leave-grant/01-v1；02_entities.md @ annual-leave-grant/02-v1；core/ @ 9c729ce；docs/03 P1、P2、P4；inputs/research/特別休假.md #01～#04
