@@ -1,8 +1,8 @@
 # hire-employee、annual-leave-grant 實作（MongoDB＋FastAPI）
 
-依 `slices/annual-leave-grant/` 凍結的設計實作特休：`02_entities.md` @ `annual-leave-grant/02-v1`；`03_flows.md`、`03_use_cases.md` @ `annual-leave-grant/03-v3`；`04_rules.md` @ `annual-leave-grant/04-v2`；`05_mapping.md`、`schema.mongo.js`、`api.yaml`（0.1.0）@ `annual-leave-grant/05-v2`。兩條切片共用同一個資料庫與 API。
+依 `slices/annual-leave-grant/` 凍結的設計實作特休：`02_entities.md` @ `annual-leave-grant/02-v1`；`03_flows.md`、`03_use_cases.md` @ `annual-leave-grant/03-v4`；`04_rules.md` @ `annual-leave-grant/04-v3`；`05_mapping.md`、`schema.mongo.js`、`api.yaml`（0.2.0）@ `annual-leave-grant/05-v3`。兩條切片共用同一個資料庫與 API。
 
-依 `slices/hire-employee/` 凍結的設計實作：`02_entities.md` @ `hire-employee/02-v4`；`03_flows.md` @ `hire-employee/03-v6`；`04_rules.md` @ `hire-employee/04-v5`；`05_mapping.md`、`schema.mongo.js`、`api.yaml`（0.5.0）@ `hire-employee/05-v5`。
+依 `slices/hire-employee/` 凍結的設計實作：`02_entities.md` @ `hire-employee/02-v4`；`03_flows.md` @ `hire-employee/03-v6`；`04_rules.md` @ `hire-employee/04-v5`；`05_mapping.md`、`schema.mongo.js`、`api.yaml`（0.5.0）@ `hire-employee/05-v7`。
 
 ## 需要
 

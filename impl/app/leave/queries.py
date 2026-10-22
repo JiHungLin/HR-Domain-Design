@@ -32,7 +32,7 @@ def list_entitlements(db, actor: Actor, employment_id: str, on: date | None, lea
                       as_of: datetime | None) -> dict:
     """Q01：這位員工在某一天有哪幾筆特休。
 
-    暫時：「某一天有哪幾筆」取取得日不晚於那一天、沒有作廢的（05_mapping、api.yaml 都沒寫篩選條件，signoff.md #14）。
+    「某一天有哪幾筆」：取得日不晚於那一天、沒有作廢的，狀態用目前的（05_mapping D-27）。
     """
     emp, employer = _employment(db, actor, employment_id)
     ctx = _ctx(db, actor, employer, as_of)

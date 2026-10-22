@@ -183,7 +183,8 @@ def test_withdraw_deferral_after_year_end_rejudges(api, db, ref):
                                                             "agreed_on": "2026-02-25", "deferred_quantity": "2"}).json()
         assert d["status"] == "Applied" and "R84" in [w["rule_id"] for w in d["warnings"]]
         n = api("getLeaveReassessmentNotice", h, path={"id": d["reassessment_notice_ids"][0]}, expect=200).json()
-        assert len(n["added_ids"]) == 1 and len(n["provisional_conversion_ids"]) == 1
+        # 要扣回已判定的轉換 → 遞延進來那一筆等確認後才建立（04 R92、D-27）
+        assert n["added_ids"] == [] and len(n["provisional_conversion_ids"]) == 1
         neg = api("listLeaveConversions", h, params={"employment_id": emp, "status": "Provisional"}, expect=200).json()["items"]
         assert [(c["quantity"], c["correction_cause"]) for c in neg] == [("-2", "CORRECTION_CAUSE.DEFERRAL_CHANGED")]
         # 撤回 → 遞延進來那一筆作廢，待確認的負數差額被取代
@@ -191,7 +192,8 @@ def test_withdraw_deferral_after_year_end_rejudges(api, db, ref):
                 json={"reason": "員工改變心意"}).json()
         assert w["status"] == "Withdrawn"
         r = api("confirmLeaveConversion", h, path={"id": neg[0]["conversion_id"]}, json={"reason": "確認"})
-        assert r.status_code == 409
+        # 重算後差額為 0、沒有取代它的那一筆 → Superseded，discarded_by_id 為 null（05_mapping D-23）
+        assert r.status_code == 409 and r.json() == {"message_code": "CONVERSION_DISCARDED", "discarded_by_id": None}
         detail = api("getLeaveEntitlement", h, path={"id": first["entitlement_id"]}, expect=200).json()
     assert detail["entitlement"]["quantities"]["converted_quantity"] == "3"
     assert detail["entitlement"]["quantities"]["deferred_out_quantity"] == "0"

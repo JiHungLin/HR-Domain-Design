@@ -59,7 +59,7 @@ def list_enrollment_proposals(employment_id: str | None = Query(None, pattern="^
                               hire_id: str | None = Query(None, pattern="^[0-9a-f]{24}$"),
                               open: bool | None = None, actor: Actor = Depends(current_actor)):
     actor.require("HR", "EMPLOYER")
-    return proposals.list_proposals(database(), actor.tenant_id, employment_id, hire_id, open, date.today())
+    return proposals.list_proposals(database(), actor.tenant_id, employment_id, hire_id, open)
 
 
 @_post("/employments/{id}/periods", "recordEmploymentPeriod")
@@ -79,4 +79,4 @@ def get_applicability(id: str, on: str = Query(...), as_of: str | None = None, a
         a = datetime.fromisoformat(as_of.replace("Z", "+00:00")) if as_of else None
     except ValueError as e:
         raise RequestInvalid([f"on／as_of：{e}"])
-    return proposals.applicability_on(database(), actor.tenant_id, oid(id), d, a, date.today())
+    return proposals.applicability_on(database(), actor.tenant_id, oid(id), d, a)

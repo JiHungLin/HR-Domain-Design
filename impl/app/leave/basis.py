@@ -36,7 +36,7 @@ def pref(v: dict) -> dict:
 def acquisition(start: date, months: int, rule_code: str) -> date:
     """R65：滿 months 個月的取得日；acquisition_day_rule 決定是末日的隔天或末日當天。"""
     end = dates.period_end(start, months)
-    return end + dates.DAY if rule_code == "DAY_AFTER_PERIOD_END" else end
+    return end + dates.DAY if rule_code == "ACQUISITION_DAY_RULE.DAY_AFTER_PERIOD_END" else end
 
 
 def threshold(k: int, first_months: int) -> int:
@@ -105,6 +105,18 @@ def year_basis(db, s, emp: dict, on: date) -> YearBasis:
     return YearBasis(r68["params"]["leave_year_basis_when_none"], "NONE", rule_refs=[rref(r68)])
 
 
+def fixed_start_method(db, s, emp: dict, on: date) -> tuple[str, list]:
+    """fixed_start_year_method：on 當天雇主有效的特休年度預設那一版有寫就用它，否則用 R70 的（05_mapping 3.2、D-31）。
+    個別約定也沿用雇主預設的做法（04 參數表）。回傳 (做法代碼, 依據的規則版本)。"""
+    r70 = rule(db, "R70", on, s)
+    for p in policies_on(db, s, emp["tenant_id"], emp["employer_id"], YEAR_DEFAULT, on):
+        v = policy_version(db, s, p["entity_id"], on)
+        method = (v or {}).get("params", {}).get("fixed_start_year_method")
+        if method:
+            return method, [rref(r70), pref(v)]
+    return r70["params"]["fixed_start_year_method"], [rref(r70)]
+
+
 # ---- R65～R70、R77：依規則應給予的每一期 ----
 
 @dataclass
@@ -153,16 +165,16 @@ def expected(db, s, emp: dict, employer: dict, until: date, *, version_for=None)
         if k - 1 == 1:
             valid_to = dates.period_end(acq, first)                                     # R69 第一筆
             nxt = acquisition(start, 12, acq_rule) - dates.DAY
-            if acq_rule == "PERIOD_END_DAY" and valid_to < nxt:
+            if acq_rule == "ACQUISITION_DAY_RULE.PERIOD_END_DAY" and valid_to < nxt:
                 valid_to = nxt
         else:
             valid_to = acquisition(start, threshold(k, first), acq_rule) - dates.DAY   # 下一個週年取得日的前一天
-        period_rule = rule(db, "R69", acq, s)
+        period_refs = [rref(rule(db, "R69", acq, s))]
         if yb.leave_year_basis == FIXED_START:
-            # 暫時：04 說 fixed_start_year_method 依公司規定的版本，⑤ 3.2 放在 R70 全部相同（signoff.md #18）
-            period_rule = rule(db, "R70", acq, s)
-            if period_rule["params"]["fixed_start_year_method"] != "EXTEND_TO_YEAR_END":
-                raise Blocked("R70", "UNSUPPORTED_METHOD", "這版只實作「延到約定年度的最後一天」")
+            method, period_refs = fixed_start_method(db, s, emp, acq)
+            if method != "FIXED_START_YEAR_METHOD.EXTEND_TO_YEAR_END":    # 這版沒有規則的做法 → 資料不足（04 參數表）
+                insufficient = [{"rule_id": "R70", "missing": ["fixed_start_year_method"]}]
+                continue
             valid_to = dates.fixed_year_end(valid_to, yb.year_start or {"month": 1, "day": 1})
         base = {
             "leave_type_code": LEAVE_TYPE, "origin": RULE_GRANT, "period_sequence": k - 1, "seniority_tier": months,
@@ -171,8 +183,8 @@ def expected(db, s, emp: dict, employer: dict, until: date, *, version_for=None)
             "basis_start_date": start,
             "applied_year_agreement_id": yb.agreement_id, "applied_year_default_policy_id": yb.policy_id,
         }
-        # 暫時：basis_rule_versions「每一種規則一筆」沒列是哪幾條；記取得日、天數、年度、期間的規則（signoff.md #20）
-        rules = [rref(r65), rref(r66), *yb.rule_refs, rref(period_rule)]
+        # basis_rule_versions：R65、R66、R68（依預設時加那一版公司規定）、R69 或 R70（05_mapping D-26）
+        rules = [rref(r65), rref(r66), *yb.rule_refs, *period_refs]
         items.append({**base, "source": STATUTORY, "policy_id": None, "quantity": qty, "basis_rule_versions": rules})
         r77 = rule(db, "R77", acq, s)
         category = value_on(emp.get("employee_category"), acq, key="code")

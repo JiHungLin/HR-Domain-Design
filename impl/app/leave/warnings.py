@@ -13,7 +13,7 @@ from app.leave.ledger import Ctx
 from app.leave.views import notice_info
 from app.rules import warnings as W
 
-# 暫時：警告與擋下的 message_code 04、05 都沒有定義，程式自己取（signoff.md #7）
+# 警告與擋下的 message_code 見 05_mapping 2.3（D-30）
 NOTICE_OVERDUE, NOTICE_LATE, NOTICE_BEFORE_ACQUIRED = "NOTICE_OVERDUE", "NOTICE_LATE", "NOTICE_BEFORE_ACQUIRED"
 
 

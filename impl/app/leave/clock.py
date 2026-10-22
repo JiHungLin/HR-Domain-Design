@@ -1,13 +1,14 @@
-"""「今天」以雇主所在管轄區的日期判斷（05_mapping 第二節 GrantLeaveEntitlement、CloseLeaveYear）。
+"""取得「今天」的唯一入口（平台 P4）：依雇主所在地的當地日期，不直接讀伺服器時鐘。
 
-暫時：管轄區沒有時區的屬性（core Jurisdiction、hire-employee 的 jurisdictions 都沒有），
-時區寫在這裡（signoff.md #6）。測試用 fixed() 固定「今天」。
+annual-leave-grant 05_mapping D-28、hire-employee 05_mapping D-24：地點是雇主所在地。
+地點 → 時區由平台維護對照（P4）；這版還沒有平台的對照表，TIMEZONES 是 [靜態替代]（signoff.md #6）。
+測試用 fixed() 固定「今天」。
 """
 from contextlib import contextmanager
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
-TIMEZONES = {"TW": "Asia/Taipei"}   # 暫時（signoff.md #6）
+TIMEZONES = {"TW": "Asia/Taipei"}   # [靜態替代] 代替平台的地點 → 時區對照（P4）；沒有對照的用 UTC
 
 _fixed: date | None = None
 

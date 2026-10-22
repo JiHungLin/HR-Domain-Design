@@ -78,7 +78,7 @@ def year_end_treatment(ctx: Ctx, ent: dict) -> tuple[str, bool, bool, list]:
     if ent["source"] == B.STATUTORY:
         return WAGES, True, True, []
     p = r79["params"]
-    if p["company_policy_version_at_year_end"] == "AT_GRANT":
+    if p["company_policy_version_at_year_end"] == "COMPANY_POLICY_VERSION_AT_YEAR_END.AT_GRANT":
         ref = next((r for r in ent.get("basis_rule_versions") or [] if r["kind"] == "COMPANY_POLICY"), None)
         v = ref and ctx.db.company_policy_versions.find_one(
             {"policy_id": ref["policy_id"], "version": ref["version"], "revision": ref["revision"]}, session=ctx.s)
@@ -107,9 +107,9 @@ def payment_due(ctx: Ctx, employment: dict, base: date) -> tuple[date, dict]:
     r90 = B.rule(ctx.db, "R90", base, ctx.s)
     p = r90["params"]
     st = ctx.db.employer_settings.find_one({"employer_id": employment["employer_id"]}, session=ctx.s) or {}
-    # 暫時：依雇主的值取 base 當天有效的那一段（05_mapping 沒寫用哪一天查，signoff.md #8）
+    # 依雇主的值取 base（年度終結日；差額是判定日）當天有效的那一段（05_mapping D-32）
     rule_code = value_on(st.get("payment_deadline_rule"), base) or p["payment_deadline_rule"]
-    if rule_code == "DAYS_AFTER_YEAR_END":
+    if rule_code == "PAYMENT_DEADLINE_RULE.DAYS_AFTER_YEAR_END":
         return base + dates.DAY * p["payment_days_after_year_end"], B.rref(r90)   # 從隔天算第 1 日（EQ-014）
     day = value_on(st.get("wage_payment_day"), base) or p["wage_payment_day"]
     lag = value_on(st.get("wage_payment_lag_months"), base)
@@ -227,14 +227,35 @@ def close(ctx: Ctx, ent: dict, notice: Notice) -> ObjectId:
     return event_id
 
 
-def _year_end_payload(ent, used, unused, ref, deferred, din_id, convs, late) -> dict:
+def _year_end_payload(ent, used, unused, ref, deferred, din_id, convs, late, waiting=None) -> dict:
     out = {"entitlement_id": ent["entity_id"], "used_quantity_known": str(used), "unused_quantity": str(unused),
            "conversion_ids": [c for c, _ in convs], "late": late}
+    if waiting:                                     # 04 R92：增加多少記在這次判定上，確認那筆負數差額時建立或增加
+        out["deferred_in_waiting"] = {"conversion_id": waiting[0], "quantity": str(waiting[1])}
     if ref:
         out |= {"deferral_agreement_ref": ref, "deferred_in_quantity": str(deferred)}
     if din_id:
         out["deferred_in_entitlement_id"] = din_id
     return out
+
+
+def release_waiting_deferred_in(ctx: Ctx, conversion: dict, notice: Notice, event_id) -> ObjectId | None:
+    """ConfirmLeaveConversion：等這筆負數差額確認的遞延進來那一筆，建立或增加額度（04 R92、03_flows D-17）。"""
+    e = ctx.db.events.find_one({"type": "RejudgeLeaveYearEnd",
+                                "payload.year_end.deferred_in_waiting.conversion_id": conversion["entity_id"]}, session=ctx.s)
+    if e is None:
+        return None
+    qty = B.decimal(e["payload"]["year_end"]["deferred_in_waiting"]["quantity"])
+    orig = L.entitlement(ctx, conversion["entitlement_id"])
+    din = L.deferred_in_of(ctx, orig)
+    if din is None:
+        din_id = _create_deferred_in(ctx, orig, L.deferral(ctx, orig["entity_id"]), qty, event_id)
+        notice.added_ids.append(din_id)
+        return din_id
+    before = _snap(din)
+    din = L.change_entitlement(ctx, din, {"quantity": to_dec(din["quantity"]) + qty}, event_id=event_id)
+    notice.changed.append({"entitlement_id": din["entity_id"], "before": before, "after": _snap(din)})
+    return din["entity_id"]
 
 
 def _create_deferred_in(ctx: Ctx, orig: dict, agreement: dict, qty: Decimal, event_id) -> ObjectId:
@@ -244,7 +265,7 @@ def _create_deferred_in(ctx: Ctx, orig: dict, agreement: dict, qty: Decimal, eve
     return L.create_entitlement(ctx, {
         "employment_id": orig["employment_id"], "leave_type_code": orig["leave_type_code"], "source": orig["source"],
         "origin": B.DEFERRED_IN, "unit": orig["unit"], "policy_id": orig.get("policy_id"),
-        # 暫時：遞延進來那一筆的取得日 04 沒有寫，用可休起日（signoff.md #9）
+        # 取得日是可休起日（04 R87、D-29）
         "acquired_on": vf, "valid_from": vf, "valid_to": vt, "quantity": qty,
         "leave_year_basis": orig.get("leave_year_basis"),
         "applied_year_agreement_id": orig.get("applied_year_agreement_id"),
@@ -271,24 +292,30 @@ def rejudge(ctx: Ctx, ent: dict, cause: str, notice: Notice, *, event_id=None) -
             deferred = min(to_dec(agreement["deferred_quantity"]), max(unused, Decimal(0)))
             if agreement["status"] == "Agreed":
                 L.change_deferral(ctx, agreement, {"status": "Applied"}, event_id=event_id)
-    din = L.deferred_in_of(ctx, ent)
-    din_id = din["entity_id"] if din else None
-    # 照設計：遞延進來那一筆立刻可以休，扣回的負數差額要人確認；確認前天數與工資同時在（signoff.md #16）
-    if deferred > 0 and din is None:
-        din_id = _create_deferred_in(ctx, ent, agreement, deferred, event_id)
-        notice.added_ids.append(din_id)
-    elif din is not None and deferred == 0:
-        _void(ctx, din, event_id, notice, cause)
-        din_id = None
-    elif din is not None and to_dec(din["quantity"]) != deferred:
-        before = _snap(din)
-        din = L.change_entitlement(ctx, din, {"quantity": deferred}, event_id=event_id)
-        notice.changed.append({"entitlement_id": din["entity_id"], "before": before, "after": _snap(din)})
-        if din["status"] == "YearEnded":
-            rejudge(ctx, din, cause, notice)
     convs = settle(ctx, ent, max(unused - deferred, Decimal(0)), target, event_id=event_id, rule_refs=refs, cause=cause,
                    version_found=found, judgment_event_id=_judgment_event(ctx, ent["entity_id"]))
     notice.conv(convs)
+    din = L.deferred_in_of(ctx, ent)
+    din_id = din["entity_id"] if din else None
+    # 04 R92、D-27：要扣回已判定的轉換（這次的負數差額，待確認）時，遞延進來增加的部分等那筆確認後才建立或增加
+    current = to_dec(din["quantity"]) if din else Decimal(0)
+    negative = next(((cid, to_dec(c["quantity"])) for cid, st in convs if st == "Provisional"
+                     for c in [ctx.db[L.CONV].find_one({"entity_id": cid, "is_current": True}, session=ctx.s)]
+                     if to_dec(c["quantity"]) < 0), None)
+    waiting = min(deferred - current, -negative[1]) if negative and deferred > current else Decimal(0)
+    apply = deferred - waiting
+    if apply > 0 and din is None:
+        din_id = _create_deferred_in(ctx, ent, agreement, apply, event_id)
+        notice.added_ids.append(din_id)
+    elif din is not None and apply == 0:
+        _void(ctx, din, event_id, notice, cause)
+        din_id = None
+    elif din is not None and current != apply:
+        before = _snap(din)
+        din = L.change_entitlement(ctx, din, {"quantity": apply}, event_id=event_id)
+        notice.changed.append({"entitlement_id": din["entity_id"], "before": before, "after": _snap(din)})
+        if din["status"] == "YearEnded":
+            rejudge(ctx, din, cause, notice)
     _conversion_dates_changed(ctx, ent, notice)
     if unused < 0:
         notice.act("USED_OVER_QUANTITY", ent["entity_id"], f"已休 {used} 大於額度 {to_dec(ent['quantity'])}")
@@ -297,7 +324,8 @@ def rejudge(ctx: Ctx, ent: dict, cause: str, notice: Notice, *, event_id=None) -
                  actor=ctx.actor, occurred_at=to_dt(valid_to), effective_from=to_dt(valid_to + dates.DAY),
                  rule_versions=[B.rref(B.rule(ctx.db, r, ctx.today, ctx.s)) for r in ("R92", "R93")] + refs,
                  derived=True, event_id=event_id, reason=cause,
-                 payload={"year_end": _year_end_payload(ent, used, unused, ref, deferred, din_id, convs, False)})
+                 payload={"year_end": _year_end_payload(ent, used, unused, ref, deferred, din_id, convs, False,
+                                                        waiting=(negative[0], waiting) if waiting > 0 else None)})
     L.check_conservation(ctx, ent["entity_id"])
     return event_id
 
@@ -364,10 +392,7 @@ def catch_up(ctx: Ctx, employment: dict, employer: dict, notice: Notice) -> list
 # ---- EndLeaveEntitlementsWithEmployment ----
 
 def end_with_employment(ctx: Ctx, employment: dict, notice: Notice) -> ObjectId:
-    """僱傭關係結束（R85、R95；03_flows D-05）。
-
-    暫時：③ 事件表的 NotifyLeaveReassessment 觸發來源沒有這個事件，⑤ UC-09 例外卻從通知取待確認的轉換；
-    這裡改到東西就產生通知（signoff.md #17）。"""
+    """僱傭關係結束（R85、R95；03_flows D-05）。改到請假權利或產生待確認的負數差額就產生通知（03_flows D-18）。"""
     event_id = ObjectId()
     ended = to_date(employment["ended_on"])
     touched = []
@@ -517,7 +542,11 @@ def _changed_items(ctx: Ctx, before: dict, after: dict, notice: Notice) -> None:
     if after.get("notified_on") and to_date(after["notified_on"]) < to_date(after["acquired_on"]):
         notice.act("NOTICE_BEFORE_ACQUIRED", after["entity_id"],
                    f"告知日 {to_date(after['notified_on'])} 早於更正後的取得日 {to_date(after['acquired_on'])}")
-    # 暫時：就地更正後期間或取得日改變、上面有已休的，NOTICE_ACTION 沒有對應的代碼，只列在 changed[]（signoff.md #10）
+    key = ("acquired_on", "valid_from", "valid_to")
+    old, new = (tuple(to_date(x[k]) for k in key) for x in (before, after))
+    if u > 0 and old != new:                                  # R96：期間或取得日改變、上面有已休（05_mapping D-24）
+        notice.act("PERIOD_CHANGED_WITH_USED", after["entity_id"],
+                   f"可休期間 {old[1]}～{old[2]} → {new[1]}～{new[2]}，上面有已休 {u}")
 
 
 def _follow_deferred_in(ctx: Ctx, orig: dict, event_id, notice: Notice) -> None:

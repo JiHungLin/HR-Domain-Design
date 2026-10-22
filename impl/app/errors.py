@@ -40,11 +40,9 @@ def install(app):
 
     @app.exception_handler(Superseded)
     def _superseded(_: Request, e: Superseded):
-        if e.discarded_by_id is None:
-            # 暫時：取代後差額為 0、沒有新的一筆時沒有 discarded_by_id，Superseded 格式要求必填（signoff.md #13）
-            return JSONResponse(status_code=409, content={"rule_id": None, "message_code": e.message_code,
-                                                          "detail": "已被取代，重算後沒有新的轉換"})
-        return JSONResponse(status_code=409, content={"message_code": e.message_code, "discarded_by_id": str(e.discarded_by_id)})
+        # 重算後差額為 0、沒有新的一筆時 discarded_by_id 為 null（annual-leave-grant 05_mapping D-23）
+        by = None if e.discarded_by_id is None else str(e.discarded_by_id)
+        return JSONResponse(status_code=409, content={"message_code": e.message_code, "discarded_by_id": by})
 
     @app.exception_handler(Forbidden)
     def _forbidden(_: Request, e: Forbidden):

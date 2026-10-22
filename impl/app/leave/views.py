@@ -7,7 +7,7 @@ from app.leave import dates
 from app.leave import ledger as L
 from app.leave.ledger import Ctx
 
-# 暫時：api.yaml 的 used_quantity_basis 是字串，05_mapping 只寫「目前累計」，代碼是程式取的（signoff.md #7）
+# used_quantity_basis 的值（05_mapping 2.3、D-30）
 USED_BASIS_CURRENT = "CURRENT_TOTAL"
 
 

@@ -10,6 +10,7 @@ from bson import ObjectId
 from app.auth import Actor
 from app.db import now, oid, run_in_transaction, to_date, to_dt
 from app.errors import Blocked, NotFound
+from app.leave import clock
 from app.rules import applicability as ap
 from app.rules import versions
 from app.spec import RequestInvalid
@@ -136,19 +137,31 @@ def _is_open(p: dict) -> bool:
         and not it.get("closed_by_enrollment_id") and not it.get("voluntary_declined") for it in p["items"])
 
 
-def list_proposals(db, tenant_id, employment_id: str | None, hire_id: str | None, open_only: bool | None,
-                   today: date) -> dict:
+def _employer_today(db, employer_id, cache: dict) -> date:
+    """「今天」依雇主所在地的當地日期（05_mapping D-24，平台 P4）：經 clock.today，不讀伺服器時鐘（hire-employee signoff.md #22）。"""
+    if employer_id not in cache:
+        cache[employer_id] = clock.today(db, db.employers.find_one({"_id": employer_id}))
+    return cache[employer_id]
+
+
+def _proposal_employer_id(db, p: dict):
+    if p.get("employment_id"):
+        return db.employments.find_one({"entity_id": p["employment_id"], "is_current": True})["employer_id"]
+    return db.hires.find_one({"_id": p["hire_id"]})["employer_id"]
+
+
+def list_proposals(db, tenant_id, employment_id: str | None, hire_id: str | None, open_only: bool | None) -> dict:
     """GET /v1/enrollment-proposals → EnrollmentProposalList（含預估、逾期天數、待人判斷）。"""
     q = {"tenant_id": tenant_id}
     if employment_id:
         q["employment_id"] = oid(employment_id)
     if hire_id:
         q["hire_id"] = oid(hire_id)
-    out = []
+    out, todays = [], {}
     for p in db.enrollment_proposals.find(q).sort([("determined_on", 1), ("_id", 1)]):
         if open_only and not _is_open(p):
             continue
-        out.append(proposal_view(db, p, today))
+        out.append(proposal_view(db, p, _employer_today(db, _proposal_employer_id(db, p), todays)))
     return {"items": out}
 
 
@@ -201,7 +214,7 @@ def _amount(db, item: dict, basis_item: dict) -> str | None:
     return str(g["amount"]) if g else None
 
 
-def applicability_on(db, tenant_id, employment_id: ObjectId, on: date, as_of: datetime | None, today: date) -> dict:
+def applicability_on(db, tenant_id, employment_id: ObjectId, on: date, as_of: datetime | None) -> dict:
     """GET /v1/employments/{id}/applicability → ApplicabilityOut：現算，不落地；沿用加保待辦上的決定；
     as_of 只看當時已登錄的版本（03_flows D-10）。"""
     get_current(db, "employments", employment_id, tenant_id)       # 找不到或不屬於呼叫者 → 404／403
@@ -209,6 +222,7 @@ def applicability_on(db, tenant_id, employment_id: ObjectId, on: date, as_of: da
     if not emps:
         raise NotFound(f"{as_of} 時系統還沒有這段僱傭關係")
     subj = ap.Subject.of_employment(emps[0])
+    today = _employer_today(db, subj.employer_id, {})
     prop = current_proposal(db, tenant_id, _links(subj))
     decisions = ap.Decisions.of_proposal(prop)
     facts = ap.load_facts(db, subj, on, as_of, decisions=decisions)

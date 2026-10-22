@@ -1,9 +1,10 @@
 """04 的回頭修改：公教或軍保（D-15）、待人判斷（D-16、D-19、D-20）、逾期（D-17）、錄用時的預估（D-18）。"""
-from datetime import date
+from datetime import date, timedelta
 
 from bson import ObjectId
 
 from app.db import now, to_dt
+from app.leave import clock
 from tests.conftest import make_org
 from tests.test_applicability import EI, LI, LP, M, NA, OAI, START, national
 
@@ -154,8 +155,10 @@ def test_d17_overdue_is_on_proposal_not_a_warning(api, db, ref):
     org = make_org(db, ref)
     started = _start(api, org, _hire(api, org, ref))
     assert not [w for w in started["warnings"] if w["rule_id"] == "R36"]
-    _, items = _current(api, org, employment_id=started["employment_id"])
-    assert items[LI]["days_overdue"] == (date.today() - date.fromisoformat(START)).days
+    # 「今天」經 clock.today（雇主所在地，hire-employee 05_mapping D-24），不讀伺服器時鐘
+    with clock.fixed(date.fromisoformat(START) + timedelta(days=10)):
+        _, items = _current(api, org, employment_id=started["employment_id"])
+    assert items[LI]["days_overdue"] == 10
     assert "days_overdue" not in items[LP] or items[LP]["days_overdue"] < items[LI]["days_overdue"]
     # 登錄實際辦理後結案，不再逾期
     api("recordInsuranceFiling", org["hr"], expect=201, json={

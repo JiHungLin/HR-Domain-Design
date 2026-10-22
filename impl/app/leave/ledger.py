@@ -80,7 +80,7 @@ def used(ctx: Ctx, ent: dict) -> Decimal:
     """已休＝固定資料 [靜態替代] ＋ 開始管理前已休（05_mapping 1.2）。
 
     as_of：固定資料是覆寫＋change_log（P2 B），但 change_log 只記欄位名稱、不記值（hire-employee D-08），
-    所以從 LoadUsedQuantityFixture 事件記的值還原（暫時，signoff.md #11）。
+    所以從 LoadUsedQuantityFixture 事件記的值還原（05_mapping D-25）。
     """
     if ctx.as_of is None:
         f = ctx.db.leave_used_quantity_fixtures.find_one({"entitlement_id": ent["entity_id"]}, session=ctx.s)
@@ -119,6 +119,19 @@ def quantities(ctx: Ctx, ent: dict) -> Quantities:
     return Quantities(u, out, conv, exp, q - u - out - conv - exp)
 
 
+def waiting_deferred_in(ctx: Ctx, ent_id) -> Decimal:
+    """等負數差額確認才增加的遞延進來額度（04 R92、D-27）：記在 RejudgeLeaveYearEnd 的 payload.year_end.deferred_in_waiting，
+    那筆負數差額還在待確認的才算。"""
+    filt = {"type": "RejudgeLeaveYearEnd", "payload.year_end.entitlement_id": ent_id,
+            "payload.year_end.deferred_in_waiting": {"$exists": True}}
+    if ctx.as_of is not None:
+        filt["recorded_at"] = {"$lte": ctx.as_of}
+    pending = {c["entity_id"] for c in conversions(ctx, ent_id) if c["status"] == "Provisional"}
+    return sum((B.decimal(e["payload"]["year_end"]["deferred_in_waiting"]["quantity"])
+                for e in ctx.db.events.find(filt, session=ctx.s)
+                if e["payload"]["year_end"]["deferred_in_waiting"]["conversion_id"] in pending), Decimal(0))
+
+
 def check_conservation(ctx: Ctx, ent_id) -> None:
     """C01、C02：每次寫入請假權利或轉換後在同一交易中檢查；不成立是程式錯誤，中止交易（05_mapping 3.1）。"""
     ent = entitlement(ctx, ent_id)
@@ -127,15 +140,18 @@ def check_conservation(ctx: Ctx, ent_id) -> None:
     qs = quantities(ctx, ent)
     if ent["status"] == "YearEnded":
         unused = to_dec(ent["quantity"]) - qs.used
-        # 暫時：待確認的負數差額不算進 C01（04 D-14），確認前還可以休是負的，和「已年度終結的為 0」互相矛盾（signoff.md #15）
+        # C01（04 D-28）：已年度終結的還可以休＝待確認中的負數差額合計＋等它確認才增加的遞延進來額度；已休多於額度時再更少
         held = sum((to_dec(c["quantity"]) for c in conversions(ctx, ent_id)
                     if c["status"] == "Provisional" and to_dec(c["quantity"]) < 0), Decimal(0))
-        if qs.remaining - held != 0 and not (unused < 0 and qs.remaining - held == unused):
-            raise AssertionError(f"C01 不成立：{ent_id} 已年度終結，還可以休 {qs.remaining}")
+        waiting = waiting_deferred_in(ctx, ent_id)
+        expect = held + waiting
+        if qs.remaining != expect and not (unused < 0 and qs.remaining - expect == unused):
+            raise AssertionError(f"C01 不成立：{ent_id} 已年度終結，還可以休 {qs.remaining}，應為 {expect}")
         if unused >= 0:
+            # C02：遞延出去（含等確認的部分）＋轉換（已判定與待確認）＝未休
             convs = sum((to_dec(c["quantity"]) for c in conversions(ctx, ent_id)), Decimal(0))
-            if qs.deferred_out + convs != unused:
-                raise AssertionError(f"C02 不成立：{ent_id} 未休 {unused} ≠ 遞延 {qs.deferred_out} ＋ 轉換 {convs}")
+            if qs.deferred_out + waiting + convs != unused:
+                raise AssertionError(f"C02 不成立：{ent_id} 未休 {unused} ≠ 遞延 {qs.deferred_out}＋{waiting} ＋ 轉換 {convs}")
 
 
 # ---- 寫入 ----

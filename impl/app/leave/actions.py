@@ -140,20 +140,19 @@ def load_ending(db, actor: Actor, employment_id: str, body: dict) -> dict:
     ended = D(body["ended_on"])
 
     def fn(ctx, emp, employer, notice_ids):
-        if emp["status"] != "Active":
-            raise Blocked(None, "INVALID_STATE", f"僱傭關係的狀態是 {emp['status']}")
+        if emp["status"] != "Active" or emp.get("ended_on"):
+            raise Blocked(None, "INVALID_STATE", f"僱傭關係的狀態是 {emp['status']}" + ("，已有結束日" if emp.get("ended_on") else ""))
         if ended < to_date(emp["start_date"]):
             raise Blocked("R02", "END_BEFORE_START", "結束日早於到職日")
         event_id = record_event(db, ctx.s, tenant_id=ctx.tenant_id, type="LoadEmploymentEndingFixture",
                                 subject=("employments", emp["entity_id"]), actor=ctx.actor, occurred_at=to_dt(ended),
                                 effective_from=to_dt(ended), reason=body["reason"])
-        # 暫時：結束日在未來時 employments.status 何時變 Ended 沒有寫，載入時就改（signoff.md #19）
-        cur = new_version(db, ctx.s, "employments", emp, {"ended_on": to_dt(ended), "end_reason": body["end_reason"],
-                                                          "status": "Ended"}, event_id=event_id)
-        ctx.root_event_id = event_id
-        notice = E.Notice(emp["entity_id"])
-        end_event = E.end_with_employment(ctx, cur, notice)
-        out = _flush(ctx, notice, end_event, notice_ids)
+        # 結束日在未來時只記結束日，到那天由每日排程改為 Ended 並停止特休（05_mapping D-33）
+        cur = new_version(db, ctx.s, "employments", emp, {"ended_on": to_dt(ended), "end_reason": body["end_reason"]},
+                          event_id=event_id)
+        out = notice_ids
+        if ended <= ctx.today:
+            out = scheduler.end_employment(ctx, cur, event_id, out)
         return {"event_id": str(event_id), "employment_id": str(emp["entity_id"]), "reassessment_notice_ids": _ids(out),
                 "warnings": []}
     return _employment_tx(db, actor, employment_id, fn)
@@ -183,7 +182,7 @@ def _deferral_warnings(ctx: Ctx, ent: dict, agreement: dict | None) -> list[dict
     out = []
     if agreement is not None:
         qs = L.quantities(ctx, ent)
-        # 暫時：已年度終結的那一筆還可以休一律是 0，R83 照字面會每次成立；改用未休比較（signoff.md #12）
+        # R83：已年度終結的用「額度減已休」比，不用還可以休（04 D-26）
         base = to_dec(ent["quantity"]) - qs.used if ent["status"] == "YearEnded" else qs.remaining
         if to_dec(agreement["deferred_quantity"]) > base:
             out.append(LW.over_remaining(ctx, agreement, base))
@@ -294,8 +293,13 @@ def confirm_conversion(db, actor: Actor, conversion_id: str, body: dict) -> dict
                                 subject=(L.CONV, c["entity_id"]), actor=ctx.actor, reason=body["reason"],
                                 evidence=body.get("evidence"))
         L.change_conversion(ctx, c, {"status": "Determined"}, event_id=event_id)
+        notice = E.Notice(ent["employment_id"])
+        din_id = E.release_waiting_deferred_in(ctx, c, notice, event_id)     # 04 R92、03_flows D-17
         L.check_conservation(ctx, c["entitlement_id"])
-        return {"event_id": str(event_id), "conversion_id": str(c["entity_id"]), "status": "Determined"}
+        if din_id:
+            L.check_conservation(ctx, din_id)
+        return {"event_id": str(event_id), "conversion_id": str(c["entity_id"]), "status": "Determined",
+                "deferred_in_entitlement_id": str(din_id) if din_id else None}
     return _entitlement_tx(db, actor, str(c0["entitlement_id"]), fn)
 
 
@@ -418,7 +422,7 @@ def establish_policy(db, actor: Actor, body: dict) -> dict:
             "tenant_id": t, "employer_id": (employer or {}).get("_id"), "leave_type_code": body.get("leave_type_code"),
             "name": body["name"], "subject": subject, "source_note": body.get("source_note"), "effective_from": to_dt(eff),
             "status": scheduler.policy_status({"effective_from": to_dt(eff)}, today)}), event_id=event_id)
-        # 暫時：公司規定版本的名稱 04、05 沒有定義，第一版叫 v1（signoff.md #7）
+        # 公司規定版本的名稱依新增順序 v1、v2……（05_mapping 2.3、D-30）
         db.company_policy_versions.insert_one({
             "tenant_id": t, "policy_id": pid, "version": "v1", "revision": 1, "effective_from": to_dt(eff),
             "params": _params_to_db(params), "recorded_at": now(), "event_id": event_id, "created_at": now()}, session=s)
@@ -428,14 +432,14 @@ def establish_policy(db, actor: Actor, body: dict) -> dict:
         ver = list(db.company_policy_versions.find({"policy_id": pid}, session=s))
         warn = policy_warnings(db, s, policy, ver, today)
         # D-18：影響這個雇主的每一段僱傭關係 → 上鎖、生效日不晚於已給予的取得日的寫一筆佇列
-        # 暫時：「受影響的僱傭關係」沒有定義，全部上鎖、只對已有取得日不早於生效日的那幾段排佇列（signoff.md #22）
+        # 受影響的僱傭關係：全部上鎖，只對已有取得日不早於生效日的那幾段排佇列（05_mapping D-34）
         q = {"tenant_id": t, "is_current": True, "annulled": {"$ne": True}}
         if employer:
             q["employer_id"] = employer["_id"]
         queued = 0
         for emp in db.employments.find(q, session=s):
             locks.lock(db, s, t, "EMPLOYMENT", emp["entity_id"])
-            # 暫時：R76「還在套用預設的員工」看哪一天沒寫，用生效日與今天較晚的那天（signoff.md #21）
+            # R76：看生效日與今天較晚的那天（04 D-30）
             if subject == B.YEAR_DEFAULT and emp.get("status") == "Active" and B.agreement_on(db, s, emp, max(eff, today)) is None:
                 warn.append(W.warning(db, "R76", today, "DEFAULT_LEAVE_YEAR_CHANGED", subject=("employments", emp["entity_id"]),
                                       warned_value={"policy_id": str(pid), "effective_from": str(eff)}, session=s))
@@ -479,7 +483,7 @@ def backfill(db, actor: Actor, body: dict) -> dict:
         ent_id = L.create_entitlement(ctx, {
             "employment_id": emp["entity_id"], "leave_type_code": body["leave_type_code"], "source": body["source"],
             "origin": body["origin"], "unit": body["unit"], "quantity": qty, "pre_system_used_quantity": pre,
-            # 暫時：補登的取得日 schema 必填、API 沒有這個欄位，用可休起日（signoff.md #9）
+            # 補登的取得日是可休起日（04 R97、D-29）
             "acquired_on": vf, "valid_from": vf, "valid_to": vt, "registered_original_year_end": orig_end,
             "policy_id": oid(body["policy_id"]) if body.get("policy_id") else None,
             "basis_rule_versions": [], "no_rule_version": True,

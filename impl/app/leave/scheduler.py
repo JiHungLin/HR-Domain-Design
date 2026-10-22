@@ -1,4 +1,4 @@
-"""每日排程（05_mapping D-03）：給予、年度終結、約定開始適用、公司規定生效與廢止。
+"""每日排程（05_mapping D-03）：給予、年度終結、約定開始適用、公司規定生效與廢止、到了的結束日（D-33）。
 
 不靠「執行到哪一天」的游標：每次對每段僱傭關係找出到今天應發生而還沒發生的，補上（X-04）。
 用法：uv run python scripts/run_daily.py
@@ -11,7 +11,7 @@ from app.db import now, run_in_transaction, to_date, to_dt
 from app.leave import clock, locks
 from app.leave import engine as E
 from app.leave.ledger import SYSTEM, Ctx
-from app.store import record_event, update_with_changelog
+from app.store import new_version, record_event, update_with_changelog
 
 
 def agreement_status(a: dict, others: list[dict], today: date) -> str:
@@ -61,6 +61,29 @@ def policy_status(p: dict, today: date) -> str:
     return "Scheduled" if to_date(p["effective_from"]) > today else "Effective"
 
 
+def end_employment(ctx: Ctx, emp: dict, fixture_event_id, out: list) -> list:
+    """一般離職的結束日到了（[靜態替代]，05_mapping D-33）：employments.status 改為 Ended，EndLeaveEntitlementsWithEmployment。"""
+    cur = new_version(ctx.db, ctx.s, "employments", emp, {"status": "Ended"}, event_id=fixture_event_id)
+    ctx.root_event_id = fixture_event_id
+    notice = E.Notice(emp["entity_id"])
+    end_event = E.end_with_employment(ctx, cur, notice)
+    nid = notice.flush(ctx, end_event)
+    return out + ([nid] if nid else [])
+
+
+def _due_ending(ctx: Ctx, emp: dict, out: list) -> tuple[dict, list]:
+    """載入時結束日還在未來、今天已經到了的（05_mapping D-33）。"""
+    ended = to_date(emp.get("ended_on"))
+    if emp["status"] != "Active" or ended is None or ended > ctx.today:
+        return emp, out
+    ev = ctx.db.events.find_one({"type": "LoadEmploymentEndingFixture", "subject.id": emp["entity_id"]},
+                                sort=[("recorded_at", -1)], session=ctx.s)
+    if ev is None:                       # 結束日不是固定資料載入的（hire-employee 的 RecordEarlyDeparture 已改狀態）
+        return emp, out
+    out = end_employment(ctx, emp, ev["_id"], out)
+    return ctx.db.employments.find_one({"entity_id": emp["entity_id"], "is_current": True}, session=ctx.s), out
+
+
 def process_employment(db, employment_id, today: date | None = None) -> list:
     """一段僱傭關係一個交易：上鎖、先清佇列、約定狀態、補給予與年度終結。回傳產生的通知編號。"""
     def tx(s):
@@ -68,6 +91,7 @@ def process_employment(db, employment_id, today: date | None = None) -> list:
         employer = locks.employer_of(db, s, emp)
         ctx = Ctx(db, s, emp["tenant_id"], today or clock.today(db, employer, s))
         out = locks.begin(ctx, emp)
+        emp, out = _due_ending(ctx, emp, out)
         refresh_agreements(ctx, employment_id)
         notice = E.Notice(employment_id)
         events = E.catch_up(ctx, emp, employer, notice)
