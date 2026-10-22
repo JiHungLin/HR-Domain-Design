@@ -8,6 +8,7 @@ from datetime import date
 
 from app import config
 from app.db import database, now, to_dt
+from app.leave import seed as leave_seed
 
 SCHEMES = [
     # code, insurer, effective_from, source_ref（施行日的來源；全部 [未核對]）
@@ -143,9 +144,9 @@ def rules() -> list[tuple]:
     ]
 
 
-def parse_labels() -> list[dict]:
+def parse_labels(rules_md=None) -> list[dict]:
     """從 04_rules.md 的「分類值」表取出 zh-TW 名稱（P10）。"""
-    text = config.RULES_MD.read_text(encoding="utf-8")
+    text = (rules_md or config.RULES_MD).read_text(encoding="utf-8")
     section = text.split("## 分類值", 1)[1].split("\n## ", 1)[0]
     out = []
     for line in section.splitlines():
@@ -156,9 +157,10 @@ def parse_labels() -> list[dict]:
 
 
 def create_schema(db_name: str) -> None:
-    """用 mongosh 執行 slices/hire-employee/schema.mongo.js（集合驗證規則與索引）。"""
+    """用 mongosh 依序執行 hire-employee 與 annual-leave-grant 的 schema.mongo.js（集合驗證規則與索引）。"""
     uri = config.MONGO_URI.replace("/?", f"/{db_name}?") if "/?" in config.MONGO_URI else f"{config.MONGO_URI.rstrip('/')}/{db_name}"
-    subprocess.run(["mongosh", "--quiet", uri, str(config.SCHEMA_SCRIPT)], check=True)
+    for script in config.SCHEMA_SCRIPTS:
+        subprocess.run(["mongosh", "--quiet", uri, str(script)], check=True)
 
 
 def seed_reference(db) -> None:
@@ -171,8 +173,11 @@ def seed_reference(db) -> None:
         {k: v for k, v in {
             "rule_id": rid, "version": ver, "revision": 1, "effective_from": to_dt(f), "effective_to": to_dt(t),
             "params": params, "source_ref": src, "recorded_at": ts, "created_at": ts}.items() if v is not None}
-        for rid, ver, f, t, params, src in rules()])
-    db.labels.insert_many([{**l, "created_at": ts} for l in parse_labels()])
+        for rid, ver, f, t, params, src in rules() + leave_seed.rules()])
+    labels = {l["code"]: l for l in parse_labels() + parse_labels(config.LEAVE_RULES_MD)}
+    db.labels.insert_many([{**l, "created_at": ts} for l in labels.values()])
+    # annual-leave-grant 的 schema.mongo.js 已建立台灣特休（leave_types）；補上 establishedBy
+    db.leave_types.update_one({"code": "LEAVE_TYPE.ANNUAL_LEAVE_TW"}, {"$set": {"jurisdiction_id": tw, "created_at": ts}})
 
 
 def init(db_name: str, reset: bool = False) -> None:

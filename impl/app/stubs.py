@@ -2,20 +2,18 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from app.spec import spec
+from app.spec import paths
 
 
 def router_for_missing(*implemented_routers: APIRouter) -> APIRouter:
     implemented = {r.operation_id for rt in implemented_routers for r in rt.routes}
     router = APIRouter()
-    for path, ops in spec()["paths"].items():
-        for method, op in ops.items():
-            if method not in ("get", "post") or op["operationId"] in implemented:
-                continue
-
-            router.add_api_route(path, _not_implemented(op), methods=[method.upper()], operation_id=op["operationId"],
-                                 summary=op.get("summary"), tags=["尚未實作"],
-                                 openapi_extra={k: v for k, v in op.items() if k in ("requestBody", "responses", "parameters") or k.startswith("x-")})
+    for path, method, op in paths():
+        if op["operationId"] in implemented:
+            continue
+        router.add_api_route(path, _not_implemented(op), methods=[method.upper()], operation_id=op["operationId"],
+                             summary=op.get("summary"), tags=["尚未實作"],
+                             openapi_extra={k: v for k, v in op.items() if k in ("requestBody", "responses", "parameters") or k.startswith("x-")})
     return router
 
 

@@ -126,7 +126,9 @@ def test_unimplemented_returns_501(api, org):
 
 def test_events_and_versions_recorded(api, org, ref, db):
     hire, _, started = uc01(api, org, ref)
-    types = [e["type"] for e in db.events.find({"tenant_id": org["tenant"]}).sort("recorded_at", 1)]
+    # 到職日在過去滿 6 個月時，同一交易也會補上特休（annual-leave-grant 的掛勾）；這裡只看 hire-employee 的事件
+    types = [e["type"] for e in db.events.find({"tenant_id": org["tenant"], "type": {"$ne": "GrantLeaveEntitlement"}})
+             .sort("recorded_at", 1)]
     assert types == ["DecideHire", "ProposeEnrollmentFiling", "RecordIdentityDocument",
                      "StartEmployment", "ProposeEnrollmentFiling"]
     # P2 B：Hire 狀態改變、契約接續到僱傭關係，都留下變更紀錄

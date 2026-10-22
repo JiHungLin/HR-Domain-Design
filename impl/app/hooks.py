@@ -4,7 +4,8 @@
 到職後立刻離開、註銷與撤銷註銷，要在 hire-employee 的 API 同一交易中執行特休的重新判定與驗證；
 hire-employee 的設計文件與 api.yaml 不改，回應格式不變。
 
-這版 annual-leave-grant 還沒有實作，沒有註冊任何處理，publish 什麼都不做。
+annual-leave-grant 的處理在 app/leave/handlers.py 註冊（app/main.py import 時）：到職、更正到職日（POST /v1/corrections
+目前只實作 start_date）、EmploymentEnded。註銷、撤銷註銷、到職後立刻離開的 API 還沒實作，實作時照下面的種類呼叫。
 """
 from collections.abc import Callable
 from contextlib import contextmanager
@@ -15,7 +16,7 @@ from bson import ObjectId
 # 事件種類 → 呼叫的位置（annual-leave-grant 05_mapping「core 事件的連鎖」）
 EMPLOYMENT_STARTED = "EmploymentStarted"      # StartEmployment（已呼叫）、RegisterExistingEmployment（尚未實作）
 EMPLOYMENT_ENDED = "EmploymentEnded"          # RecordEarlyDeparture、LoadEmploymentEndingFixture（尚未實作）
-EMPLOYMENT_CORRECTED = "EmploymentCorrected"  # CorrectRecord：employments 的 start_date、employee_category、ended_on（尚未實作）
+EMPLOYMENT_CORRECTED = "EmploymentCorrected"  # CorrectRecord：employments 的 start_date（已呼叫）、employee_category、ended_on
 EVENT_ANNULLED = "EventAnnulled"              # AnnulEntry、RevokeAnnulment：StartEmployment、RegisterExistingEmployment、
                                               # RecordEarlyDeparture 等（尚未實作）
 EMPLOYER_CHANGED = "EmployerChanged"          # CorrectRecord、LoadEmployerFixture：employers 的 system_managed_from、

@@ -4,9 +4,18 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SLICE_DIR = REPO_ROOT / "slices" / "hire-employee"
+LEAVE_SLICE_DIR = REPO_ROOT / "slices" / "annual-leave-grant"
 
 MONGO_URI = os.environ.get("HR_MONGO_URI", "mongodb://localhost:27017/?replicaSet=rs0")
 DB_NAME = os.environ.get("HR_DB_NAME", "hr_hire_dev")
 API_SPEC = SLICE_DIR / "api.yaml"
 SCHEMA_SCRIPT = SLICE_DIR / "schema.mongo.js"
 RULES_MD = SLICE_DIR / "04_rules.md"
+
+# annual-leave-grant：api.yaml 與 schema.mongo.js 和 hire-employee 的並存（同一個資料庫、同一個 API）
+LEAVE_API_SPEC = LEAVE_SLICE_DIR / "api.yaml"
+LEAVE_SCHEMA_SCRIPT = LEAVE_SLICE_DIR / "schema.mongo.js"
+LEAVE_RULES_MD = LEAVE_SLICE_DIR / "04_rules.md"
+
+API_SPECS = (API_SPEC, LEAVE_API_SPEC)
+SCHEMA_SCRIPTS = (SCHEMA_SCRIPT, LEAVE_SCHEMA_SCRIPT)
