@@ -5,7 +5,7 @@
 | 切片 | annual-leave-grant |
 | 步驟 | ③ 流程與狀態（Use Case） |
 | 狀態 | 已凍結 |
-| 版本 | annual-leave-grant/03-v3 |
+| 版本 | annual-leave-grant/03-v4 |
 | 讀取的輸入 | 01_scope.md @ annual-leave-grant/01-v1；02_entities.md @ annual-leave-grant/02-v1；03_flows.md（本步產出） |
 
 <!-- 完成標準與檢查紀錄寫在 03_flows.md -->
@@ -124,11 +124,11 @@
 - 對應草稿：US-D04、US-D05
 - 參與者：人資、系統
 - 前提：一筆特休已 YearEnded，已有轉換交給薪資
-- 主流程：判定用到的資料改變——最後幾天的請假較晚登錄（這版改正已休的固定資料）、遞延協商事後登錄（RecordLeaveDeferral → Applied）、雙方改談（AmendLeaveDeferral）、取消（WithdrawLeaveDeferral）、補登的額度更正（CorrectRecord）→ RejudgeLeaveYearEnd：遞延進來的那一筆新增、更正或作廢；轉換另記一筆差額，指回被更正的那一次並記更正原因；增加工資的直接交給薪資，減少工資的待確認 → NotifyLeaveReassessment 通知人資與雇主 → 人資確認（ConfirmLeaveConversion）→ 薪資切片依差額補發或處理
+- 主流程：判定用到的資料改變——最後幾天的請假較晚登錄（這版改正已休的固定資料）、遞延協商事後登錄（RecordLeaveDeferral → Applied）、雙方改談（AmendLeaveDeferral）、取消（WithdrawLeaveDeferral）、補登的額度更正（CorrectRecord）→ RejudgeLeaveYearEnd：遞延進來的那一筆新增、更正或作廢（遞延加大、要扣回已交給薪資的轉換時，增加的部分等人資確認扣回後才建立，確認前不能休，03_flows D-17）；轉換另記一筆差額，指回被更正的那一次並記更正原因；增加工資的直接交給薪資，減少工資的待確認 → NotifyLeaveReassessment 通知人資與雇主 → 人資確認（ConfirmLeaveConversion；等它的遞延進來那一筆同時建立或增加）→ 薪資切片依差額補發或處理
 - 例外：遞延進來的那一筆已經休了一部分又被撤回 → 作廢的那筆上已休的天數由通知列出，人處理；年度終結後才登錄或修改遞延協商（看登錄時間，不論填的協商日）→ 法規警告，不阻擋，算不算數 [待專家確認: EQ-003]；確認前資料又改 → 待確認的那一筆被重算的取代；固定資料的已休改正要記誰、何時、理由，判定當時的已休仍查得到（03_flows D-15）；多發的怎麼處理 [待專家確認: EQ-009]
 - 用到的 Entity：LeaveEntitlement、LeaveDeferralAgreement、LeaveConversion
 - 用到的事件：RecordLeaveDeferral、AmendLeaveDeferral、WithdrawLeaveDeferral、CorrectRecord、RejudgeLeaveYearEnd、NotifyLeaveReassessment、ConfirmLeaveConversion
-- 規則：R84、R92、R93、R94、R96
+- 規則：R83、R84、R87、R92、R93、R94、R96
 
 ## 草稿涵蓋檢查
 

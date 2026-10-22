@@ -2,6 +2,11 @@
 
 <!-- 只新增，最新的在最上面。記錄：切片項目以 [候選] 合併、升為 [已驗證]、套用變更提案、平行切片撞號重編。格式同切片 CHANGELOG.md -->
 
+## 2026-10-22　annual-leave-grant/03-v4、annual-leave-grant/04-v3　③④　凍結（回頭修改）
+- 改了什麼：flows.md LeaveEntitlement 狀態機（無）→ Active（RejudgeLeaveYearEnd）前提加「不用扣回」，新增（無）→ Active、Active → Active（ConfirmLeaveConversion）兩列；LeaveConversion Provisional → Determined 改寫；事件 RejudgeLeaveYearEnd、ConfirmLeaveConversion、NotifyLeaveReassessment 改寫；兩個狀態機與三個事件的出處改 03-v4。rules.md R66、R76、R83、R86、R87、R92、R97、C01、C02 改寫，出處改 04-v3；分類值新增 8 列（ACQUISITION_DAY_RULE 2、FIXED_START_YEAR_METHOD 2、PAYMENT_DEADLINE_RULE 2、COMPANY_POLICY_VERSION_AT_YEAR_END 2），[候選]。沒有刪除項目，既有項目狀態仍是 [候選]
+- 依據：slices/annual-leave-grant/03_flows.md D-17、D-18 @ annual-leave-grant/03-v4；04_rules.md D-26～D-32 @ annual-leave-grant/04-v3（⑥ signoff #1～#22）
+- 產出者：AI（Claude）；審查者：JiHungLin；核心負責人：待審閱
+
 ## 2026-10-21　hire-employee/03-v7、hire-employee/05-v6、annual-leave-grant/05-v2　③⑤　凍結（回頭修改，格式）
 - 改了什麼：只改格式，項目內容、出處、狀態都不變。rules.md 守恆式表的分隔列原本在 C02 之後，移到表頭下（C01、C02 才會被解析）。沒有切片前綴的 Qnn、US-Dnn、UC-nn 依所在項目的出處加前綴：hire-employee 57 處（entities.md Tenant～DataSubjectRequest、flows.md「更正方式（hire-employee）」、relations.md、rules.md R52 的 UC-14、UC-15），annual-leave-grant 48 處（entities.md LeaveType～LeaveConversion、flows.md 兩處 US-D、relations.md、rules.md R75 的 US-D10）
 - 依據：tools/lint.py「表格」「core 前綴」檢查（工具包 @ 8b5f2bd）；docs/02 第六節

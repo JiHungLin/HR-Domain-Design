@@ -2,7 +2,7 @@
 openapi: 3.1.0
 info:
   title: annual-leave-grant API
-  version: 0.1.0
+  version: 0.2.0
   description: 依 slices/annual-leave-grant/05_mapping.md 產生的設計文件，不是實作。請求與回應寫到欄位層級；每支 API 標 x-concept（概念，P8）、x-roles（誰可以做）、x-rules（檢查的規則）。所有寫入在一個多文件交易中寫入 events 與受影響的集合，先更新 leave_locks、先處理那段僱傭關係的重新判定佇列（05_mapping
     D-05、D-18），並檢查每個引用屬於呼叫者的客戶、存在且為目前版本（hire-employee 05_mapping D-06）。更正、註銷、警告忽略沿用 hire-employee 的 /v1/corrections、/v1/annulments、/v1/warning-overrides（05_mapping D-11）。給予、年度終結、開始適用與廢止生效由每日排程產生，沒有 API（05_mapping
     D-03）。
@@ -426,6 +426,8 @@ paths:
       x-roles:
       - HR
       x-rules:
+      - R87
+      - R92
       - R94
       parameters:
       - name: id
@@ -452,7 +454,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          description: 狀態不是待確認；已被取代時回 Superseded（給 discarded_by_id）
+          description: 狀態不是待確認；已被取代時回 Superseded（給 discarded_by_id；重算後差額為 0、沒有取代它的那一筆時為 null，05_mapping D-23）
           content:
             application/json:
               schema:
@@ -555,7 +557,7 @@ paths:
         schema:
           type: string
           format: date
-        description: 預設今天
+        description: 預設今天（依雇主所在地，P4）；列出取得日不晚於這天、沒有作廢的每一筆，狀態用目前的，不看可休期間有沒有包含這天（05_mapping D-27）
       - name: leave_type_code
         in: query
         required: false
@@ -928,11 +930,12 @@ components:
           type: string
         rule_version:
           type: string
-          description: 規則版本；04_rules 版本欄為「—」的規則填 annual-leave-grant/04-v1（05_mapping D-12，同 hire-employee D-20）
+          description: 規則版本；版本欄為「—」的規則填規則所在的 04 凍結版本（05_mapping D-29，同 hire-employee D-20）
         rule_revision:
           type: integer
         message_code:
           type: string
+          description: 代碼見 05_mapping 2.3（D-30）
         subject:
           $ref: '#/components/schemas/SubjectRef'
         warned_value: {}
@@ -975,9 +978,11 @@ components:
         message_code:
           type: string
         discarded_by_id:
-          type: string
+          type:
+          - string
+          - 'null'
           pattern: ^[0-9a-f]{24}$
-          description: 取代它的那一筆轉換
+          description: 取代它的那一筆轉換；重算後差額為 0、沒有新的一筆時為 null（05_mapping D-23）
       required:
       - message_code
       - discarded_by_id
@@ -1313,6 +1318,12 @@ components:
               $ref: '#/components/schemas/MonthDay'
           required:
           - leave_year_basis
+        fixed_start_year_method:
+          type: string
+          enum:
+          - FIXED_START_YEAR_METHOD.EXTEND_TO_YEAR_END
+          - FIXED_START_YEAR_METHOD.PRORATED
+          description: 事項為特休年度預設的版本才有；沒有時用 rule_versions（R70）的值（05_mapping 3.2、D-31）
       description: 參數名稱照 04 參數表；沒有給的欄位＝那一版沒有寫（04 R79 決策表），不補預設值
     EstablishPolicyIn:
       type: object
@@ -1522,6 +1533,12 @@ components:
           pattern: ^[0-9a-f]{24}$
         status:
           type: string
+        deferred_in_entitlement_id:
+          type:
+          - string
+          - 'null'
+          pattern: ^[0-9a-f]{24}$
+          description: 等這筆負數差額確認才建立或增加的遞延進來那一筆（04 R92）；沒有時為 null
       required:
       - event_id
       - conversion_id
@@ -1589,7 +1606,9 @@ components:
           description: 數量（Decimal128 以字串傳）
         used_quantity_basis:
           type: string
-          description: '[靜態替代] 目前累計（帶 on 時也用目前累計）'
+          enum:
+          - CURRENT_TOTAL
+          description: '[靜態替代] 目前累計（帶 on 時也用目前累計；05_mapping 2.3）'
         deferred_out_quantity:
           type: string
           pattern: ^-?\d+(\.\d+)?$
@@ -2171,6 +2190,7 @@ components:
           - NOTICE_ACTION.NOTICE_BEFORE_ACQUIRED
           - NOTICE_ACTION.DEFERRAL_OVER_UNUSED
           - NOTICE_ACTION.CONVERSION_DATES_CHANGED
+          - NOTICE_ACTION.PERIOD_CHANGED_WITH_USED
         entitlement_id:
           type: string
           pattern: ^[0-9a-f]{24}$

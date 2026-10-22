@@ -5,9 +5,9 @@
 | 切片 | annual-leave-grant |
 | 步驟 | ④ 規則與限制 |
 | 狀態 | 已凍結 |
-| 版本 | annual-leave-grant/04-v2 |
+| 版本 | annual-leave-grant/04-v3 |
 | 產出者 | AI（Claude） |
-| 讀取的輸入 | 02_entities.md @ annual-leave-grant/02-v1；03_flows.md @ annual-leave-grant/03-v3（本步回填並回頭修改，與本步一起凍結）；03_use_cases.md @ annual-leave-grant/03-v3（同上）；core/ @ cdc7f72（R02 結束日不早於到職日、R51 警告忽略失效、R60 資料不足；Employer、Employment、EmploymentContract 的屬性）；法規與政策原文：inputs/research/特別休假.md #01～#04、勞動契約與年資.md #05、#07、#08、期間計算.md #02、#03 @ cdc7f72；inputs/shared/範圍釐清_P-01_優於法令.md、範圍釐清_法規警告不阻擋.md、範圍釐清_矛盾資料阻擋.md、範圍釐清_法規版本與系統上線前資料.md；inputs/drafts/特休未休工資發給期限.md、inputs/drafts/一般薪資結構與計薪流程.md（2026-10-21 回頭修改加入，推想，D-23） |
+| 讀取的輸入 | 02_entities.md @ annual-leave-grant/02-v1；03_flows.md @ annual-leave-grant/03-v3（本步回填並回頭修改，與本步一起凍結）；03_use_cases.md @ annual-leave-grant/03-v3（同上）；core/ @ cdc7f72（R02 結束日不早於到職日、R51 警告忽略失效、R60 資料不足；Employer、Employment、EmploymentContract 的屬性）；法規與政策原文：inputs/research/特別休假.md #01～#04、勞動契約與年資.md #05、#07、#08、期間計算.md #02、#03 @ cdc7f72；inputs/shared/範圍釐清_P-01_優於法令.md、範圍釐清_法規警告不阻擋.md、範圍釐清_矛盾資料阻擋.md、範圍釐清_法規版本與系統上線前資料.md；inputs/drafts/特休未休工資發給期限.md、inputs/drafts/一般薪資結構與計薪流程.md（2026-10-21 回頭修改加入，推想，D-23）；06_evidence/signoff.md「實作時發現的設計問題」#1、#2、#4、#9、#12、#15、#16、#18、#21（2026-10-22 回頭修改，實作 @ af460ea） |
 
 **怎麼讀這份規則**
 - 法條原文都在 `inputs/research/`，規則的「來源」寫條目編號；原文與解讀都還沒有人核對，一律 `[未核對]`。原文沒有直接寫、由 AI 補上的條件寫成 `[解讀: …]`。
@@ -29,7 +29,7 @@
 | 編號 | 規則 | 種類 | 套用對象 | 判斷方式 | 違反時 | 來源 | 版本／生效日 | 核對 |
 |---|---|---|---|---|---|---|---|---|
 | R65 | 取得日（`LeaveEntitlement.acquired_on`）：滿 `first_period_months` 個月的那天取得第一筆，之後每滿一週年取得一筆 [解讀: 第 38 條第 1 項第 1～3 款每一級給一次，第 4～6 款寫「每年」，所以 3 年以上也是每一週年給一次；合起來就是滿 6 個月一次、之後每個週年一次]。年資自到職日（`Employment.start_date`）當天起算，到職日算第 1 天 [解讀: 施行細則 §5「自受僱當日起算」是民法 §120「始日不算入」的特別規定，所以不適用始日不算入]；滿期的末日依民法 §121 是到職日相當日的前一天，沒有相當日時是該月最後一天；末日過完才算滿，取得日依 `acquisition_day_rule` 是末日的隔天 [解讀: 原文只寫「繼續工作滿一定期間」]。例：3 月 2 日到職，9 月 2 日取得；8 月 30 日、8 月 31 日、9 月 1 日到職都在隔年 3 月 1 日取得，8 月 29 日到職在隔年非閏年是 3 月 1 日、閏年是 2 月 29 日 [待專家確認: EQ-006]。這版年資只由本段到職日算（01_scope D-07、D-11） | 計算 | GrantLeaveEntitlement、ReassessLeaveEntitlements | 可自動判斷 | — | 勞基法 §38 第 1 項（特別休假#01）、施行細則 §24 第 1 項（特別休假#02）、施行細則 §5（勞動契約與年資#08）、民法 §121（期間計算#03） | — | [未核對] |
-| R66 | 法定特休的額度（`LeaveEntitlement.quantity`，`LeaveEntitlement.unit` 為日）：依取得日當天的年資（`LeaveEntitlement.basis_seniority`，滿幾個月）落在 `statutory_annual_leave_days` 的哪一個區間給；年資級別記在 `LeaveEntitlement.seniority_tier`，依據的版本記在 `LeaveEntitlement.basis_rule_versions`。依取得日當天有效的天數表版本，之後改版不影響已給予的（Q10）[待專家確認: EQ-008] | 計算 | GrantLeaveEntitlement、ReassessLeaveEntitlements | 可自動判斷 | — | 勞基法 §38 第 1 項（特別休假#01） | v1：特別休假#01 讀取日 2026-10-05 的現行條文；生效日未查（系統只支援上線後的法規版本，inputs/shared/範圍釐清_法規版本與系統上線前資料.md） | [未核對] |
+| R66 | 法定特休的額度（`LeaveEntitlement.quantity`，`LeaveEntitlement.unit` 為日）：依取得日當天的年資（`LeaveEntitlement.basis_seniority`，滿幾個月）落在 `statutory_annual_leave_days` 的哪一個區間給；年資級別記在 `LeaveEntitlement.seniority_tier`，依據的版本記在 `LeaveEntitlement.basis_rule_versions`。依取得日當天有效的天數表版本，之後改版不影響已給予的（Q10）[待專家確認: EQ-008] | 計算 | GrantLeaveEntitlement、ReassessLeaveEntitlements | 可自動判斷 | — | 勞基法 §38 第 1 項（特別休假#01） | v1：特別休假#01 讀取日 2026-10-05 的現行條文；生效日未查（系統只支援上線後的法規版本，inputs/shared/範圍釐清_法規版本與系統上線前資料.md）；查到之前生效日以「沒有下限」表示，上線前後都用 v1（D-32） | [未核對] |
 | R67 | 依規則給予法定特休的條件：見下方決策表。雇主在取得日當天不適用勞基法（`Employer.labor_standards_act_applicable`）的不給予；取得日早於雇主開始由系統管理的日子（`Employer.system_managed_from`）的不給予，由人補登（01_scope D-09）；取得日當天僱傭關係已結束（`Employment.ended_on` 早於取得日）的不給予；結束日剛好是取得日 [待專家確認: EQ-006]，這版給予（D-08）。部分工時按比例給，這版不做（01_scope D-04） | 判定 | GrantLeaveEntitlement | 可自動判斷 | — | 勞基法 §38 第 1 項（特別休假#01）；01_scope D-04、D-09、D-15 | — | [未核對] |
 | R68 | 某一天適用哪一種特休年度：當天有效的個別約定（LeaveYearAgreement，Effective）→ 依約定（`LeaveYearAgreement.leave_year_basis`、`LeaveYearAgreement.year_start`）；沒有約定、雇主當天有效的「特休年度預設」（`CompanyPolicy.subject`）→ 依 `company_default_leave_year`；兩者都沒有 → 依 `leave_year_basis_when_none`（週年制）[待專家確認: EQ-002]。給予時記在 `LeaveEntitlement.leave_year_basis` 與 appliedYearAgreement 或 appliedYearDefault | 判定 | GrantLeaveEntitlement、ReassessLeaveEntitlements | 可自動判斷 | — | 施行細則 §24 第 2 項（特別休假#02）；01_scope D-12 | — | [未核對] |
 | R69 | 週年制的可休期間：起日（`LeaveEntitlement.valid_from`）是取得日。第一筆（滿 6 個月）的迄日（`LeaveEntitlement.valid_to`）是取得後 `first_period_months` 個月期間的末日 [解讀: 依民法 §121，取得日相當日的前一天，沒有相當日時是該月最後一天]；之後每一筆的迄日是下一個週年取得日的前一天 [解讀: 「每一週年之期間」]。月底到職時，第一筆的迄日可能比滿 1 年那筆的取得日晚 1～3 天，兩筆重疊的那幾天都可以休，先扣哪一筆由 annual-leave-request 決定 [待專家確認: EQ-015]；`acquisition_day_rule` 改用「末日當天」時第一筆的迄日可能早於下一筆取得日的前一天，這時第一筆的迄日延到下一筆取得日的前一天，兩筆之間不留空檔 | 計算 | GrantLeaveEntitlement、ReassessLeaveEntitlements | 可自動判斷 | — | 施行細則 §24 第 2 項第 1 款（特別休假#02）、民法 §121（期間計算#03） | — | [未核對] |
@@ -39,7 +39,7 @@
 | R73 | 同一雇主、同一假別，任何一天最多只有一條有效的「特休年度預設」（`CompanyPolicy.subject`）：生效期間（`CompanyPolicy.effective_from`～`CompanyPolicy.effective_to`）不能和另一條重疊 | 前提條件 | EstablishCompanyPolicy、ReviseCompanyPolicy、CorrectRecord | 可自動判斷 | 擋下 | 業務需求（02_entities D-11；資料矛盾） | — | [未核對] |
 | R74 | 依規則給予的一筆，appliedYearAgreement 與 appliedYearDefault 最多一個；appliedYearDefault 只能指到事項（`CompanyPolicy.subject`）為「特休年度預設」的規定 | 前提條件 | GrantLeaveEntitlement、ReassessLeaveEntitlements | 可自動判斷 | 擋下 | 業務需求（02_entities 關係表） | — | [未核對] |
 | R75 | 改用另一種年度：新約定的適用起日（`LeaveYearAgreement.effective_from`）當天以後取得的，依新的年度（R68）；之前已給予的不因改用而重算（Q14、US-D10）。例外是回溯：適用起日早於已給予的取得日（`LeaveEntitlement.acquired_on`）時，那幾筆依 R91 重新判定（03_flows D-10）——同一期別、期間重疊，就地更正可休期間，已休與告知日留在原來那一筆 | 判定 | ActivateLeaveYearAgreement、RecordLeaveYearAgreement、EndLeaveYearAgreement | 可自動判斷 | — | 施行細則 §24 第 2 項（特別休假#02）；01_scope D-12 | — | [未核對] |
-| R76 | 雇主的「特休年度預設」開始、修改或結束（含第一次訂定、廢止），沒有個別約定、還在套用預設的員工，從那天起改用新的年度；對這些員工各成立一筆「預設的特休年度改變」法規警告，人資確認員工同意，或替不同意的員工登錄維持原年度的約定（03_flows D-13）[解讀: 年度是勞雇雙方協商的結果，雇主單方改預設不等於員工同意] [待專家確認: EQ-002] | 前提條件 | EstablishCompanyPolicy、ReviseCompanyPolicy、RepealCompanyPolicy、ActivateCompanyPolicy、ExpireCompanyPolicy | 可自動判斷 | 提醒 | 施行細則 §24 第 2 項（特別休假#02）；01_scope D-12 | — | [未核對] |
+| R76 | 雇主的「特休年度預設」開始、修改或結束（含第一次訂定、廢止），沒有個別約定、還在套用預設的員工，從那天起改用新的年度；「沒有個別約定」看新預設的生效日與判定當天（今天）兩者較晚的那一天，那天沒有有效的個別約定（LeaveYearAgreement，Effective）的員工（生效日在過去時，之後才登錄約定的員工不再警告；在未來時，看生效日當天，D-30）；對這些員工各成立一筆「預設的特休年度改變」法規警告，人資確認員工同意，或替不同意的員工登錄維持原年度的約定（03_flows D-13）[解讀: 年度是勞雇雙方協商的結果，雇主單方改預設不等於員工同意] [待專家確認: EQ-002] | 前提條件 | EstablishCompanyPolicy、ReviseCompanyPolicy、RepealCompanyPolicy、ActivateCompanyPolicy、ExpireCompanyPolicy | 可自動判斷 | 提醒 | 施行細則 §24 第 2 項（特別休假#02）；01_scope D-12 | — | [未核對] |
 
 ### 決策表：依規則給予法定特休（R67）
 
@@ -111,7 +111,7 @@
 | 編號 | 規則 | 種類 | 套用對象 | 判斷方式 | 違反時 | 來源 | 版本／生效日 | 核對 |
 |---|---|---|---|---|---|---|---|---|
 | R82 | 登錄或修改遞延協商的條件：要遞延的那一筆 `LeaveEntitlement.origin` 是依規則給予或補登當期（遞延進來、補登遞延的不能再遞延，R88）；同一筆同時最多一筆沒有撤回、沒有失效的協商；遞延額度（`LeaveDeferralAgreement.deferred_quantity`）大於 0、不超過那一筆的額度（`LeaveEntitlement.quantity`），單位沿用那一筆；`LeaveEntitlement.source` 為公司規定的，給予時那一版的 `company_extra_deferrable` 要是可以 [待專家確認: EQ-005] | 前提條件 | RecordLeaveDeferral、AmendLeaveDeferral | 可自動判斷 | 擋下 | 勞基法 §38 第 4 項但書（特別休假#01）；02_entities D-05、X-12 | — | [未核對] |
-| R83 | 遞延額度大於登錄或修改當時還可以休的（`LeaveEntitlement.remaining_quantity`）→ 成立「協商遞延額度超過未休」法規警告；年度終結時仍超過的，見 R86 | 前提條件 | RecordLeaveDeferral、AmendLeaveDeferral | 可自動判斷 | 提醒 | 03_flows D-12 | — | [未核對] |
+| R83 | 遞延額度大於登錄或修改當時的未休 → 成立「協商遞延額度超過未休」法規警告；年度終結時仍超過的，見 R86。未休：那一筆還沒年度終結時，是還可以休的（`LeaveEntitlement.remaining_quantity`）；已年度終結時（年度終結後才登錄或修改），是額度減已休（`LeaveEntitlement.quantity` 減 `LeaveEntitlement.used_quantity`，同 R86 的未休），不是還可以休——已年度終結的那一筆還可以休依 C01 為 0，拿它比每次都會成立（D-26） | 前提條件 | RecordLeaveDeferral、AmendLeaveDeferral | 可自動判斷 | 提醒 | 03_flows D-12 | — | [未核對] |
 | R84 | 登錄、修改或撤回遞延協商的**登錄時間**晚於那一筆的年度終結日（`LeaveEntitlement.valid_to`）→ 成立「年度終結後才登錄遞延協商」法規警告，不論填的協商日（`LeaveDeferralAgreement.agreed_on`）是哪天；協商日晚於年度終結日的算不算數 [待專家確認: EQ-003]，這版可以登錄 | 前提條件 | RecordLeaveDeferral、AmendLeaveDeferral、WithdrawLeaveDeferral | 可自動判斷 | 提醒 | 勞基法 §38 第 4 項但書（特別休假#01）[解讀: 「年度終結未休之日數，經勞雇雙方協商遞延」沒寫協商要在年度終結前]；03_flows D-06 | — | [未核對] |
 
 ### 五、年度終結
@@ -119,8 +119,8 @@
 | 編號 | 規則 | 種類 | 套用對象 | 判斷方式 | 違反時 | 來源 | 版本／生效日 | 核對 |
 |---|---|---|---|---|---|---|---|---|
 | R85 | 年度終結日是可休期間迄日（`LeaveEntitlement.valid_to`），這一天過完才判定（CloseLeaveYear）；判定時僱傭關係仍在職的做年度終結，年度終結前已結束的交給契約終止（resignation），見下方決策表 | 判定 | CloseLeaveYear、EndLeaveEntitlementsWithEmployment、ReassessLeaveEntitlements | 可自動判斷 | — | 施行細則 §24-1 第 1 項（特別休假#03）；01_scope D-15 | — | [未核對] |
-| R86 | 年度終結的分配：未休＝`LeaveEntitlement.quantity` 減判定當時已知的已休（`LeaveEntitlement.used_quantity`，記在這次判定上，03_flows D-15）；有「已協商」的遞延協商時，遞延進來的那一筆額度＝`LeaveDeferralAgreement.deferred_quantity` 與未休兩者較小的（協商本身不改，超過時成立「協商遞延額度超過未休」法規警告，03_flows D-12）；其餘未休產生一筆轉換（`LeaveConversion.quantity`，`LeaveConversion.reason` 為年度終結，`LeaveConversion.target` 為工資，公司多給的依 R79）；未休為 0 的不產生轉換；未休小於 0（已休多於額度，例：就地更正後額度變少）的不產生轉換，成立 R96 提醒交給人資。這一筆已經有轉換（曾年度終結、之後回到可休又再年度終結）時，先把還在待確認的轉換取代（Discarded），這次只記「應轉換的額度」減去已判定的轉換合計的差額（R92 同一做法）。判定後這一筆的還可以休（`LeaveEntitlement.remaining_quantity`）為 0 | 計算 | CloseLeaveYear、RejudgeLeaveYearEnd | 可自動判斷 | — | 勞基法 §38 第 4 項（特別休假#01） | — | [未核對] |
-| R87 | 遞延進來的那一筆：起日是原來那一筆年度終結日的隔天，迄日是「次一年度」終結日 [解讀: 次一年度是原來那一筆所依的年度種類（`LeaveEntitlement.leave_year_basis`）的下一個年度期間；週年制是下一個週年期間的最後一天，曆年制是下一年的最後一天；原來那一筆沒有年度種類（補登的）時，是起日起算一年的末日]；來源、單位、公司規定（grantedUnderPolicy）與依據的規則版本（`LeaveEntitlement.basis_rule_versions`）沿用原來那一筆，`LeaveEntitlement.origin` 為遞延進來 | 計算 | CloseLeaveYear、RejudgeLeaveYearEnd | 可自動判斷 | — | 勞基法 §38 第 4 項但書（特別休假#01） | — | [未核對] |
+| R86 | 年度終結的分配：未休＝`LeaveEntitlement.quantity` 減判定當時已知的已休（`LeaveEntitlement.used_quantity`，記在這次判定上，03_flows D-15）；有「已協商」的遞延協商時，遞延進來的那一筆額度＝`LeaveDeferralAgreement.deferred_quantity` 與未休兩者較小的（協商本身不改，超過時成立「協商遞延額度超過未休」法規警告，03_flows D-12）；其餘未休產生一筆轉換（`LeaveConversion.quantity`，`LeaveConversion.reason` 為年度終結，`LeaveConversion.target` 為工資，公司多給的依 R79）；未休為 0 的不產生轉換；未休小於 0（已休多於額度，例：就地更正後額度變少）的不產生轉換，成立 R96 提醒交給人資。這一筆已經有轉換（曾年度終結、之後回到可休又再年度終結）時，先把還在待確認的轉換取代（Discarded），這次只記「應轉換的額度」減去已判定的轉換合計的差額（R92 同一做法）。判定後這一筆的還可以休（`LeaveEntitlement.remaining_quantity`）為 0；之後重新判定產生待確認的扣回時見 C01 | 計算 | CloseLeaveYear、RejudgeLeaveYearEnd | 可自動判斷 | — | 勞基法 §38 第 4 項（特別休假#01） | — | [未核對] |
+| R87 | 遞延進來的那一筆：起日是原來那一筆年度終結日的隔天，迄日是「次一年度」終結日 [解讀: 次一年度是原來那一筆所依的年度種類（`LeaveEntitlement.leave_year_basis`）的下一個年度期間；週年制是下一個週年期間的最後一天，曆年制是下一年的最後一天；原來那一筆沒有年度種類（補登的）時，是起日起算一年的末日]；來源、單位、公司規定（grantedUnderPolicy）與依據的規則版本（`LeaveEntitlement.basis_rule_versions`）沿用原來那一筆，`LeaveEntitlement.origin` 為遞延進來；取得日（`LeaveEntitlement.acquired_on`）是它的可休起日（D-29）。年度終結後才登錄或加大的遞延，建立或增加的時間見 R92 | 計算 | CloseLeaveYear、RejudgeLeaveYearEnd、ConfirmLeaveConversion | 可自動判斷 | — | 勞基法 §38 第 4 項但書（特別休假#01） | — | [未核對] |
 | R88 | `LeaveEntitlement.origin` 為遞延進來或補登遞延的那一筆，不能再遞延；到它的年度終結仍未休的，法定的全部轉為工資，公司多給的依 R79 | 判定 | RecordLeaveDeferral、CloseLeaveYear | 可自動判斷 | — | 勞基法 §38 第 4 項但書（「於次一年度終結或契約終止仍未休之日數，雇主應發給工資」，特別休假#01） | — | [未核對] |
 | R89 | 工資計算基準日（`LeaveConversion.wage_basis_date`）是計算一日工資的錨點：當期的是這一筆的年度終結日；遞延進來的是原來那一筆的年度終結日；補登遞延的是 `LeaveEntitlement.registered_original_year_end`；轉為失效的沒有。原文的一日工資是「年度終結……前一日」的工資，計月者是「年度終結……前最近一個月」的工資除以 30，由 monthly-payroll 依這個錨點往前取 [解讀: 錨點記年度終結日、往前取一日或一個月由薪資切片處理]。判定時算出後不再改；依據更正後的差額依新的日子另記（02_entities X-14） | 計算 | CloseLeaveYear、RejudgeLeaveYearEnd | 可自動判斷 | — | 施行細則 §24-1 第 2 項第 1 款（特別休假#03） | — | [未核對] |
 | R90 | 發給期限（`LeaveConversion.payment_due_on`）：年度終結的，依雇主擇一的 `payment_deadline_rule`（全公司統一一種，不由員工個別決定、不取兩者較晚的）[待專家確認: EQ-003]，雇主沒有登錄時用預設。採「年度終結後 30 日內」時，是年度終結後 `payment_days_after_year_end` 日 [解讀: 從年度終結日的隔天算第 1 日；末日遇到休息日不順延]；從隔天算第 1 日已確認（EQ-014）；末日遇到休息日 [待專家確認: EQ-015]；採「契約約定的工資給付日」時，是年度終結日所屬計薪期間的工資給付日：年度終結日所在月份之後第 `wage_payment_lag_months` 個月的 `wage_payment_day`，那個月沒有那一天時用那個月的最後一天；算出的日子不晚於年度終結日時，再往後一個月 [解讀: 計薪期間以曆月計、併入年度終結日所屬那一期的工資一起發，依推想草稿；原文沒有寫給付日落在月底的情況]。更正差額的期限依同樣方法從差額的判定日（`LeaveConversion.determined_on`）算 [解讀: 原文只有年度終結的期限，差額的期限是 AI 補上]；轉為失效的、負數差額沒有發給期限（處理期限見 R94） | 計算 | CloseLeaveYear、RejudgeLeaveYearEnd、ReassessLeaveEntitlements、EndLeaveEntitlementsWithEmployment | 可自動判斷 | — | 施行細則 §24-1 第 2 項第 2 款（特別休假#03）；inputs/drafts/特休未休工資發給期限.md（推想，D-23） | — | [未核對] |
@@ -144,7 +144,7 @@
 | 編號 | 規則 | 種類 | 套用對象 | 判斷方式 | 違反時 | 來源 | 版本／生效日 | 核對 |
 |---|---|---|---|---|---|---|---|---|
 | R91 | 重新判定的新舊對應：依更正後的依據重算每一期，只算到今天為止已經取得的期別（新取得日在未來的不建立，等取得日到了由 GrantLeaveEntitlement 給予）；和既有 `LeaveEntitlement.origin` 為依規則給予的逐筆比：同一來源（`LeaveEntitlement.source`，公司規定的要同一條）、同一期別（`LeaveEntitlement.period_sequence`），而且新舊可休期間（`LeaveEntitlement.valid_from`～`LeaveEntitlement.valid_to`）有重疊 → 就地更正取得日、期間、額度、年資級別與依據，已休、告知日、遞延協商留在這一筆；對不上的作廢；多出來的新增。因較晚得知結束而作廢的那一筆（R95），結束被註銷或結束日延後時也參加比對，對得上就恢復（Voided → Active），告知日、已休跟著恢復。遞延進來的那一筆跟著原來那一筆（期間依 R87 重算，原來那一筆作廢時一起作廢）。補登的不參加比對。就地更正後可休期間或取得日改變、上面有已休或告知日的，以及作廢的那一筆上的已休天數、告知日、遞延協商，都列入通知由人處理（R96；03_flows D-04）。公司規定版本內容的修訂（登錄錯誤，03_flows D-16）也是依據更正：那條規定涵蓋的每段僱傭關係，取得日落在被修訂那一版有效期間的期別依修訂後的內容重算後比對，含原本因條件不符沒給、修訂後符合的（新增）；只改了年度終結處理、額度不變的，交給 R92 | 判定 | ReassessLeaveEntitlements | 可自動判斷 | — | 業務需求（03_flows D-04；02_entities D-03、D-07、X-15）；03_flows D-16（公司規定的修訂） | — | [未核對] |
-| R92 | 重新判定年度終結的差額：依更正後的資料（已休、遞延協商、額度）重算 R86 的應轉換額度；還在待確認的轉換先取代（Discarded）；應轉換額度減去這一筆已判定（Determined）的轉換合計，不為 0 時另記一筆差額（`LeaveConversion.quantity` 可為負數），指回被更正的那一次，記 `LeaveConversion.correction_cause`；遞延進來的那一筆依新的遞延額度更正或作廢。依據的公司規定版本被修訂（03_flows D-16）時，依修訂後的年度終結處理重算，`LeaveConversion.correction_cause` 為依據更正。重算後的工資計算基準日（R89）或發給期限（R90）和已判定的轉換不同時，已判定的轉換不改，也不因此另記一筆（天數差額為 0 時不產生轉換），由 R96 列入通知交給人（D-25） | 計算 | RejudgeLeaveYearEnd | 可自動判斷 | — | 業務需求（02_entities D-06；03_flows D-06、D-11）；03_flows D-16 | — | [未核對] |
+| R92 | 重新判定年度終結的差額：依更正後的資料（已休、遞延協商、額度）重算 R86 的應轉換額度；還在待確認的轉換先取代（Discarded）；應轉換額度減去這一筆已判定（Determined）的轉換合計，不為 0 時另記一筆差額（`LeaveConversion.quantity` 可為負數），指回被更正的那一次，記 `LeaveConversion.correction_cause`；遞延進來的那一筆依新的遞延額度新增、更正或作廢——但這次有負數差額（扣回已判定的轉換，待確認）時，遞延進來的額度增加的部分（不超過那筆負數差額的天數）等那筆負數差額確認（ConfirmLeaveConversion）後才建立或增加，確認前不能休，增加多少記在這次判定上；那筆負數差額被取代時，由取代它的那次重新判定重算。減少或作廢的部分立刻生效（對應的正數差額直接交給薪資，R93）（D-27）。依據的公司規定版本被修訂（03_flows D-16）時，依修訂後的年度終結處理重算，`LeaveConversion.correction_cause` 為依據更正。重算後的工資計算基準日（R89）或發給期限（R90）和已判定的轉換不同時，已判定的轉換不改，也不因此另記一筆（天數差額為 0 時不產生轉換），由 R96 列入通知交給人（D-25） | 計算 | RejudgeLeaveYearEnd、ConfirmLeaveConversion | 可自動判斷 | — | 業務需求（02_entities D-06；03_flows D-06、D-11、D-17）；03_flows D-16 | — | [未核對] |
 | R93 | 轉換直接判定或先停在待確認：見下方決策表（03_flows D-11） | 判定 | CloseLeaveYear、RejudgeLeaveYearEnd、ReassessLeaveEntitlements、EndLeaveEntitlementsWithEmployment | 可自動判斷 | — | 業務需求（03_flows D-11）[待專家確認: EQ-009] | — | [未核對] |
 | R94 | 待確認的轉換沒有確認：轉為工資的正數轉換，晚於發給期限（`LeaveConversion.payment_due_on`）與判定日（`LeaveConversion.determined_on`）後 `provisional_review_days` 日兩者中較晚的那天；負數差額或轉為失效的，晚於判定日後 `provisional_review_days` 日 → 成立「待確認的轉換逾期」法規警告。補做的年度終結發給期限在判定時可能已過，所以至少給人資 `provisional_review_days` 日。忽略時依 02_entities D-16 的方式掛在那一筆所屬的僱傭關係；待確認的負數差額「決定不扣回」的出口待 [待專家確認: EQ-009] | 前提條件 | LeaveConversion、ConfirmLeaveConversion | 可自動判斷 | 提醒 | 施行細則 §24-1 第 2 項第 2 款（特別休假#03）；03_flows D-11 | — | [未核對] |
 | R95 | 較晚才得知僱傭關係結束：取得日晚於結束日的那一筆作廢；已做年度終結、但結束日早於年度終結日的，那次年度終結當作沒有發生——已做的轉換各記一筆負數差額（待確認，R93，`LeaveConversion.correction_cause` 為較晚才得知僱傭關係結束）、遞延進來的那一筆作廢、已依它遞延的協商失效，原來那一筆交給契約終止（03_flows D-05） | 判定 | EndLeaveEntitlementsWithEmployment | 可自動判斷 | — | 01_scope D-15；03_flows D-05 | — | [未核對] |
@@ -168,7 +168,7 @@
 
 | 編號 | 規則 | 種類 | 套用對象 | 判斷方式 | 違反時 | 來源 | 版本／生效日 | 核對 |
 |---|---|---|---|---|---|---|---|---|
-| R97 | 補登仍可休的特休：僱傭關係的到職日（`Employment.start_date`）早於雇主開始由系統管理的日子（`Employer.system_managed_from`）；可休迄日（`LeaveEntitlement.valid_to`）不早於開始由系統管理的日子、不早於可休起日（`LeaveEntitlement.valid_from`）；額度（`LeaveEntitlement.quantity`）大於 0；開始管理前已休（`LeaveEntitlement.pre_system_used_quantity`）不大於額度；`LeaveEntitlement.origin` 為補登遞延的，要有原年度終結日（`LeaveEntitlement.registered_original_year_end`），而且早於可休起日 | 前提條件 | RegisterExistingLeaveEntitlement、CorrectRecord | 可自動判斷 | 擋下 | 業務需求（01_scope D-09；資料矛盾，inputs/shared/範圍釐清_矛盾資料阻擋.md） | — | [未核對] |
+| R97 | 補登仍可休的特休：僱傭關係的到職日（`Employment.start_date`）早於雇主開始由系統管理的日子（`Employer.system_managed_from`）；可休迄日（`LeaveEntitlement.valid_to`）不早於開始由系統管理的日子、不早於可休起日（`LeaveEntitlement.valid_from`）；額度（`LeaveEntitlement.quantity`）大於 0；開始管理前已休（`LeaveEntitlement.pre_system_used_quantity`）不大於額度；`LeaveEntitlement.origin` 為補登遞延的，要有原年度終結日（`LeaveEntitlement.registered_original_year_end`），而且早於可休起日。補登不登錄取得日，取得日（`LeaveEntitlement.acquired_on`）是可休起日（D-29） | 前提條件 | RegisterExistingLeaveEntitlement、CorrectRecord | 可自動判斷 | 擋下 | 業務需求（01_scope D-09；資料矛盾，inputs/shared/範圍釐清_矛盾資料阻擋.md） | — | [未核對] |
 | R98 | 日期要對得起來：特休年度約定的適用起日（`LeaveYearAgreement.effective_from`）不早於到職日（`Employment.start_date`）；協商日（`LeaveYearAgreement.agreed_on`、`LeaveDeferralAgreement.agreed_on`）不晚於登錄當天；公司規定的廢止日（`CompanyPolicy.effective_to`）不早於第一次生效日（`CompanyPolicy.effective_from`）；實際告知日（`LeaveEntitlement.notified_on`）不早於到職日、不晚於登錄當天 | 前提條件 | RecordLeaveYearAgreement、EndLeaveYearAgreement、RecordLeaveDeferral、AmendLeaveDeferral、EstablishCompanyPolicy、RepealCompanyPolicy、RecordLeaveNotice、CorrectRecord | 可自動判斷 | 擋下 | 業務需求（資料矛盾，inputs/shared/範圍釐清_矛盾資料阻擋.md） | — | [未核對] |
 
 ### 八、依法可能應合併的年資
@@ -181,8 +181,8 @@
 
 | 編號 | 等式 | 套用對象 |
 |---|---|---|
-| C01 | `LeaveEntitlement.quantity` ＝ `LeaveEntitlement.remaining_quantity` ＋ `LeaveEntitlement.used_quantity` ＋ `LeaveEntitlement.deferred_out_quantity` ＋ `LeaveEntitlement.converted_quantity` ＋ `LeaveEntitlement.expired_quantity`；轉換算進已判定的，以及待確認中的正數與失效（先扣住天數）；待確認中的負數差額不算，確認後才把天數還給這一筆（D-14）；已年度終結的那一筆 `LeaveEntitlement.remaining_quantity` 為 0，只有已休多於額度時為負數（R96 提醒） | 每一筆沒有作廢的請假權利 |
-| C02 | 年度終結判定時：判定當時的未休（不小於 0 時）＝ 遞延進來那一筆的額度 ＋ 這次轉換的額度（工資或失效）；之後每次重新判定後：原來那一筆的遞延出去 ＋ 已判定的轉換合計（含差額）＋ 待確認中的轉換 ＝ 重算後的未休 | 每一筆已年度終結（YearEnded）的請假權利 |
+| C01 | `LeaveEntitlement.quantity` ＝ `LeaveEntitlement.remaining_quantity` ＋ `LeaveEntitlement.used_quantity` ＋ `LeaveEntitlement.deferred_out_quantity` ＋ `LeaveEntitlement.converted_quantity` ＋ `LeaveEntitlement.expired_quantity`；轉換算進已判定的，以及待確認中的正數與失效（先扣住天數）；待確認中的負數差額不算，確認後才把天數還給這一筆（D-14）；遞延出去只算已建立的遞延進來那一筆，等負數差額確認才增加的部分（R92）不算。已年度終結的那一筆 `LeaveEntitlement.remaining_quantity` ＝ 待確認中的負數差額合計 ＋ 等它們確認才增加的遞延進來額度：沒有待確認的扣回時為 0；扣回是因為遞延加大時兩者相抵為 0；因為其他原因（例：年度終結後才補登已休）扣回時為負數，確認後回到 0。已休多於額度時也是負數（R96 提醒）（D-28） | 每一筆沒有作廢的請假權利 |
+| C02 | 年度終結判定時：判定當時的未休（不小於 0 時）＝ 遞延進來那一筆的額度 ＋ 這次轉換的額度（工資或失效）；之後每次重新判定後：原來那一筆的遞延出去（含等負數差額確認才增加的部分，R92）＋ 已判定的轉換合計（含差額）＋ 待確認中的轉換 ＝ 重算後的未休 | 每一筆已年度終結（YearEnded）的請假權利 |
 
 ## 參數
 <!-- 先試用（docs/01 0.10）。規則用到的門檻、天數、比率、可選做法列在這裡，規則以 `參數名稱` 引用（不帶點）
@@ -192,24 +192,44 @@
 
 | 參數 | 意義 | 資料類型 | 合理範圍 | 預設值 | 依什麼條件變化 | 用在 | 來源 | 核對 |
 |---|---|---|---|---|---|---|---|---|
-| statutory_annual_leave_days | 法定特休的天數表：取得日當天的年資區間 → 那一筆的天數 | 年資區間 → 天數 | — | 特別休假#01 第 1 項：6 個月以上未滿 1 年 3 日；1 年以上未滿 2 年 7 日；2 年以上未滿 3 年 10 日；3 年以上未滿 5 年每年 14 日；5 年以上未滿 10 年每年 15 日；10 年以上每一年加給 1 日，加至 30 日（滿 10 年 16 日……滿 24 年起 30 日）[解讀: 「每一年加給一日」從滿 10 年那一筆開始加] | 管轄區；法令版本 | R65、R66 | 勞基法 §38 第 1 項（特別休假#01） | [未核對] |
-| acquisition_day_rule | 滿期那一天怎麼對應到取得日 | 可選做法 | 末日的隔天（到職日的相當日）／末日當天 | 末日的隔天 [待專家確認: EQ-006] | — | R65 | 民法 §121（期間計算#03）；施行細則 §5（勞動契約與年資#08） | [未核對] |
+| statutory_annual_leave_days | 法定特休的天數表：取得日當天的年資區間 → 那一筆的天數 | 表格 | — | 特別休假#01 第 1 項：6 個月以上未滿 1 年 3 日；1 年以上未滿 2 年 7 日；2 年以上未滿 3 年 10 日；3 年以上未滿 5 年每年 14 日；5 年以上未滿 10 年每年 15 日；10 年以上每一年加給 1 日，加至 30 日（滿 10 年 16 日……滿 24 年起 30 日）[解讀: 「每一年加給一日」從滿 10 年那一筆開始加] | 管轄區；法令版本 | R65、R66 | 勞基法 §38 第 1 項（特別休假#01） | [未核對] |
+| acquisition_day_rule | 滿期那一天怎麼對應到取得日 | 選項 | ACQUISITION_DAY_RULE.DAY_AFTER_PERIOD_END（末日的隔天，到職日的相當日）／ACQUISITION_DAY_RULE.PERIOD_END_DAY（末日當天） | ACQUISITION_DAY_RULE.DAY_AFTER_PERIOD_END [待專家確認: EQ-006] | — | R65 | 民法 §121（期間計算#03）；施行細則 §5（勞動契約與年資#08） | [未核對] |
 | first_period_months | 第一筆的取得門檻與週年制第一筆可休期間的長度 | 月數 | — | 6 | — | R65、R69 | 勞基法 §38 第 1 項第 1 款（特別休假#01）、施行細則 §24 第 2 項第 1 款但書（特別休假#02） | [未核對] |
-| leave_year_basis_when_none | 員工沒有個別約定、雇主也沒有預設時用的特休年度 | 年度種類 | 週年制／固定起始日 | 週年制 [待專家確認: EQ-002] | — | R68 | AI 提出（D-03） | [未核對] |
+| leave_year_basis_when_none | 員工沒有個別約定、雇主也沒有預設時用的特休年度 | 選項 | LEAVE_YEAR_BASIS.ANNIVERSARY（週年制）／LEAVE_YEAR_BASIS.FIXED_START（固定起始日）；沿用 LEAVE_YEAR_BASIS 的代碼（D-31） | LEAVE_YEAR_BASIS.ANNIVERSARY [待專家確認: EQ-002] | — | R68 | AI 提出（D-03） | [未核對] |
 | company_default_leave_year | 雇主的特休年度預設：年度種類與起始月日 | 年度種類＋月日 | 週年制／固定起始日（這版只有 1 月 1 日） | 沒有預設 | 公司規定的版本 | R68、R76 | 公司規定；施行細則 §24 第 2 項（特別休假#02） | [未核對] |
-| fixed_start_year_method | 固定起始日年度（曆年制）的取得日、天數與可休期間怎麼算 | 可選做法 | 延到約定年度的最後一天（照週年制取得）／依比例換算／其他 HC 說明的做法 | 延到約定年度的最後一天 [待專家確認: EQ-002] | 公司規定（特休年度預設）的版本；個別約定沿用雇主預設的做法 | R70、R71 | AI 提出（D-02） | [未核對] |
+| fixed_start_year_method | 固定起始日年度（曆年制）的取得日、天數與可休期間怎麼算 | 選項 | FIXED_START_YEAR_METHOD.EXTEND_TO_YEAR_END（延到約定年度的最後一天，照週年制取得）／FIXED_START_YEAR_METHOD.PRORATED（依比例換算，這版沒有規則，選它時資料不足）；HC 說明其他做法時再加代碼 [待專家確認: EQ-002] | FIXED_START_YEAR_METHOD.EXTEND_TO_YEAR_END [待專家確認: EQ-002] | 公司規定（特休年度預設）的版本；個別約定沿用雇主預設的做法 | R70、R71 | AI 提出（D-02） | [未核對] |
 | notice_period_days | 雇主告知排定特休的期限 | 日數 | — | 30 | — | R80 | 施行細則 §24 第 3 項（特別休假#02） | [未核對] |
-| payment_deadline_rule | 年度終結轉為工資的發給期限採哪一種 | 可選做法 | 契約約定的工資給付日／年度終結後 30 日內 | 年度終結後 30 日內 [待專家確認: EQ-003] | 雇主（擇一、全公司統一，通常寫在工作規則；這版以固定資料提供 [靜態替代]，D-23） | R90 | 施行細則 §24-1 第 2 項第 2 款（特別休假#03）；inputs/drafts/特休未休工資發給期限.md（推想） | [未核對] |
+| payment_deadline_rule | 年度終結轉為工資的發給期限採哪一種 | 選項 | PAYMENT_DEADLINE_RULE.CONTRACT_WAGE_PAYMENT_DAY（契約約定的工資給付日）／PAYMENT_DEADLINE_RULE.DAYS_AFTER_YEAR_END（年度終結後 30 日內） | PAYMENT_DEADLINE_RULE.DAYS_AFTER_YEAR_END [待專家確認: EQ-003] | 雇主（擇一、全公司統一，通常寫在工作規則；這版以固定資料提供 [靜態替代]，D-23） | R90 | 施行細則 §24-1 第 2 項第 2 款（特別休假#03）；inputs/drafts/特休未休工資發給期限.md（推想） | [未核對] |
 | payment_days_after_year_end | 年度終結後幾日內發給 | 日數 | — | 30 | — | R90 | 施行細則 §24-1 第 2 項第 2 款（特別休假#03） | [未核對] |
 | wage_payment_day | 契約約定的工資給付日（例：每月 5 日）[靜態替代] | 每月幾日 | 1～31（該月沒有那一天時用該月最後一天） | 5 | 雇主（這版以固定資料提供） | R90 | monthly-payroll 的第 ④ 步（01_scope「範圍外但會用到」） | [未核對] |
 | wage_payment_lag_months | 工資給付日發的是哪一個計薪期間：給付日在計薪期間所在月份之後第幾個月（0＝當月發當月，1＝次月發上月）[靜態替代] | 月數 | 0～1 | 1 | 雇主（這版以固定資料提供） | R90 | monthly-payroll 的第 ④ 步；inputs/drafts/特休未休工資發給期限.md（推想，D-23）；inputs/drafts/一般薪資結構與計薪流程.md | [未核對] |
 | provisional_review_days | 負數差額或轉為失效的待確認轉換，判定後幾日內要確認 | 日數 | 1 以上 | 30 | —（同上） | R94 | AI 提出（D-17） | [未核對] |
-| company_extra_days | 公司多給的天數：取得日當天的年資區間 → 天數 | 年資區間 → 天數 | 每一區間不少於 0；有負數時成立 R78 警告 | 無（每一版自己登錄） | 公司規定的版本 | R77、R78 | 公司規定（範圍釐清_P-01_優於法令.md） | [未核對] |
+| company_extra_days | 公司多給的天數：取得日當天的年資區間 → 天數 | 表格 | 每一區間不少於 0；有負數時成立 R78 警告 | 無（每一版自己登錄） | 公司規定的版本 | R77、R78 | 公司規定（範圍釐清_P-01_優於法令.md） | [未核對] |
 | company_extra_eligibility | 公司多給適用哪些員工（例：取得日當天的員工類型） | 條件 | — | 全部員工 | 公司規定的版本 | R77 | 公司規定 | [未核對] |
-| company_extra_year_end_treatment | 公司多給的特休年度終結未休的處理 | 可選做法 | 轉為工資／失效 | 轉為工資 [待專家確認: EQ-005] | 公司規定的版本 | R79 | 公司規定 | [未核對] |
+| company_extra_year_end_treatment | 公司多給的特休年度終結未休的處理 | 選項 | CONVERSION_TARGET.WAGES（轉為工資）／CONVERSION_TARGET.FORFEITED（失效）；沿用 CONVERSION_TARGET 的代碼（D-31） | CONVERSION_TARGET.WAGES [待專家確認: EQ-005] | 公司規定的版本 | R79 | 公司規定 | [未核對] |
 | company_extra_deferrable | 公司多給的特休能不能協商遞延 | 是否 | 可以／不可以 | 可以 [待專家確認: EQ-005] | 公司規定的版本 | R79、R82 | 公司規定 | [未核對] |
-| company_policy_version_at_year_end | 公司多給的那一筆年度終結時依哪一版的處理 | 可選做法 | 給予時的版本／年度終結當天的版本 | 給予時的版本 [待專家確認: EQ-013] | — | R79 | AI 提出（D-04） | [未核對] |
+| company_policy_version_at_year_end | 公司多給的那一筆年度終結時依哪一版的處理 | 選項 | COMPANY_POLICY_VERSION_AT_YEAR_END.AT_GRANT（給予時的版本）／COMPANY_POLICY_VERSION_AT_YEAR_END.AT_YEAR_END（年度終結當天的版本） | COMPANY_POLICY_VERSION_AT_YEAR_END.AT_GRANT [待專家確認: EQ-013] | — | R79 | AI 提出（D-04） | [未核對] |
 | seniority_merge_gap_months | 前一段結束到這一段訂定新約之間未滿幾個月，成立「可能應合併年資」警告 | 月數 | — | 3 | — | R99 | 勞基法 §10（勞動契約與年資#05） | [未核對] |
+
+### 參數欄位：statutory_annual_leave_days
+
+每一個年資區間一列（D-31）。區間是「滿 `from_months` 個月以上、未滿 `to_months` 個月」，取得日當天的年資（`LeaveEntitlement.basis_seniority`，滿幾個月）落在哪一列就給那一列的天數；區間不重疊、由小到大排。展開方式：「a 年以上未滿 b 年」寫成 from_months＝a×12、to_months＝b×12；「10 年以上每一年加給 1 日，加至 30 日」展開成每滿一年一列（滿 10 年未滿 11 年 16 日、滿 11 年未滿 12 年 17 日……），到 30 日那一列（滿 24 年）的 `to_months` 空白，表示沒有上限。
+
+| 欄位 | 意義 | 資料類型 |
+|---|---|---|
+| from_months | 年資下限（含），滿幾個月 | 月數（整數，0 以上） |
+| to_months | 年資上限（不含），滿幾個月；空白表示沒有上限 | 月數（整數，大於 from_months）或空白 |
+| days | 這個區間的特休天數 | 日數（大於 0） |
+
+### 參數欄位：company_extra_days
+
+欄位、區間的意思同 `statutory_annual_leave_days`（D-31）；每一版公司規定自己登錄，沒有展開規則。`days` 可以是 0 或負數：0 不建立那一筆（R77），負數成立 R78 警告。
+
+| 欄位 | 意義 | 資料類型 |
+|---|---|---|
+| from_months | 年資下限（含），滿幾個月 | 月數（整數，0 以上） |
+| to_months | 年資上限（不含），滿幾個月；空白表示沒有上限 | 月數（整數，大於 from_months）或空白 |
+| days | 這個區間公司多給的天數 | 日數 |
 
 ## 分類值
 
@@ -241,6 +261,14 @@
 | NOTICE_STATUS.NOTIFIED | NOTICE_STATUS | TW | 已告知 | 推導；R81 |
 | NOTICE_STATUS.OVERDUE | NOTICE_STATUS | TW | 逾期未告知 | 推導；R81 |
 | NOTICE_STATUS.NOTIFIED_LATE | NOTICE_STATUS | TW | 逾期後告知 | 推導；R81 |
+| ACQUISITION_DAY_RULE.DAY_AFTER_PERIOD_END | ACQUISITION_DAY_RULE | — | 末日的隔天（到職日的相當日） | 參數 `acquisition_day_rule`；R65（D-31） |
+| ACQUISITION_DAY_RULE.PERIOD_END_DAY | ACQUISITION_DAY_RULE | — | 末日當天 | 參數 `acquisition_day_rule`；R65、R69 |
+| FIXED_START_YEAR_METHOD.EXTEND_TO_YEAR_END | FIXED_START_YEAR_METHOD | — | 延到約定年度的最後一天 | 參數 `fixed_start_year_method`；R70（D-02） |
+| FIXED_START_YEAR_METHOD.PRORATED | FIXED_START_YEAR_METHOD | — | 依比例換算 | 參數 `fixed_start_year_method`；這版沒有規則，選它時資料不足 [待專家確認: EQ-002] |
+| PAYMENT_DEADLINE_RULE.CONTRACT_WAGE_PAYMENT_DAY | PAYMENT_DEADLINE_RULE | TW | 契約約定的工資給付日 | 參數 `payment_deadline_rule`；R90 |
+| PAYMENT_DEADLINE_RULE.DAYS_AFTER_YEAR_END | PAYMENT_DEADLINE_RULE | TW | 年度終結後 30 日內 | 參數 `payment_deadline_rule`；R90 |
+| COMPANY_POLICY_VERSION_AT_YEAR_END.AT_GRANT | COMPANY_POLICY_VERSION_AT_YEAR_END | — | 給予時的版本 | 參數 `company_policy_version_at_year_end`；R79（D-04） |
+| COMPANY_POLICY_VERSION_AT_YEAR_END.AT_YEAR_END | COMPANY_POLICY_VERSION_AT_YEAR_END | — | 年度終結當天的版本 | 參數 `company_policy_version_at_year_end`；R79 |
 
 ## 回填紀錄
 - 03_flows.md：56 個狀態轉換的「規則」欄。LeaveEntitlement 20 列（GrantLeaveEntitlement → R65～R71、R74、R77、R80、R99；CloseLeaveYear → R85、R86、R88～R90、R93；ReassessLeaveEntitlements → R91 等；EndLeaveEntitlementsWithEmployment → R85、R95）；LeaveDeferralAgreement 12 列（R82～R86、R91、R92、R95、R98）；LeaveYearAgreement 6 列（R71、R72、R75、R98）；CompanyPolicy 9 列（R73、R76、R78、R79、R98）；LeaveConversion 9 列（R79、R86、R89～R95）。只由狀態與做的人決定、沒有規則的寫「—」：Agreed→Withdrawn（WithdrawLeaveDeferral）
@@ -277,6 +305,13 @@
 | D-23 | 〔回頭修改，2026-10-21，⑤ 紙上驗證準備 GC01〕年度終結轉為工資的發給期限：雇主擇一（`payment_deadline_rule` 改為依雇主）；採「契約約定的工資給付日」時，是年度終結日所屬計薪期間的給付日（新增參數 `wage_payment_lag_months`，預設次月發上月），不是年度終結日之後第一個給付日 | 原寫法：年度終結日之後第一個 `wage_payment_day`，全部雇主相同（X-27） | 使用者為 GC01 ③ 問了其他 AI，答覆是雇主擇一、全公司統一，並舉例年度終結日 2026-03-01、每月 5 日發薪時是 2026-04-05（併入 3 月份的薪資）；原寫法會算出 2026-03-05。答覆是推想，使用者接受為假設；EQ-003 仍待 HC 確認 | inputs/drafts/特休未休工資發給期限.md；EQ-003；特別休假#03 | AI／JiHungLin（2026-10-21） |
 | D-24 | 〔回頭修改，2026-10-21，⑤ 紙上驗證 GC06〕已隨僱傭關係結束（EndedWithEmployment）或作廢（Voided）的那一筆不判定告知狀態，之前成立的告知逾期警告也不再列出 | 照樣判定，離職後仍成立逾期未告知 | 員工已離職，未休的由 resignation 依契約終止發給工資，再提醒告知沒有意義；GC06 推演時發現離職後仍會成立警告。代價：離職前就已經逾期沒告知的，離職後警告也跟著消失 | 06_evidence GC06；JiHungLin 2026-10-21：「已離職並發給未休代金了，就不需要警告了」 | AI／JiHungLin（2026-10-21） |
 | D-25 | 〔回頭修改，2026-10-21，⑤ 紙上驗證 GC04〕重新判定後，已判定轉換的工資計算基準日或發給期限依新依據會不同（例：到職日提前 1 天，年度終結日從 2026-03-01 變成 2026-02-28，天數不變）：已判定的轉換不改、不另記一筆，在重新判定的通知列出原 → 新，交給人資或計薪人員決定要不要另外補發或扣回 | 天數差額 0 就什麼都不記（原寫法）；另記一筆天數 0 的轉換，或把已判定的轉換改成待確認 | 基準日改變可能讓一日工資不同（例：3 月 1 日調薪），原寫法完全看不到；已判定的轉換已交給薪資，不能直接改，另記天數 0 的轉換要改狀態機與守恆式。列入通知最輕，和計算者預期的「基準日異動提示單」最接近 | 06_evidence GC04；R89、R92、R96；JiHungLin 2026-10-21 同意 | AI／JiHungLin（2026-10-21） |
+| D-26 | 〔回頭修改，2026-10-22，⑥ signoff #12〕R83「協商遞延額度超過未休」：已年度終結的那一筆，用「額度減已休」比較，不用還可以休 | 照舊用還可以休 | 年度終結後還可以休一律是 0（C01），年度終結後才登錄的協商每次都會成立警告，警告就沒有意義；「額度減已休」正是年度終結時 R86 用的未休，判斷一致 | ⑥ signoff #12；R86；C01 | AI／JiHungLin（2026-10-22） |
+| D-27 | 〔回頭修改，2026-10-22，⑥ signoff #16〕年度終結後才登錄或加大遞延協商：遞延進來的那一筆增加的部分，等扣回已判定轉換的負數差額確認後才建立或增加；減少或撤回立刻生效 | 照舊立刻建立；先建立但標成不能休（LeaveEntitlement 多一個狀態） | 立刻建立時，確認前員工同時有可休的天數和已交給薪資的工資（又休又領），正是 D-14 想避免的；先建立再標不能休要在 ③ 狀態機加狀態，改動較大。使用者 2026-10-22 選「確認後才建立」。減少的部分對員工有利（多發工資），比照正數差額直接生效。代價：負數差額被人資擱著時，員工遲遲不能休遞延的天數（R94 逾期警告會提醒） | ⑥ signoff #16；D-14；03_flows D-17 | AI／JiHungLin（2026-10-22） |
+| D-28 | 〔回頭修改，2026-10-22，⑥ signoff #15〕C01：已年度終結的那一筆，還可以休＝待確認中的負數差額合計＋等它確認才增加的遞延進來額度；不再寫「一律為 0」 | 把待確認的負數差額算進轉換（D-14 第一輪的寫法，X-24 已排除）；改成「待確認的負數差額不存在」 | D-14 決定待確認的負數不算，確認前「還可以休」就會是負數（例：年度終結後補登已休 1 日，還可以休 −1）；寫成等式才能檢查。因遞延加大而扣回的，D-27 讓遞延出去也等確認，兩者相抵仍是 0 | ⑥ signoff #15；D-14、D-27 | AI／JiHungLin（2026-10-22） |
+| D-29 | 〔回頭修改，2026-10-22，⑥ signoff #9〕遞延進來與補登的那一筆，取得日＝可休起日 | 取得日可以空白；遞延進來的沿用原來那一筆的取得日 | 遞延進來的天數是在原年度終結的隔天才能開始休，算是那天才取得；補登時人只登可休期間。沿用原來那一筆的取得日，查詢「某一天有哪幾筆」（Q01，取得日不晚於那天）會在原年度就列出還不能休的遞延 | ⑥ signoff #9；R87、R97；Q01 | AI／JiHungLin（2026-10-22） |
+| D-30 | 〔回頭修改，2026-10-22，⑥ signoff #21〕R76「沒有個別約定的員工」看新預設的生效日與今天兩者較晚的那一天 | 一律看生效日；一律看今天 | 生效日在過去（晚登錄）時，生效日之後已經登錄個別約定的員工不會套用新預設，不用再警告；生效日在未來時，到那天才知道誰還在用預設，先看生效日當天有效的約定 | ⑥ signoff #21 | AI／JiHungLin（2026-10-22） |
+| D-31 | 〔回頭修改，2026-10-22，⑥ signoff #1、#2〕參數改成新格式：可選做法寫代碼（「屬於」是參數名稱的大寫）；已經有分類值、意思相同的沿用原代碼（`leave_year_basis_when_none` 用 LEAVE_YEAR_BASIS，`company_extra_year_end_treatment` 用 CONVERSION_TARGET）；天數表寫欄位 `from_months`、`to_months`、`days` 與展開方式 | 一律另立代碼（例：COMPANY_EXTRA_YEAR_END_TREATMENT.WAGES） | 另立代碼要再對照回轉換的去向，同一件事兩套代碼；docs/02 參數格式（工具包 @ 5a98cab）；欄位名稱沿用實作暫時的做法（signoff #1），不必改資料 | ⑥ signoff #1、#2；docs/02 ④ 參數 | AI／JiHungLin（2026-10-22） |
+| D-32 | 〔回頭修改，2026-10-22，⑥ signoff #4〕R66 v1 的生效日查到之前以「沒有下限」表示，上線前後都用 v1；EQ-008 仍待回答 | 先停用 R66 直到查到生效日 | 系統只支援上線後的法規版本（範圍釐清_法規版本與系統上線前資料.md），上線前已取得的由人補登，不會依 R66 計算；查到生效日後再補，結果不變 | ⑥ signoff #4；EQ-008 | AI／JiHungLin（2026-10-22） |
 
 ### 反例處理
 
@@ -324,14 +359,14 @@
 
 | 完成標準 | 類 | AI 自評 |
 |---|---|---|
-| 每條規則都有種類、套用對象、判斷方式、來源與違反時的處理；會隨時間改變、且舊結果要依當時規則解釋的，有版本與生效日；沒有寫死的數字散落在流程裡（規則用到的數字列在參數表，先試用） | 修正線索 | ✓ 35 條（R65～R99）都有種類、套用對象、判斷方式、違反時、來源，由 md2build.py 解析（固定選項格式通過）＋ lint.py「編號存在」（套用對象都是已宣告的事件或 Entity）；會改版的 3 條有版本（R66 法令版本、R77、R79 公司規定版本）。數字都在參數表（16 個），由 AI 比對：規則引用的參數都有定義、定義的都有被引用；規則文字裡剩下的日期只是例子 |
+| 每條規則都有種類、套用對象、判斷方式、來源與違反時的處理；會隨時間改變、且舊結果要依當時規則解釋的，有版本與生效日；沒有寫死的數字散落在流程裡（規則用到的數字列在參數表，先試用） | 修正線索 | ✓ 35 條（R65～R99）都有種類、套用對象、判斷方式、違反時、來源，由 md2build.py 解析（固定選項格式通過）＋ lint.py「編號存在」（套用對象都是已宣告的事件或 Entity）；會改版的 3 條有版本（R66 法令版本、R77、R79 公司規定版本）。數字都在參數表（16 個），由 AI 比對：規則引用的參數都有定義、定義的都有被引用；規則文字裡剩下的日期只是例子。〔2026-10-22 回頭修改〕✓ 參數表改成新格式（docs/02 ④）：可選做法 6 個寫成「選項」與代碼，天數表 2 個寫成「表格」並加「參數欄位」（D-31）；R66 生效日寫明（D-32）；規則 R76、R83、R86、R87、R92、R97 補寫（D-26～D-30） |
 | 判定類規則寫出每一種結果，包括條件不成立時（例：強制／可自願／不適用），以及需要的資料未知時（資料不足，《平台架構約定》P12）；兩個以上條件決定同一結果時，用決策表寫出每種組合；不知道的開 EQ 並標「待專家確認」，不留空白 | 品質檢查 | ✓ 判定類 10 條（R67、R68、R75、R79、R81、R85、R88、R91、R93、R95）；條件組合多的 6 條附決策表（R67、R68、R79、R81、R85、R93），含「未知 → 資料不足」與「不可能」列；資料不足依 core R60（檔頭說明）；不知道的標 EQ（EQ-002、003、005、006、009、011、012、013、014）。由 AI 判斷，兩輪挑錯補了 6 個漏掉的組合（X-12、X-19、X-20、X-25、X-26） |
 | 每條有來源的規則都標了核對狀態：已由人核對（對照法規或公司文件原文，或經人資專業人員確認；引用公開來源條目的，該條目的原文也已核對），或標「未核對」。核對可以在 ⑥ 之前任何時間完成，④ 不必等；⑥ 中受未核對規則影響的案例不算通過 | 修正線索 | ✓ 35 條的「核對」都是 [未核對]，16 個參數也是；引用的 research 條目（特別休假#01～#04、勞動契約與年資#05、#07、#08、期間計算#02、#03）原文也都還 [未核對]。由 AI 比對＋ lint.py「標記」 |
 | 判斷方式為「需人工判斷」的，經 Domain 專家確認（或標「待專家確認」） | 關鍵決定（例外時） | ✓ 不適用：沒有判斷方式為「需人工判斷」的規則；要人處理的都是規則算出結果後交給人（R79 找不到版本、R93 待確認、R96），由 AI 比對 |
-| ③ 每個狀態轉換的前提條件，都已對應到規則編號並回填 `03_flows.md` | 修正線索 | ✓ 03_flows.md 56 個轉換的「規則」欄都已回填，只有 Agreed → Withdrawn 寫「—」（只由狀態與做的人決定）；由 AI 用程式逐列比對（沒有空白欄） |
-| 規則用到的分類值（例：假別、保險級距）都有穩定代碼，並登錄在詞彙對照表 | 修正線索 | ✓ 分類值 26 個都有代碼，lint.py「詞彙對照表」通過（131 個名稱） |
+| ③ 每個狀態轉換的前提條件，都已對應到規則編號並回填 `03_flows.md` | 修正線索 | ✓ 03_flows.md 56 個轉換的「規則」欄都已回填，只有 Agreed → Withdrawn 寫「—」（只由狀態與做的人決定）；由 AI 用程式逐列比對（沒有空白欄）。〔2026-10-22 回頭修改〕✓ ③ 新增的 ConfirmLeaveConversion 兩列回填 R87、R92；R87、R92 的套用對象加 ConfirmLeaveConversion |
+| 規則用到的分類值（例：假別、保險級距）都有穩定代碼，並登錄在詞彙對照表 | 修正線索 | ✓ 分類值 26 個都有代碼，lint.py「詞彙對照表」通過（131 個名稱）。〔2026-10-22 回頭修改〕✓ 新增 8 個可選做法的代碼（ACQUISITION_DAY_RULE、FIXED_START_YEAR_METHOD、PAYMENT_DEADLINE_RULE、COMPANY_POLICY_VERSION_AT_YEAR_END）；leave_year_basis_when_none、company_extra_year_end_treatment 沿用既有代碼（D-31）；lint「詞彙對照表」通過（139 個名稱） |
 | 規則會用到的判斷條件（例：這天假是法定的還是公司加給的），在第 ② 步的 Entity 裡存得下；規則文字用到的屬性都寫成 `Entity.attribute` | 修正線索 | 部分：規則文字用到的屬性都存在（check.py「規則判別的屬性須存得下」通過，97 個屬性引用）；但 R99 的簽約日、R86 年度終結判定當時的已休不是 ② 的屬性，取自事件紀錄（SignContract 的發生日、CloseLeaveYear 判定時記下的已休）。另外「依雇主」的參數（發給期限做法、待確認處理日數）這版沒有存放處，改為全部雇主相同（X-27） |
-| 有數量或金額需要對帳的地方（例：假的額度、薪資），已寫出守恆式；沒有的不必硬寫 | 關鍵決定 | ✓ 守恆式 2 條：C01（每一筆的額度＝剩餘＋已休＋遞延出去＋轉為工資＋失效）、C02（年度終結時未休的去向）；兩輪挑錯各修一次待確認轉換怎麼算（X-08、X-24）。由 AI 判斷 |
+| 有數量或金額需要對帳的地方（例：假的額度、薪資），已寫出守恆式；沒有的不必硬寫 | 關鍵決定 | ✓ 守恆式 2 條：C01（每一筆的額度＝剩餘＋已休＋遞延出去＋轉為工資＋失效）、C02（年度終結時未休的去向）；兩輪挑錯各修一次待確認轉換怎麼算（X-08、X-24）。由 AI 判斷。〔2026-10-22 回頭修改〕✓ C01 改寫已年度終結的還可以休＝待確認中的負數差額＋等它確認才增加的遞延（D-28）；C02 的遞延出去含等確認的部分（R92、D-27）；GC08、GC09 紙上推演兩式都成立，程式每次寫入後檢查，59 個測試通過 |
 | `03_use_cases.md` 每條都已補上規則欄 | 修正線索 | ✓ UC-01～UC-12 都已回填；由 AI 用程式比對（沒有剩下「第 ④ 步回填」） |
 
 ### 審查重點（人）
@@ -372,4 +407,24 @@
 
 - 審查者（非產出者）： JiHungLin
 - 日期： 20261021
+- 結論：通過
+
+### 審查重點（2026-10-22 回頭修改）
+
+實作後回頭修改（⑥ signoff #1、#2、#4、#9、#12、#15、#16、#18、#21）；只看這次的差異。和 ③⑤ 一起審查、一起凍結。
+
+| # | 要看的 | 在哪裡 | 審查者確認 |
+|---|---|---|---|
+| 1 | 新增 D-27（你 2026-10-22 選的做法）：年度終結後才登錄或加大遞延，增加的部分等扣回確認後才建立；減少或撤回立刻生效。代價：人資擱著不確認，員工就遲遲不能休那幾天（R94 逾期會提醒） | R92、R87；D-27 | ✓ |
+| 2 | 守恆式改寫（關鍵決定，D-28，問題）：年度終結後才補登 1 天已休，扣回還沒確認時，這一筆「還可以休」要顯示 −1 嗎？設計的答案：要，−1 表示已多發 1 天工資、等確認扣回，確認後回到 0；因遞延加大而扣回的，和等確認的遞延相抵，仍是 0。例子見 GC08、GC09 | C01、C02；D-28 | ✓，同意  |
+| 3 | D-26（問題）：年度終結後才登錄遞延協商，「遞延額度超過未休」要跟什麼比？設計的答案：跟「額度減已休」比（就是年度終結當時的未休）；原本跟還可以休比，年度終結後一律是 0，每次都會跳警告。例子見 GC07 | R83；D-26 | ✓，同意 |
+| 4 | D-29（問題）：遞延進來的、補登的那一筆，取得日寫哪天？設計的答案：可休起日；遞延的天數到原年度終結的隔天才能休，算那天取得 | R87、R97；D-29 | ✓，同意 |
+| 5 | D-30（問題）：雇主改了特休年度的預設，「還在套用預設的員工」看哪一天？設計的答案：新預設生效日與今天較晚的那天沒有個別約定的員工 | R76；D-30 | ✓，同意 |
+| 6 | 參數改成新格式（D-31，問題）：可選做法寫代碼，已有意思相同的分類值就沿用（年度種類、轉為工資／失效），不另立一套；天數表寫出欄位與「10 年以上每年加 1 天」怎麼展開。這樣可以嗎？設計的答案：可以，欄位名稱沿用實作已經在用的，不必改資料 | 參數表；「參數欄位」兩節；分類值表新增 8 列；D-31 | ✓，同意 |
+| 7 | D-32（問題）：天數表 v1 的生效日還沒查到，先當成沒有下限、上線前後都用 v1，可以嗎？設計的答案：可以，上線前已取得的由人補登，不會用它算；EQ-008 繼續等回答 | R66 版本欄；D-32 | ✓，同意 |
+| 抽查 | （審查者自選 1～2 條 AI 自評 ✓ 的完成標準，寫出是哪幾條與結果） | 規則用到的分類值（例：假別、保險級距）都有穩定代碼，並登錄在詞彙對照表。 有數量或金額需要對帳的地方（例：假的額度、薪資），已寫出守恆式；沒有的不必硬寫 | ✓ |
+
+
+- 審查者（非產出者）： JiHungLin
+- 日期： 20261022
 - 結論：通過

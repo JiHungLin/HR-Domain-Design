@@ -269,7 +269,7 @@
 - 更正、註銷、較晚得知造成的轉換，凡是對員工不利（負數差額）或依據還沒處理完（重新判定後才補做的年度終結），先停在「待確認」，人資確認後才交給薪資；正常的年度終結與補發的正數差額直接交給薪資（D-11）。
 
 ### LeaveEntitlement（請假權利） [候選]（歷史需求：需要重建當時，依 annual-leave-grant:Q01、annual-leave-grant:Q09、annual-leave-grant:Q10、annual-leave-grant:Q11）
-- 出處：annual-leave-grant（③ @ annual-leave-grant/03-v2）；文中的 D-nn、X-nn 指該切片 03_flows.md 的決定與反例
+- 出處：annual-leave-grant（③ @ annual-leave-grant/03-v4）；文中的 D-nn、X-nn 指該切片 03_flows.md 的決定與反例
 - 層：domain
 - 被引用：（無）
 
@@ -281,7 +281,9 @@
 | （無） | Active | GrantLeaveEntitlement | 系統 | 取得日到達（依年資與特休年度算出，annual-leave-grant:Q02）；取得日不早於雇主開始由系統管理的日子（之前的由人補登，01_scope D-09）；當天系統已知的僱傭關係仍在職（之後才得知結束日早於取得日的，見 EndLeaveEntitlementsWithEmployment；結束日剛好是取得日見 EQ-006 ④）；這位員工在取得日有特休年度（個別約定或雇主預設；兩者都沒有時第 ④ 步決定，[待專家確認: EQ-002]）；法定一筆，符合公司規定的每條加給各一筆（02_entities D-02） | R65、R66、R67、R68、R69、R70、R71、R74、R77、R80、R99 |
 | （無） | Active | RegisterExistingLeaveEntitlement | 人資 | 僱傭關係的到職日早於雇主開始由系統管理的日子；可休迄日不早於開始由系統管理的日子（那天仍可以休，01_scope D-09）；來歷是補登當期或補登遞延 | R97 |
 | （無） | Active | CloseLeaveYear | 系統 | 遞延進來的那一筆：原來那一筆有一筆「已協商」的遞延協商；遞延進來的額度是協商額度與終結時未休兩者較小的，協商本身不改（D-12） | R86、R87 |
-| （無） | Active | RejudgeLeaveYearEnd | 系統 | 遞延進來的那一筆：原來那一筆年度終結之後才登錄遞延協商（D-06） | R84、R87、R92 |
+| （無） | Active | RejudgeLeaveYearEnd | 系統 | 遞延進來的那一筆：原來那一筆年度終結之後才登錄遞延協商（D-06），而且不用扣回已判定的轉換（例：原本的轉換還在待確認，被這次取代）；要扣回的，等負數差額確認後才建立（D-17） | R84、R87、R92 |
+| （無） | Active | ConfirmLeaveConversion | 人資 | 遞延進來的那一筆：年度終結之後才登錄遞延協商，扣回已判定轉換的負數差額確認了（D-17） | R87、R92 |
+| Active | Active | ConfirmLeaveConversion | 人資 | 遞延進來的那一筆：年度終結之後才加大遞延協商，扣回已判定轉換的負數差額確認了，額度增加（D-17） | R92 |
 | （無） | Active | ReassessLeaveEntitlements | 系統 | 依新依據多出一期，和任何既有的一筆都對不上（D-04）；可休迄日已經過了的，進來之後立刻由 CloseLeaveYear 判定，轉換先停在待確認（D-11） | R91、R93 |
 | Active | Active | ReassessLeaveEntitlements | 系統 | 依新依據仍有同一來源（同一條公司規定）、同一期別、而且新舊可休期間有重疊的一筆（④ R91），但額度、年資級別或依據不同：就地更正，更正前的內容保留（02_entities D-07）；遞延進來的那一筆，原來那一筆的年度終結日改變時，可休期間跟著更正 | R91 |
 | Active | YearEnded | CloseLeaveYear | 系統 | 可休迄日（年度終結日）已經過完；系統已知的僱傭關係到那天仍在職（結束日剛好是年度終結日的情況見 [待專家確認: EQ-011]） | R85、R86、R88、R89、R90、R93 |
@@ -381,7 +383,7 @@
 說明：需要重建當時：特休要能說出「依哪一條公司規定的哪一版」給的（annual-leave-grant:Q09），公司規定改版或廢止後，已給予的依原版本（annual-leave-grant:Q10）。公司規定本身的生效日、廢止日是登錄的事實，打錯更正時和到職日一樣觸發重新判定（D-14）；版本內容（多給幾天、適用對象、年度終結處理）登錄錯誤時新增一筆修訂，也是依據更正，觸發重新判定；改版（新的版本）不觸發（02_entities D-03，D-16）。
 
 ### LeaveConversion（請假權利轉換） [候選]（歷史需求：需要重建當時，依 annual-leave-grant:Q05、annual-leave-grant:Q08、annual-leave-grant:Q11）
-- 出處：annual-leave-grant（③ @ annual-leave-grant/03-v2）；文中的 D-nn、X-nn 指該切片 03_flows.md 的決定與反例
+- 出處：annual-leave-grant（③ @ annual-leave-grant/03-v4）；文中的 D-nn、X-nn 指該切片 03_flows.md 的決定與反例
 - 層：domain
 - 被引用：（無）
 
@@ -396,7 +398,7 @@
 | （無） | Provisional | RejudgeLeaveYearEnd | 系統 | 更正差額，減少員工的工資（負數）或改為失效（D-11） | R92、R93 |
 | （無） | Provisional | ReassessLeaveEntitlements | 系統 | 更正差額：那一筆因重新判定而回到可休、作廢、額度改變，或建立它的事件被註銷、撤銷註銷 | R90、R91、R93 |
 | （無） | Provisional | EndLeaveEntitlementsWithEmployment | 系統 | 負數差額：年度終結判定之後才得知僱傭關係在年度終結日之前就結束（D-05） | R90、R93、R95 |
-| Provisional | Determined | ConfirmLeaveConversion | 人資 | 人資看過 NotifyLeaveReassessment 列出的事（已休、遞延協商、告知日），確認這一筆；確認後才交給薪資（D-11） | R94 |
+| Provisional | Determined | ConfirmLeaveConversion | 人資 | 人資看過 NotifyLeaveReassessment 列出的事（已休、遞延協商、告知日），確認這一筆；確認後才交給薪資（D-11）；等這筆負數差額確認才建立或增加的遞延進來那一筆，同時建立或增加（D-17） | R92、R94 |
 | Provisional | Discarded | RejudgeLeaveYearEnd | 系統 | 確認前依據又改變，重新算出的取代它；被取代的保留紀錄 | R92 |
 | Provisional | Discarded | ReassessLeaveEntitlements | 系統 | 確認前依據又改變，重新算出的取代它 | R91 |
 
@@ -449,11 +451,11 @@
 | AmendLeaveDeferral（修改遞延協商） | 人的動作（人資，依雙方重新協商的結果） | 決定 | LeaveDeferralAgreement | 不改變狀態（Agreed 或 Applied 不變）；改協商日與遞延額度，原內容保留；已 Applied 的觸發 RejudgeLeaveYearEnd | 新的協商日、憑據說明 | 可以再修改或撤回 | 發生（新的協商日）、得知 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） | |
 | WithdrawLeaveDeferral（撤回遞延協商） | 人的動作（人資，依雙方取消遞延） | 決定 | LeaveDeferralAgreement | Agreed 或 Applied → Withdrawn；已 Applied 的觸發 RejudgeLeaveYearEnd | 撤回理由 | 不可撤銷；要再遞延是新的一筆協商 | 發生、得知 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） | |
 | CloseLeaveYear（年度終結判定） | 時間或條件到達（一筆請假權利的可休迄日過完，且系統已知的僱傭關係到那天仍在職） | 發生 | LeaveEntitlement | 那一筆 Active → YearEnded；依「已協商」的遞延協商產生遞延進來的一筆（Active，額度見 D-12），協商 Agreed → Applied；其餘未休額度產生轉換（LeaveConversion：轉為工資，或公司規定的失效），記工資計算基準日與發給期限（02_entities D-06）；由重新判定新增的那一筆，轉換是待確認（D-11） | 判定當時已知的已休（記下當時的數字，D-15）、遞延協商的內容、規則版本 | 不可撤銷；判定用到的資料之後改變時由 RejudgeLeaveYearEnd 記差額 | 發生（年度終結日）、得知（判定日） | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） | |
-| RejudgeLeaveYearEnd（重新判定年度終結） | 其他單位個體的變化（已年度終結的那一筆：已休改變（含這版固定資料的改正）、遞延協商修改、撤回或事後登錄、額度就地更正、依據的公司規定版本被修訂（D-16）） | 發生 | LeaveEntitlement | YearEnded 不變；遞延進來的那一筆新增、更正額度或作廢；轉換另記差額，指回被更正的那一次，記更正原因，負數的待確認（D-11）；待確認還沒確認的被取代；產生 NotifyLeaveReassessment | 改變了什麼、判定當時與現在的資料 | 不可撤銷；資料再改變時再重新判定 | 發生（年度終結日）、得知 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |  |
+| RejudgeLeaveYearEnd（重新判定年度終結） | 其他單位個體的變化（已年度終結的那一筆：已休改變（含這版固定資料的改正）、遞延協商修改、撤回或事後登錄、額度就地更正、依據的公司規定版本被修訂（D-16）） | 發生 | LeaveEntitlement | YearEnded 不變；遞延進來的那一筆新增、更正額度或作廢（要扣回已判定的轉換時，增加的部分等負數差額確認後才建立，D-17）；轉換另記差額，指回被更正的那一次，記更正原因，負數的待確認（D-11）；待確認還沒確認的被取代；產生 NotifyLeaveReassessment | 改變了什麼、判定當時與現在的資料 | 不可撤銷；資料再改變時再重新判定 | 發生（年度終結日）、得知 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v4） |  |
 | ReassessLeaveEntitlements（依據更正後重新判定特休） | 其他單位個體的變化（到職日更正；特休年度約定登錄、終止、更正或註銷；員工類型等決定適用哪一條公司規定的資料更正；公司規定的生效日、廢止日登錄或更正；公司規定版本內容的修訂（D-16）；僱傭關係的到職或結束被註銷、撤銷註銷；結束日更正；補登的特休被註銷或撤銷註銷） | 發生 | LeaveEntitlement | 依新依據重算每一期，和既有的依規則給予的逐筆對應（D-04）：對得上的就地更正（保留更正前內容；已年度終結的接著 RejudgeLeaveYearEnd）、對不上的作廢、多出來的新增；已年度終結的回到可休或作廢時，轉換記差額（待確認）；遞延協商依對應結果失效或恢復；產生 NotifyLeaveReassessment。規則改版不觸發（02_entities D-03） | 被更正的依據（更正前、更正後）、更正者 | 不可撤銷；依據再更正時再重新判定 | 發生（依據被更正的時間）、得知 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |  |
 | EndLeaveEntitlementsWithEmployment（僱傭關係結束，停止特休） | 其他單位個體的變化（系統得知僱傭關係 Active → Ended：core 的 RecordEarlyDeparture，或 resignation 定義的離職；這版一般離職以固定資料提供 [靜態替代]，載入結束日視同這個變化） | 發生 | LeaveEntitlement | 取得日不晚於結束日、可休迄日晚於結束日的每一筆 Active → EndedWithEmployment；取得日晚於結束日的（結束日較晚得知）→ Voided；年度終結判定之後才得知的，那一筆 YearEnded → EndedWithEmployment、遞延進來的那筆作廢、Applied 的協商 Lapsed、已做的轉換記負數差額（待確認）；Agreed 的遞延協商 → Lapsed；之後不再給予（01_scope D-15，D-05） | 結束日 | 不可撤銷；結束被註銷或結束日更正時由 ReassessLeaveEntitlements 重新推導 | 發生（結束日）、得知 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） | |
-| ConfirmLeaveConversion（確認待確認的轉換） | 人的動作（人資） | 決定 | LeaveConversion | Provisional → Determined；確認後交給薪資切片（D-11） | 確認者、時間；人資處理過的事（已休、遞延協商、告知日） | 不可撤銷；確認後發現要更正，另記差額 | 發生、得知 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） | |
-| NotifyLeaveReassessment（通知特休重新判定結果） | 其他單位個體的變化（ReassessLeaveEntitlements、RejudgeLeaveYearEnd 改變了額度、期間、狀態，或產生轉換差額；CloseLeaveYear 遇到協商遞延額度超過未休） | 建議 | LeaveEntitlement | 不改變狀態；列出改了哪幾筆（更正前、更正後）、新增或作廢的、轉換差額與待確認的轉換，以及要人處理的：作廢的那筆上已休的天數、要重新登錄的告知日、要重新登錄的遞延協商、已休超過更正後額度的、補登的那筆和依規則重算的期間重疊或有空檔的、已判定轉換的工資計算基準日或發給期限依新依據會不同的（原 → 新，④ D-25）；通知人資與雇主（老闆）（D-04） | 重新判定的紀錄 | 不可作廢（保留紀錄） | 得知 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |  |
+| ConfirmLeaveConversion（確認待確認的轉換） | 人的動作（人資） | 決定 | LeaveConversion | Provisional → Determined；確認後交給薪資切片（D-11）；年度終結後才登錄或加大遞延協商時，等這筆負數差額確認的遞延進來那一筆建立（（無）→ Active）或增加額度（D-17） | 確認者、時間；人資處理過的事（已休、遞延協商、告知日） | 不可撤銷；確認後發現要更正，另記差額 | 發生、得知 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v4） |  |
+| NotifyLeaveReassessment（通知特休重新判定結果） | 其他單位個體的變化（ReassessLeaveEntitlements、RejudgeLeaveYearEnd 改變了額度、期間、狀態，或產生轉換差額；EndLeaveEntitlementsWithEmployment 改變了請假權利（隨僱傭關係結束或作廢）或產生待確認的負數差額（④ R95；⑤ annual-leave-grant:UC-09 從通知取待確認的轉換，D-18）；CloseLeaveYear 遇到協商遞延額度超過未休） | 建議 | LeaveEntitlement | 不改變狀態；列出改了哪幾筆（更正前、更正後）、新增或作廢的、轉換差額與待確認的轉換，以及要人處理的：作廢的那筆上已休的天數、要重新登錄的告知日、要重新登錄的遞延協商、已休超過更正後額度的、補登的那筆和依規則重算的期間重疊或有空檔的、已判定轉換的工資計算基準日或發給期限依新依據會不同的（原 → 新，④ D-25）；通知人資與雇主（老闆）（D-04） | 重新判定的紀錄 | 不可作廢（保留紀錄） | 得知 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v4） |  |
 
 沿用 core 的事件（不重新定義）：CorrectRecord（更正資料）、AnnulEntry（註銷誤登）、RevokeAnnulment（撤銷註銷）、OverrideWarning（忽略警告）、WithdrawWarningOverride（撤回忽略），這些依 core 只有人資可以做；觸發本切片的 core 事件：RecordEarlyDeparture、StartEmployment、RegisterExistingEmployment（D-08）。
 

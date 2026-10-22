@@ -81,6 +81,8 @@ create("company_policy_versions", "公司規定的版本（02「不是 Entity」
       company_extra_year_end_treatment: { enum: ["CONVERSION_TARGET.WAGES", "CONVERSION_TARGET.FORFEITED"] },
       company_extra_deferrable: bool,
       company_default_leave_year: { bsonType: "object", required: ["leave_year_basis"], properties: { leave_year_basis: code, year_start: monthDay } },
+      // 沒有時用 rule_versions（R70）的值（05_mapping 3.2、D-31）
+      fixed_start_year_method: { enum: ["FIXED_START_YEAR_METHOD.EXTEND_TO_YEAR_END", "FIXED_START_YEAR_METHOD.PRORATED"] },
     },
   },
 });
@@ -167,7 +169,7 @@ create("leave_reassessment_notices", "NotifyLeaveReassessment", ["tenant_id", "e
   action_items: { bsonType: "array", items: { bsonType: "object", required: ["kind"], properties: {
     kind: { enum: ["NOTICE_ACTION.USED_ON_VOIDED", "NOTICE_ACTION.RENOTIFY", "NOTICE_ACTION.REDEFER", "NOTICE_ACTION.USED_OVER_QUANTITY",
                    "NOTICE_ACTION.BACKFILL_OVERLAP_OR_GAP", "NOTICE_ACTION.NOTICE_BEFORE_ACQUIRED", "NOTICE_ACTION.DEFERRAL_OVER_UNUSED",
-                   "NOTICE_ACTION.CONVERSION_DATES_CHANGED"] },
+                   "NOTICE_ACTION.CONVERSION_DATES_CHANGED", "NOTICE_ACTION.PERIOD_CHANGED_WITH_USED"] },
     entitlement_id: ref, detail: str } } },
   notified_to: { bsonType: "array", items: { enum: ["HR", "EMPLOYER"] } }, notified_at: date,
 });
@@ -182,12 +184,13 @@ create("leave_used_quantity_fixtures", "LeaveEntitlement.used_quantity [靜態�
 db.leave_used_quantity_fixtures.createIndex({ entitlement_id: 1 }, { unique: true });
 
 // 契約約定的工資給付日與發給期限的做法（04 參數 wage_payment_day、wage_payment_lag_months、payment_deadline_rule，04 D-23）：
-// monthly-payroll 定義後取代；P2 C；平台維運載入，沒有 API；沒有 payment_deadline_rule 時用 rule_versions（R90）的預設（05_mapping D-21）
+// monthly-payroll 定義後取代；P2 C；平台維運載入，沒有 API；沒有登錄時用 rule_versions（R90）的值（05_mapping 3.2、D-21、D-31）
 create("employer_settings", "參數 wage_payment_day、wage_payment_lag_months、payment_deadline_rule [靜態替代]", ["tenant_id", "employer_id"], {
   ...tenantScoped, employer_id: ref,
   wage_payment_day: period({ bsonType: "int", minimum: 1, maximum: 31 }),
   wage_payment_lag_months: period({ bsonType: "int", minimum: 0, maximum: 1 }),
-  payment_deadline_rule: period({ enum: ["CONTRACT_WAGE_PAYMENT_DAY", "DAYS_AFTER_YEAR_END"] }),
+  // 存 04 分類值的完整代碼（05_mapping D-35）；用計算發給期限的錨點那一天查帶期間的值（05_mapping D-32）
+  payment_deadline_rule: period({ enum: ["PAYMENT_DEADLINE_RULE.CONTRACT_WAGE_PAYMENT_DAY", "PAYMENT_DEADLINE_RULE.DAYS_AFTER_YEAR_END"] }),
 });
 db.employer_settings.createIndex({ employer_id: 1 }, { unique: true });
 

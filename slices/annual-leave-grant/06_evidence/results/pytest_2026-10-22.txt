@@ -1,0 +1,77 @@
+# uv run pytest -v（impl/signoff-fixes，從 design/main @ af460ea 開，尚未 commit；2026-10-22）
+============================= test session starts ==============================
+platform linux -- Python 3.14.4, pytest-9.1.1, pluggy-1.6.0 -- /home/mycena/Projects/HR-Domain-Desing/impl/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/mycena/Projects/HR-Domain-Desing/impl
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.15.1
+collecting ... collected 59 items
+
+tests/test_applicability.py::test_r22_small_company_voluntary PASSED     [  1%]
+tests/test_applicability.py::test_r22_r24_over_65_not_applicable PASSED  [  3%]
+tests/test_applicability.py::test_r25_without_registration PASSED        [  5%]
+tests/test_applicability.py::test_r25_public_sector_mandatory PASSED     [  6%]
+tests/test_applicability.py::test_r26_national_without_registration_or_residence PASSED [  8%]
+tests/test_applicability.py::test_r24_r26_r27_foreign_employment_residence PASSED [ 10%]
+tests/test_applicability.py::test_r60_missing_birth_date PASSED          [ 11%]
+tests/test_applicability.py::test_r42_full_table_high_wage PASSED        [ 13%]
+tests/test_contract.py::test_every_operation_matches_spec PASSED         [ 15%]
+tests/test_contract.py::test_components_from_spec PASSED                 [ 16%]
+tests/test_contract.py::test_request_rejected_when_not_in_spec PASSED    [ 18%]
+tests/test_decisions.py::test_d15_public_or_military_excludes_employment_insurance PASSED [ 20%]
+tests/test_decisions.py::test_d16_other_allowance_needs_decision_then_follows_decision PASSED [ 22%]
+tests/test_decisions.py::test_d16_two_employers_choose_employment_insurance PASSED [ 23%]
+tests/test_decisions.py::test_d20_choice_recorded_without_other_employer_in_system PASSED [ 25%]
+tests/test_decisions.py::test_d21_public_or_military_unknown_is_insufficient_data PASSED [ 27%]
+tests/test_decisions.py::test_d17_overdue_is_on_proposal_not_a_warning PASSED [ 28%]
+tests/test_decisions.py::test_d18_estimate_at_hire_superseded_at_start PASSED [ 30%]
+tests/test_gc01.py::test_gc01 PASSED                                     [ 32%]
+tests/test_guards.py::test_r01_start_before_decision_blocked PASSED      [ 33%]
+tests/test_guards.py::test_p1_cannot_start_twice PASSED                  [ 35%]
+tests/test_guards.py::test_r05_duplicate_employee_number_blocked PASSED  [ 37%]
+tests/test_guards.py::test_r11_warns_at_hire_but_does_not_block PASSED   [ 38%]
+tests/test_guards.py::test_r21_warns_without_compensation_and_contract PASSED [ 40%]
+tests/test_guards.py::test_person_ref_exactly_one PASSED                 [ 42%]
+tests/test_guards.py::test_rehire_reuses_person PASSED                   [ 44%]
+tests/test_guards.py::test_r50_and_r07_blocked PASSED                    [ 45%]
+tests/test_guards.py::test_r31_late_filing_effective_next_day PASSED     [ 47%]
+tests/test_guards.py::test_r61_filed_before_start_warns PASSED           [ 49%]
+tests/test_guards.py::test_r45_grade_mismatch_warns PASSED               [ 50%]
+tests/test_guards.py::test_roles_and_tenant_isolation PASSED             [ 52%]
+tests/test_guards.py::test_unimplemented_returns_501 PASSED              [ 54%]
+tests/test_guards.py::test_events_and_versions_recorded PASSED           [ 55%]
+tests/test_guards.py::test_applicability_as_of_before_start_has_no_employment PASSED [ 57%]
+tests/test_hooks.py::test_start_employment_calls_hook_in_same_transaction PASSED [ 59%]
+tests/test_hooks.py::test_hook_failure_rolls_back_start_employment PASSED [ 61%]
+tests/test_hooks.py::test_no_handler_is_noop PASSED                      [ 62%]
+tests/test_leave_gc.py::test_gc01_anniversary_notice_and_year_end PASSED [ 64%]
+tests/test_leave_gc.py::test_gc04_start_date_corrected_after_year_end PASSED [ 66%]
+tests/test_leave_gc.py::test_gc06_last_day_is_six_month_anniversary PASSED [ 67%]
+tests/test_leave_signoff.py::test_gc07_r83_after_year_end_compares_unused PASSED [ 69%]
+tests/test_leave_signoff.py::test_gc08_c01_negative_until_confirmed PASSED [ 71%]
+tests/test_leave_signoff.py::test_gc09_deferred_in_waits_for_confirmation PASSED [ 72%]
+tests/test_leave_signoff.py::test_future_ending_fixture_waits_for_the_day PASSED [ 74%]
+tests/test_leave_signoff.py::test_today_uses_employer_location PASSED    [ 76%]
+tests/test_leave_uc.py::test_uc01_start_in_past_catches_up_in_same_transaction PASSED [ 77%]
+tests/test_leave_uc.py::test_uc02_calendar_year_by_agreement PASSED      [ 79%]
+tests/test_leave_uc.py::test_uc10_retroactive_agreement_reassesses_in_place PASSED [ 81%]
+tests/test_leave_uc.py::test_uc03_company_extra_and_retroactive_policy PASSED [ 83%]
+tests/test_leave_uc.py::test_uc05_uc06_deferral PASSED                   [ 84%]
+tests/test_leave_uc.py::test_withdraw_deferral_after_year_end_rejudges PASSED [ 86%]
+tests/test_leave_uc.py::test_uc07_backfill_then_rule_grants PASSED       [ 88%]
+tests/test_leave_uc.py::test_uc09_leave_before_six_months_gets_nothing PASSED [ 89%]
+tests/test_leave_uc.py::test_uc09_end_learned_late_voids_and_reverses PASSED [ 91%]
+tests/test_leave_uc.py::test_uc11_possible_seniority_merge_warning PASSED [ 93%]
+tests/test_leave_uc.py::test_uc12_used_quantity_after_year_end PASSED    [ 94%]
+tests/test_leave_uc.py::test_late_year_end_is_provisional_and_superseded PASSED [ 96%]
+tests/test_leave_uc.py::test_uc04_notice_guards_and_overdue_warning PASSED [ 98%]
+tests/test_leave_uc.py::test_zz_conservation_on_all_data PASSED          [100%]
+
+=============================== warnings summary ===============================
+.venv/lib/python3.14/site-packages/fastapi/testclient.py:1
+  /home/mycena/Projects/HR-Domain-Desing/impl/.venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 59 passed, 1 warning in 8.20s =========================

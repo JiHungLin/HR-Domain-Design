@@ -14,6 +14,39 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-22　annual-leave-grant/03-v4、annual-leave-grant/04-v3、annual-leave-grant/05-v3　③④⑤　凍結
+- 改了什麼：⑥ 實作時發現的 22 項設計問題與平台約定 P4 的回頭修改（第 0 級）後重新凍結，內容見下方「（未凍結）③④⑤ 回頭修改（第 0 級）：⑥ 實作時發現的 22 項設計問題、平台約定 P4」那一筆。相對 03-v3：D-17、D-18（LeaveEntitlement 新增 ConfirmLeaveConversion 兩列，事件 RejudgeLeaveYearEnd、ConfirmLeaveConversion、NotifyLeaveReassessment 改寫，UC-12）；相對 04-v2：R66、R76、R83、R86、R87、R92、R97、C01、C02 改寫，參數改新格式、分類值新增 8 個（D-26～D-32）；相對 05-v2：D-23～D-35、api.yaml 0.2.0、schema.mongo.js、黃金案例 GC07～GC09
+- 依據：06_evidence/signoff.md #1～#22（實作 @ af460ea）；docs/03 P4（工具包 @ 8df026a）
+- 反例處理：這次沒有另開挑錯子代理，沒有新的 X-nn；修改來自 signoff 22 項
+- 依審查重點登記同意的決定（審查者 JiHungLin，2026-10-22）：
+  - 03_flows：D-18 依審查重點第 2 列同意（D-17 送審前已由使用者同意）
+  - 04_rules：D-28 依第 2 列、D-26 依第 3 列、D-29 依第 4 列、D-30 依第 5 列、D-31 依第 6 列、D-32 依第 7 列同意（D-27 送審前已同意）
+  - 05_mapping：D-33 依第 2 列、D-31 依第 3 列、D-32 依第 4 列、D-34 依第 5 列、D-27 依第 6 列、D-23～D-26、D-29、D-30、D-35 依第 7 列同意（D-28 送審前已同意）
+- 黃金案例：GC07～GC09 預期結果由 JiHungLin 填寫；第一次凍結檢查時 GC08 ②（還可以休 0 → −1）、GC09 ①（有 → 沒有）、GC09 ③ 2026-03-15 的遞延出去（2 → 0）與設計不一致，計算者確認設計正確後改正預期結果（設計不用回頭）；紙上判定三筆都一致
+- 審查方式：審查重點 ③ 3 列、④ 8 列、⑤ 9 列；寫成問題的 13 列回答「同意」；抽查由審查者自選（③ 狀態機、事件觸發來源；④ 分類值代碼、守恆式；⑤ Use Case 走一遍、紙上驗證）
+- 合併進 core/：flows.md LeaveEntitlement 狀態機改 1 列、新增 2 列（ConfirmLeaveConversion），LeaveConversion Provisional → Determined 改寫，事件 RejudgeLeaveYearEnd、ConfirmLeaveConversion、NotifyLeaveReassessment 改寫，兩個狀態機與三個事件的出處改 03-v4；rules.md R66、R76、R83、R86、R87、R92、R97、C01、C02 改寫，出處改 04-v3，分類值新增 8 列 [候選]；沒有刪除項目，狀態仍是 [候選]
+- 實作：impl/signoff-fixes 已依此版本修改（seed.py RULE_SET＝annual-leave-grant/04-v3），59 個測試通過；signoff「處理」欄補上新 tag，impl/README 的設計版本改為本版
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-22，通過）
+
+## 2026-10-22　（未凍結）　③④⑤　回頭修改（第 0 級）：⑥ 實作時發現的 22 項設計問題、平台約定 P4
+- 改了什麼：
+  - ③ 03_flows.md：D-17 年度終結後才登錄或加大遞延協商，遞延進來的那一筆等扣回確認（ConfirmLeaveConversion）後才建立或增加（LeaveEntitlement 新增 ConfirmLeaveConversion 兩列，RejudgeLeaveYearEnd 那一列加前提；LeaveConversion Provisional → Determined、事件表 ConfirmLeaveConversion、RejudgeLeaveYearEnd 跟著改）；D-18 NotifyLeaveReassessment 的觸發來源補 EndLeaveEntitlementsWithEmployment。03_use_cases.md：UC-12 主流程與規則（加 R83、R87）
+  - ④ 04_rules.md：R83 已年度終結的用「額度減已休」比（D-26）；R92 遞延加大要扣回時增加的部分等確認（D-27），R87、R92 套用對象加 ConfirmLeaveConversion；C01、C02 改寫（D-28）；R87、R97 取得日＝可休起日（D-29）；R76 看生效日與今天較晚的那天（D-30）；參數表改新格式：6 個可選做法寫代碼、2 個天數表寫「參數欄位」，分類值新增 8 個（D-31）；R66 v1 生效日以沒有下限表示（D-32）；R86 文字配合 C01
+  - ⑤ 05_mapping.md：D-23～D-35（Superseded 的 discarded_by_id 可空、PERIOD_CHANGED_WITH_USED、已休從事件還原、basis_rule_versions 記哪幾條、Q01 篩選、今天依 P4、警告版本、訊息代碼表 2.3、3.2 新格式與 fixed_start_year_method 放公司規定、employer_settings 查哪一天、未來的結束日由排程執行、受影響的僱傭關係、存完整代碼）；D-03、D-10、D-12、D-18、D-21 加指向新決定的標註（內容不改）；1.1、1.2、1.3、第二節、3.1、3.2、第四節 P12、第六區 UC-12 跟著改。api.yaml 0.1.0 → 0.2.0；schema.mongo.js（payment_deadline_rule 完整代碼、fixed_start_year_method、NOTICE_ACTION 新代碼）
+  - ⑤ 06_evidence/golden_cases.md：新增 GC07～GC09（情境與紙上推演由 AI 寫，預期結果待 JiHungLin）
+  - questions.md：EQ-002、EQ-003、EQ-009 的「影響」追加
+  - 三份交付物狀態 → 待檢查；受影響的完成標準重新自評；各加「審查重點（2026-10-22 回頭修改）」
+- 依據：06_evidence/signoff.md「實作時發現的設計問題」#1～#22（實作 @ af460ea）；docs/03 P4 時間欄位與時區、docs/02 參數格式（工具包 @ 8df026a、5a98cab）；使用者 2026-10-22 決定 #16 採「確認後才建立」、#6 改成引用 P4、其餘照 AI 建議（第 0 級）
+- 舊 → 新：
+  - D-12「版本欄為『—』的規則填 annual-leave-grant/04-v1」→ 填規則所在的 04 凍結版本（05 D-29，推翻 D-12 這一部分）
+  - 年度終結後才登錄遞延：遞延進來的那一筆立刻可以休 → 扣回確認後才建立（04 D-27、03 D-17）
+  - C01「已年度終結的還可以休為 0」→ ＝待確認中的負數差額＋等確認的遞延（04 D-28）
+  - R83 已年度終結的跟還可以休比 → 跟額度減已休比（04 D-26）
+  - 未來的結束日：載入時就停止特休 → 到結束日那天由排程停止（05 D-33）
+  - 「今天」：雇主所在管轄區的日期 → 依 P4，雇主所在地的當地日期（05 D-28）
+- 影響與回歸：①② 不受影響，維持凍結；core/ 不受影響（③④ 改的是本切片 [候選] 的狀態轉換與規則，凍結時依 /domain-freeze 合併）。實作：impl/signoff-fixes 分支已依此改程式（seed、basis、engine、ledger、actions、scheduler、errors、clock），59 個測試通過；⑥ 要重跑 GC01、GC04、GC06 與新增的 GC07～GC09。hire-employee：「今天」的入口一起改（見 hire-employee CHANGELOG 同日那一筆）
+- 產出者：AI（Claude）；審查者：（待審查）
+
 ## 2026-10-21　annual-leave-grant/05-v2　⑤　凍結
 - 改了什麼：lint 既有格式問題的回頭修改（第 0 級）後重新凍結，內容見「（未凍結）⑤ 回頭修改（第 0 級）：lint 抓到的既有格式問題」那一筆。相對 annual-leave-grant/05-v1：黃金案例 GC02、GC03、GC05 不採用、完成標準「已做紙上驗證」的自評補一句、新增「審查重點（2026-10-21 回頭修改）」。設計不變
 - 依據：annual-leave-grant/05-v1；tools/lint.py（工具包 @ 8b5f2bd）；docs/02 ⑥
