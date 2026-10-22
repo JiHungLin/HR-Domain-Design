@@ -1,4 +1,4 @@
-# uv run pytest -v（impl/signoff-fixes，從 design/main @ af460ea 開，尚未 commit；2026-10-22）
+# uv run pytest -v（impl/signoff-fixes @ e540ee3 加上 GC07～GC09 改照 golden_cases.md 預期結果斷言；2026-10-22）
 ============================= test session starts ==============================
 platform linux -- Python 3.14.4, pytest-9.1.1, pluggy-1.6.0 -- /home/mycena/Projects/HR-Domain-Desing/impl/.venv/bin/python
 cachedir: .pytest_cache
@@ -74,4 +74,4 @@ tests/test_leave_uc.py::test_zz_conservation_on_all_data PASSED          [100%]
     from starlette.testclient import TestClient as TestClient  # noqa
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-======================== 59 passed, 1 warning in 8.20s =========================
+======================== 59 passed, 1 warning in 8.84s =========================

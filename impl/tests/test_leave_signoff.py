@@ -1,6 +1,7 @@
 """⑥ signoff 的設計問題回頭修改後（2026-10-22）：#12 R83、#15 C01、#16 遞延等扣回確認、#19 未來的結束日、#6 今天。
 
-GC07～GC09 的預期結果還沒由人填；這裡斷言的是 golden_cases.md「紙上推演」依設計推出的值（04 D-26～D-28、05 D-28、D-33）。
+GC07～GC09 斷言的預期值取自 golden_cases.md（JiHungLin 計算，2026-10-22），測試不自行計算；
+其餘斷言依設計（04 D-26～D-28、05 D-28、D-33）。
 """
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
@@ -25,8 +26,12 @@ def _six_months_year_ended(api, db, ref, used: str | None = None):
     return org, emp, first
 
 
-def _quantities(api, org, ent_id) -> dict:
-    return api("getLeaveEntitlement", org["hr"], path={"id": ent_id}, expect=200).json()["entitlement"]["quantities"]
+def _six(api, org, ent_id) -> tuple:
+    """黃金案例「要回答」的順序：額度、還可以休、已休、遞延出去、轉為工資、失效。"""
+    e = api("getLeaveEntitlement", org["hr"], path={"id": ent_id}, expect=200).json()["entitlement"]
+    q = e["quantities"]
+    return (e["quantity"], q["remaining_quantity"], q["used_quantity"], q["deferred_out_quantity"],
+            q["converted_quantity"], q["expired_quantity"])
 
 
 def test_gc07_r83_after_year_end_compares_unused(api, db, ref):
@@ -55,12 +60,10 @@ def test_gc08_c01_negative_until_confirmed(api, db, ref):
     conv = api("listLeaveConversions", h, params={"employment_id": emp, "status": "Provisional"}, expect=200).json()["items"]
     assert [(c["quantity"], c["correction_cause"]) for c in conv] == [("-1", "CORRECTION_CAUSE.LATE_LEAVE_RECORDED")]
     with on("2026-04-05"):
-        q = _quantities(api, org, first["entitlement_id"])
-    assert (q["used_quantity"], q["converted_quantity"], q["remaining_quantity"]) == ("2", "2", "-1")
+        assert _six(api, org, first["entitlement_id"]) == ("3", "-1", "2", "0", "2", "0")
     with on("2026-04-10"):
         api("confirmLeaveConversion", h, path={"id": conv[0]["conversion_id"]}, expect=201, json={"reason": "扣回"})
-        q = _quantities(api, org, first["entitlement_id"])
-    assert (q["converted_quantity"], q["remaining_quantity"]) == ("1", "0")
+        assert _six(api, org, first["entitlement_id"]) == ("3", "0", "2", "0", "1", "0")
     assert r["reassessment_notice_ids"]
 
 
@@ -75,16 +78,14 @@ def test_gc09_deferred_in_waits_for_confirmation(api, db, ref):
     assert [c["quantity"] for c in conv] == ["-2"]
     with on("2026-03-15"):
         assert not [e for e in entitlements(api, org, emp) if e["origin"] == "ENTITLEMENT_ORIGIN.DEFERRED_IN"]
-        q = _quantities(api, org, first["entitlement_id"])
-    assert (q["deferred_out_quantity"], q["converted_quantity"], q["remaining_quantity"]) == ("0", "3", "0")
+        assert _six(api, org, first["entitlement_id"]) == ("3", "0", "0", "0", "3", "0")
     with on("2026-03-20"):
         ok = api("confirmLeaveConversion", h, path={"id": conv[0]["conversion_id"]}, expect=201,
                  json={"reason": "已和薪資確認扣回"}).json()
         din = api("getLeaveEntitlement", h, path={"id": ok["deferred_in_entitlement_id"]}, expect=200).json()["entitlement"]
-        q = _quantities(api, org, first["entitlement_id"])
+        assert _six(api, org, first["entitlement_id"]) == ("3", "0", "0", "2", "1", "0")
     assert (din["origin"], din["quantity"]) == ("ENTITLEMENT_ORIGIN.DEFERRED_IN", "2")
     assert (din["acquired_on"], din["valid_from"], din["valid_to"]) == ("2026-03-02", "2026-03-02", "2027-03-01")
-    assert (q["deferred_out_quantity"], q["converted_quantity"], q["remaining_quantity"]) == ("2", "1", "0")
 
 
 def test_future_ending_fixture_waits_for_the_day(api, db, ref):

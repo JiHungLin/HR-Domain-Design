@@ -6,15 +6,15 @@
 | 步驟 | ⑥ 跑起來驗證 |
 | 狀態 | 草稿 |
 | 版本 | （凍結後填 tag） |
-| 讀取的輸入 | 01_scope.md @ annual-leave-grant/01-v1、03_use_cases.md @ annual-leave-grant/03-v3、04_rules.md @ annual-leave-grant/04-v2、05_mapping.md、api.yaml、schema.mongo.js、06_evidence/golden_cases.md @ annual-leave-grant/05-v2；hire-employee 的實作與 api.yaml @ hire-employee/05-v5；實作 @ impl/annual-leave-grant（未提交） |
+| 讀取的輸入 | 01_scope.md @ annual-leave-grant/01-v1、03_flows.md、03_use_cases.md @ annual-leave-grant/03-v4、04_rules.md @ annual-leave-grant/04-v3、05_mapping.md、api.yaml、schema.mongo.js、06_evidence/golden_cases.md @ annual-leave-grant/05-v3；hire-employee 的實作與 api.yaml @ hire-employee/05-v7；實作 @ impl/signoff-fixes（e540ee3）（2026-10-21 第一次執行時：03-v3、04-v2、05-v2，hire-employee/05-v5，impl/annual-leave-grant） |
 
 - 執行者：AI（Claude）——寫測試，在 MongoDB replica set（本機 Docker 容器）上執行
 - 簽核者：（不得與執行者同一人）
-- 日期：2026-10-21
-- 實作版本：JiHungLin/HR-Domain-Design，分支 impl/annual-leave-grant（從 design/main @ c7987b0 開，尚未 commit）（對應設計 tag：annual-leave-grant/01-v1、02-v1、03-v3、04-v2、05-v2）；2026-10-22 依設計問題 #1～#22 的回頭修改改程式：分支 impl/signoff-fixes（從 design/main @ af460ea 開，尚未 commit；對應的 03、04、05 待凍結），59 個測試通過（results/pytest_2026-10-22.txt）
-- 結果摘要：P0 可回答率 5/5（Q01～Q05）；P1 8/9（Q10 未執行）。黃金案例 3 筆（GC01、GC04、GC06；GC02、GC03、GC05 不採用）系統結果與預期結果一致，但依據的規則都是 [未核對]，不算通過（見下）。自動測試 54 個（hire-employee 37、annual-leave-grant 17），執行紀錄見 results/pytest_2026-10-21.txt、results/系統結果_2026-10-21.md
+- 日期：2026-10-21；2026-10-22 回頭修改後重跑
+- 實作版本：JiHungLin/HR-Domain-Design，分支 impl/annual-leave-grant（從 design/main @ c7987b0 開，尚未 commit）（對應設計 tag：annual-leave-grant/01-v1、02-v1、03-v3、04-v2、05-v2）；2026-10-22 依設計問題 #1～#22 的回頭修改改程式：分支 impl/signoff-fixes（從 design/main @ af460ea 開，commit e540ee3）（對應設計 tag：annual-leave-grant/03-v4、04-v3、05-v3，hire-employee/05-v7），59 個測試通過（results/pytest_2026-10-22.txt）
+- 結果摘要：P0 可回答率 5/5（Q01～Q05）；P1 8/9（Q10 未執行）。黃金案例 3 筆（GC01、GC04、GC06；GC02、GC03、GC05 不採用）系統結果與預期結果一致，但依據的規則都是 [未核對]，不算通過（見下）。自動測試 54 個（hire-employee 37、annual-leave-grant 17），執行紀錄見 results/pytest_2026-10-21.txt、results/系統結果_2026-10-21.md。2026-10-22 回頭修改後：新增黃金案例 GC07～GC09，系統結果與預期結果一致，同樣受 [未核對] 規則影響、不算通過；自動測試 59 個，執行紀錄見 results/pytest_2026-10-22.txt、results/系統結果_2026-10-22.md
 - 未執行的項目：ReviseCompanyPolicy、RepealCompanyPolicy（回 501）；註銷與撤銷註銷（hire-employee 的 /v1/annulments 回 501）；CorrectRecord 只實作 `employments.start_date`（不含 R46 重大更正的判定、本切片集合的更正）；OverrideWarning（hire-employee 回 501，警告查詢只會標出已存在的忽略）；RecordEarlyDeparture（hire-employee 回 501，掛勾已註冊）；R71（預設做法下不會成立，不判定）；R84 只在動作的回應、不在警告查詢；Q10（規則改版）；雇主資料改變的佇列（LoadEmployerFixture）
-- 受 [未核對] 規則影響、不算通過的案例：GC01（R65、R66、R69、R80、R81、R86、R89、R90）、GC04（R65、R91、R92、R93、R96）、GC06（R67、R85、R95）——04_rules 的規則與參數全部 [未核對]
+- 受 [未核對] 規則影響、不算通過的案例：GC01（R65、R66、R69、R80、R81、R86、R89、R90）、GC04（R65、R91、R92、R93、R96）、GC06（R67、R85、R95）、GC07（R83、R84、R86；EQ-003）、GC08（R86、R92、R93；EQ-009）、GC09（R86、R87、R92、R93；EQ-003、EQ-009）——04_rules 的規則與參數全部 [未核對]
 - 結論：通過 ／ 不通過
 
 ## 實作時發現的設計問題
