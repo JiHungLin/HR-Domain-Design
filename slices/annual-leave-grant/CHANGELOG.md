@@ -14,6 +14,11 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-22　annual-leave-grant/05-v3（凍結後補填）　⑥　回頭修改（第 0 級）：GC09 計算過程
+- 改了什麼：06_evidence/golden_cases.md GC09 補上「計算過程」（計算者 JiHungLin 填寫）；預期結果、設計都沒有改
+- 依據：計算者補填；預期結果與 03_flows D-17、04_rules D-27 一致（扣回確認前沒有遞延進來的特休可以休）
+- 舊 → 新：GC09 計算過程 空白 → ① 多發 2 日待人確認扣回，確認後才有遞延特休；② 遞延最長到次一年度終結；③ 確認前遞延出去 0、確認後 2，轉為工資 1
+
 ## 2026-10-22　annual-leave-grant/03-v4、annual-leave-grant/04-v3、annual-leave-grant/05-v3　③④⑤　凍結
 - 改了什麼：⑥ 實作時發現的 22 項設計問題與平台約定 P4 的回頭修改（第 0 級）後重新凍結，內容見下方「（未凍結）③④⑤ 回頭修改（第 0 級）：⑥ 實作時發現的 22 項設計問題、平台約定 P4」那一筆。相對 03-v3：D-17、D-18（LeaveEntitlement 新增 ConfirmLeaveConversion 兩列，事件 RejudgeLeaveYearEnd、ConfirmLeaveConversion、NotifyLeaveReassessment 改寫，UC-12）；相對 04-v2：R66、R76、R83、R86、R87、R92、R97、C01、C02 改寫，參數改新格式、分類值新增 8 個（D-26～D-32）；相對 05-v2：D-23～D-35、api.yaml 0.2.0、schema.mongo.js、黃金案例 GC07～GC09
 - 依據：06_evidence/signoff.md #1～#22（實作 @ af460ea）；docs/03 P4（工具包 @ 8df026a）
