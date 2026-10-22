@@ -12,6 +12,23 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-22　hire-employee/05-v7　⑤　凍結
+- 改了什麼：「今天」依雇主所在地（P4）的回頭修改（第 0 級）後重新凍結，內容見下方「（未凍結）⑤ 回頭修改（第 0 級）：「今天」依雇主所在地（P4）」那一筆。相對 hire-employee/05-v6：第三節開頭補 R36、R53、R56 的今天依雇主所在地；新增 D-24；讀取的輸入加 P4、③ 改讀 03-v7；signoff #22。api.yaml、schema.mongo.js 不變
+- 依據：docs/03 P4（工具包 @ 8df026a）；06_evidence/signoff.md #22
+- 反例處理：無
+- 決定：D-24 送審前已由使用者在對話中同意（2026-10-22），不是依審查重點登記
+- 審查方式：舊格式；只重新確認受影響的「④ 的每條規則都已決定落實位置」那一條（JiHungLin，2026-10-22，修正後確認），其餘維持 2026-10-16 的確認
+- 合併進 core/：無（第 ⑤ 步）；PLAN 已是「設計完成（待驗證）」，不變
+- 實作：impl/ 一起 commit（uc01 不再讀伺服器時鐘，改用 clock.today）；signoff #22「處理」欄補上新 tag
+- 產出者：AI（Claude）；審查者：JiHungLin（2026-10-22，通過）
+
+## 2026-10-22　（未凍結）　⑤　回頭修改（第 0 級）：「今天」依雇主所在地（P4）
+- 改了什麼：05_mapping.md 第三節開頭補一句：以日期判斷的規則（R36 逾期天數、R53、R56）的「今天」依雇主所在地的當地日期；新增 D-24；「讀取的輸入」加 P4、signoff #22，③ 的版本改寫最新的 hire-employee/03-v7（03-v7 只修格式）；狀態 → 待檢查；舊格式檢查紀錄只清空受影響的「④ 的每條規則都已決定落實位置」那一條的審查者確認。06_evidence/signoff.md 新增 #22
+- 依據：docs/03 P4（工具包 @ 8df026a）；signoff.md #22（impl/app/routers/uc01.py 用 date.today()）；使用者 2026-10-22 同意補上
+- 舊 → 新：⑤ 沒寫今天依哪個地點、程式讀伺服器時鐘 → 依雇主所在地，程式經 app/leave/clock.py 的 today(db, employer, session)
+- 影響與回歸：①～④ 不受影響，維持凍結；api.yaml 不變。實作：proposals 的兩個查詢改用 clock.today，test_decisions 的逾期測試改成固定「今天」；59 個測試通過
+- 產出者：AI（Claude）；審查者：（待審查）
+
 ## 2026-10-21　hire-employee/03-v7、hire-employee/05-v6　③⑤　凍結
 - 改了什麼：lint 既有格式問題的回頭修改（第 0 級）後重新凍結，內容見「（未凍結）③⑤ 回頭修改（第 0 級）：lint 抓到的既有格式問題」那一筆。相對 hire-employee/03-v6：03_flows.md 決定表的空行、D-19～D-21 的欄數（03_use_cases.md 沒改，只更新版本）。相對 hire-employee/05-v5：黃金案例 GC04、GC05 不採用、完成標準「已做紙上驗證」的自評補一句。設計不變
 - 依據：hire-employee/03-v6、hire-employee/05-v5；tools/lint.py（工具包 @ 8b5f2bd）；docs/02 ⑥

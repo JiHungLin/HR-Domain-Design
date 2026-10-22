@@ -5,9 +5,9 @@
 | 切片 | hire-employee |
 | 步驟 | ⑤ 投影到實作 |
 | 狀態 | 已凍結 |
-| 版本 | hire-employee/05-v6 |
+| 版本 | hire-employee/05-v7 |
 | 產出者 | AI（Claude）＋ |
-| 讀取的輸入 | 02_entities.md @ hire-employee/02-v4；03_flows.md、03_use_cases.md @ hire-employee/03-v6；04_rules.md @ hire-employee/04-v5；docs/03 平台架構約定（P4、P5、P10 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31）；回頭修改（2026-10-14，第二次）：03_flows D-20、04_rules D-19、D-20（回頭修改中）；06_evidence/signoff.md #18～#20（impl/hire-employee @ 392b358）；回頭修改（2026-10-16）：03_flows D-21、04_rules D-21、06_evidence/signoff.md #21（impl/hire-employee @ ccc0bf8）、docs/03 P12（工具包 @ d301ec6）；回頭修改（2026-10-21）：docs/02 ⑥「候選與不採用」、tools/lint.py 黃金案例檢查（工具包 @ 8b5f2bd） |
+| 讀取的輸入 | 02_entities.md @ hire-employee/02-v4；03_flows.md、03_use_cases.md @ hire-employee/03-v7；04_rules.md @ hire-employee/04-v5；docs/03 平台架構約定（P4、P5、P10 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31）；回頭修改（2026-10-14，第二次）：03_flows D-20、04_rules D-19、D-20（回頭修改中）；06_evidence/signoff.md #18～#20（impl/hire-employee @ 392b358）；回頭修改（2026-10-16）：03_flows D-21、04_rules D-21、06_evidence/signoff.md #21（impl/hire-employee @ ccc0bf8）、docs/03 P12（工具包 @ d301ec6）；回頭修改（2026-10-21）：docs/02 ⑥「候選與不採用」、tools/lint.py 黃金案例檢查（工具包 @ 8b5f2bd）；回頭修改（2026-10-22）：docs/03 P4 時間欄位與時區（工具包 @ 8df026a）、06_evidence/signoff.md #22 |
 
 <!-- 資料庫為 MongoDB（PLAN.md D-35），本文件的「表」是集合（collection），「欄位」是文件的欄位。
      概念 ID 寫 core/ 的英文識別名稱；技術欄位標 [技術]（P8）。本步先只產出這份對照表，經人確認後才產生 schema.mongo.js 與 api.yaml。 -->
@@ -212,6 +212,8 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 ## 三、規則 → 落實位置
 <!-- db constraint／db trigger／service／人工；MongoDB 沒有 trigger，「db constraint」指集合的驗證規則與唯一索引（PLAN.md D-35） -->
 
+以日期判斷的規則用到的「今天」（R36 逾期天數、R53 個資請求的期限提醒、R56 保存期滿），依雇主所在地的當地日期（P4，D-24）。
+
 | 規則 | 落實位置 | 說明 |
 |---|---|---|
 | R02、R03 | db constraint | 同一文件內的日期比較，用集合驗證規則的 `$expr`（例：`ended_on >= start_date`）；service 再檢查一次以回傳清楚的訊息 |
@@ -369,6 +371,7 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | D-21 | 待人判斷事項的決定用 `POST /v1/enrollment-proposals/{id}/decisions` 記在加保待辦上；加保待辦加 `estimated`（錄用時的預估）、`days_overdue`（逾期，不能忽略）；`StartEmploymentIn`、補登加 `public_or_military_insurance_covered` | 另設集合記錄決定 | 比照雇主選擇不加自願保險的做法（03_flows D-19）；實作回報 signoff.md #13～#15、#17 | 04_rules D-15～D-18；03_flows D-19 | AI／JiHungLin（2026-10-14） |
 | D-22 | 待人判斷的決定記在原本那一筆待辦上（P2 B），記錄後在同一交易依決定重新判定，產生新的待辦取代原本那一筆；`recordProposalDecision` 回應的 `proposal_id` 是新的待辦、`event_id` 是重新判定的 ProposeEnrollmentFiling 事件；加保待辦與判定查詢加 `needs_decision`（還沒決定的「其他」類固定給付）；`api.yaml` 0.4.0 | 只記錄決定，等下一次其他觸發才重新判定；另立事件；把需要級距的保險項目標成待人判斷 | 實作回報 signoff.md #18、#19：決定之後待辦要馬上反映；03 不另立事件（03_flows D-19、D-20）；適用不受固定給付影響（04_rules D-19） | 03_flows D-20；04_rules D-19、D-20；signoff.md #18～#20 | AI／JiHungLin（2026-10-14） |
 | D-23 | 「這個職務是否依法應參加公教或軍保」：到職（`POST /hires/{id}/start`）、補登（`POST /employments/backfill`）的請求必填；新增 `POST /v1/employments/{id}/periods`（RecordEmploymentPeriod）在 `public_or_military_insurance_covered[]` 新增一段；02-v4 之前建立的僱傭關係沒有這個欄位，代表未知，判定時就保為資料不足（04_rules D-21），用同一支 API 補值；第四區加「既有資料（P12）」；`api.yaml` 0.5.0 | 選填；用 CorrectRecord 改值；預設為 false | docs/03 P12：未知不能當成否、補值要用業務動作；03_flows D-21 | 03_flows D-21；04_rules D-21；signoff.md #21；docs/03 P12 | AI／JiHungLin（2026-10-16） |
+| D-24 | 〔回頭修改，2026-10-22，signoff.md #22〕以日期判斷的規則用到的「今天」，依雇主所在地的當地日期（P4）；程式一律從同一個入口取得今天（annual-leave-grant 的 `today`，傳入雇主），不讀伺服器時鐘；地點 → 時區由平台對照，這版同 annual-leave-grant 05_mapping D-28 以程式內固定的對照代替（[靜態替代]） | 依伺服器時鐘（實作原本的做法）；依員工工作地點 | 加保期限、個資請求期限都是雇主的義務，以雇主所在地的日期判斷；同一客戶的兩條切片用同一個「今天」，跨午夜時兩邊才不會差一天。docs/03 P4 要求 Domain 寫出用哪個地點；使用者 2026-10-22 同意補上 | docs/03 P4；signoff.md #22；annual-leave-grant 05_mapping D-28 | AI／JiHungLin（2026-10-22） |
 
 ### 反例處理
 
@@ -415,7 +418,7 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | ② 標為推導值的東西，都已依平台 P3 決定身分 | ✓ 第四節：各保險的適用、期限、級距、晚辦天數、年齡、年資、人數、月薪資總額、移工契約實際期限、法規警告、勞工名卡都標「不存，現算」；狀態與 annulled 標快取（AI 比對 02「不是 Entity」的推導值） | ✓（JiHungLin 於對話中確認，2026-10-16：「全通過」） |
 | ③ 標出的歷史需求，都已依平台 P2 決定保存方式 | ✓ 第四節逐項：需要重建當時者為 A（Person、證件、僱傭關係、約定薪資、工作許可、投保、投保薪資）；需要軌跡者為 B；聯絡方式為 C（AI 比對 03 的 12 個狀態機與「不需要狀態機的東西」） | ✓（JiHungLin 於對話中確認，2026-10-16：「全通過」） |
 | ③ 的每個動作與狀態變更都有對應的 API，且符合平台 P1 | ✓ 第二節：36 個事件中，人觸發的 25 個有 API，時間或條件觸發與建議層的由系統產生並有查詢 API；狀態只由事件改變，CorrectRecord 不能改狀態（2.2）（AI 比對 03 事件表） | ✓（JiHungLin 於對話中確認，2026-10-16：「全通過」） |
-| ④ 的每條規則都已決定落實位置（平台 P6） | ✓ 第三節涵蓋 R01～R64（R54 已取消不列）：db constraint 4 條、人工 2 條、其餘 service（AI 比對 04 規則表） | ✓（JiHungLin 於對話中確認，2026-10-16：「全通過」） |
+| ④ 的每條規則都已決定落實位置（平台 P6） | ✓ 第三節涵蓋 R01～R64（R54 已取消不列）：db constraint 4 條、人工 2 條、其餘 service（AI 比對 04 規則表）；2026-10-22 補上以日期判斷的規則依雇主所在地的今天（P4，D-24） | ✓ (2026-10-22，修正後確認) |
 | 每個正式 Use Case 都已在對照表走一遍：每一步的輸入都拿得到；來自前一步回應的，`api.yaml` 該回應有這個欄位 | ✓ 第六區 15 個 UC 逐步對到 API，每一步的輸入都寫出來源；來自回應的欄位（hire_id、person_id、employment_id、enrollment_id、work_authorization_id、identity_document_id、warning_override_id、data_subject_request_id、archival_id、annulment_event_id 等）都在 api.yaml 該 API 的回應格式中（AI 比對）。UC-15 的 employment_id 來自前一步回應或其他切片的清單（D-19） | ✓（JiHungLin 於對話中確認，2026-10-16：「全通過」） |
 | `api.yaml` 每支 API 的請求與回應都寫到欄位層級，業務欄位對得回對照表第一區；說明（summary）提到的欄位都在格式裡 | ✓ 38 支 API 的請求與回應都是具名 schema（81 個；0.4.0 新增 NeedsDecision，0.5.0 新增 RecordEmploymentPeriodIn），有 required、巢狀物件的欄位、additionalProperties: false；業務欄位與第一區一致（AI 比對）；summary 提到的約定薪資、契約、建立項目的編號都在格式中 | ✓（JiHungLin 於對話中確認，2026-10-16：「全通過」） |
 | 已做紙上驗證：每筆黃金案例依設計推演的結果與人工預期一致；不一致的已回頭修改 | ✓ 使用者選用 GC01～GC03 並填預期結果；AI 依設計推演後比對：GC01 一致；GC02、GC03 初次共 3 處不一致，使用者複核後都是預期結果需更正（勞保生效日翌日、移工時間差不警告、健保期限始日不算入），設計不需回頭修改。結果仍有前提待專家確認：EQ-003（健保、勞退生效日）、EQ-012（伙食津貼算不算入）。2026-10-21：沒選用的 GC04、GC05 依 docs/02 ⑥「候選與不採用」，「紙上判定」「判定」由 [未執行] 改為「不採用」，推演與判定結果不變（lint 黃金案例檢查通過） | ✓（JiHungLin 於對話中確認，2026-10-21：「OK，那都通過」） |
