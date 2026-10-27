@@ -113,7 +113,7 @@ hire-employee 正式定義這些名詞時，要能支撐下列需求；做不到
 - **因事件才有的假（PLAN.md D-39）**：婚假、喪假、產假、陪產檢及陪產假等因結婚、親屬過世、分娩才有，天數依事件或親屬關係而定（請假#02、#03、#13）`[未核對]`。LeaveEntitlement 的形狀是特休「每期給一筆、有可休起訖日」；按事件給的假要不要先給一筆請假權利（例：結婚登記後給一筆、限期內請完），還是請假時才檢查上限，由 event-leave 第 ② 步決定。喪假要知道過世的是員工的哪位親屬，親屬不一定是系統裡的 Person，DependentRelation 目前只指健保眷屬，也由 event-leave 第 ② 步決定怎麼表示。
 - **兩種假共用一個額度**：例如某些假別併入事假的日數計算 `[未核對]`，LeaveEntitlement 目前一筆只屬於一個 LeaveType；由 unpaid-leave-deduction 第 ② 步決定怎麼表示。
 - **隨僱傭關係結束的那一筆，法令修正補足後的差額（annual-leave-grant 04 R100）**：法定天數表新版本晚載入時，已隨離職結束（EndedWithEmployment）的那一筆會就地增加，但契約終止的轉換由 resignation 判定；resignation 第 ② 步要確認 LeaveConversion（原因：契約終止）能記這種差額，並有接手的待辦（annual-leave-grant 這一階段只列在重新判定的通知）。
-- **離職那一年的特休改用週年制試算（inputs/shared/範圍釐清_特休離職回歸週年制.md；research/特別休假.md #05）**：公司可以約定曆年制、學年制或自行約定年度，但勞工在約定的年度中終止契約時，終止那一年的特休日數要改用週年制試算，不足的補給（天數或工資）。annual-leave-grant 把年度中途離職的那一筆交給 resignation（EndedWithEmployment）；resignation 第 ② 步要確認 LeaveEntitlement 與 LeaveConversion（原因：契約終止）撐得起「依週年制重算、補差額」。
+- **離職那一年的特休改用週年制試算（inputs/shared/範圍釐清_特休離職回歸週年制.md；research/特別休假.md #05）**：公司可以約定曆年制、學年制或自行約定年度，但勞工在約定的年度中終止契約時，終止那一年的特休日數要改用週年制試算，不足的補給（天數或工資）。annual-leave-grant 依週年制試算終止那一年的天數，算出和已給天數的差額（正負都有），交給 resignation（01_scope D-20，2026-10-27 回頭修改）；resignation 決定折算工資依哪個天數，第 ② 步要確認 LeaveEntitlement 與 LeaveConversion（原因：契約終止）撐得起「依週年制試算的差額、折算」。
 - **轉任或改組留用時，未休特休由新的僱傭關係承接（annual-leave-grant EQ-010）**：LeaveEntitlement 屬於一段 Employment，LeaveConversion 這一階段只有「轉為工資」「失效」；如果實務上由新雇主承接，由 seniority-recognition 或 cross-border-transfer 加上轉入另一筆的方式。
 - assignment-payroll 的幣別換算可能需要「匯率」這個名詞；目前不列，到該切片第 ① 步再看。
 - 同一段 Employment 有多個工作地點（例：一半遠距），目前不列，到 second-country-hire 第 ① 步再看。

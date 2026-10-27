@@ -12,6 +12,13 @@
 - 同意者：
 -->
 
+### 2026-10-27　SKETCH　annual-leave-grant 第 ① 步回頭修改：離職那一年依週年制試算改由本切片算
+- 改了什麼：「不確定的地方」中「離職那一年的特休改用週年制試算」那一條：試算與差額由 annual-leave-grant 算出（正負都交），resignation 決定折算工資依哪個天數
+- 依據：slices/annual-leave-grant/01_scope.md D-20、X-49；inputs/shared/範圍釐清_特休離職回歸週年制.md；特別休假#05
+- 舊 → 新：annual-leave-grant 把那一筆交給 resignation，由 resignation 依週年制重算、補差額 → annual-leave-grant 試算並交出差額，resignation 折算
+- 影響：resignation（地圖 resignation 列「未休特休折算工資」不變）
+- 同意者：JiHungLin（2026-10-27，同意 D-20 的分工 A）
+
 ### 2026-10-27　SKETCH　annual-leave-grant 第 ② 步凍結：LeaveConversionRecovery 改為已定義
 - 改了什麼：LeaveConversionRecovery 的狀態 草圖 → 已定義，「一句意思」改為「見 core/entities.md」
 - 依據：slices/annual-leave-grant/02_entities.md @ annual-leave-grant/02-v2；core/entities.md
