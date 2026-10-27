@@ -160,6 +160,24 @@ db.leave_conversions.createIndex({ entity_id: 1, is_current: 1 }, { unique: true
 db.leave_conversions.createIndex({ tenant_id: 1, status: 1, payment_due_on: 1, is_current: 1 }); // 薪資切片、待確認清單
 db.leave_conversions.createIndex({ tenant_id: 1, entitlement_id: 1, is_current: 1 });
 
+// LeaveConversionRecovery：需要軌跡（P2 A，只新增；改口是新的一筆，02 D-21、05_mapping D-39）
+// 還有效的天數、未收回的天數不存（P3）；涵蓋與天數上限由 service 檢查（04 R101、R103）
+create("leave_conversion_recoveries", "LeaveConversionRecovery", ["tenant_id", "entity_id", "revision", "is_current", "employment_id", "conversion_id", "method", "quantity", "responded_on", "status"], {
+  ...tenantScoped, ...versioned,
+  employment_id: ref,                                                 // [技術] 查詢用；可由 conversion_id 推出
+  conversion_id: ref, replaces_recovery_id: ref, offset_by_conversion_id: ref, // recoversConversion、replacesRecovery、offsetByConversion
+  method: { enum: ["RECOVERY_METHOD.PAYROLL_DEDUCTION", "RECOVERY_METHOD.REPAYMENT_AGREED", "RECOVERY_METHOD.REPAID",
+                   "RECOVERY_METHOD.REFUSED", "RECOVERY_METHOD.DEFERRAL_DECLINED", "RECOVERY_METHOD.OFFSET_BY_REJUDGE"] },
+  quantity: qty, responded_on: date, evidence_note: str,
+  status: { enum: ["Active", "Annulled"] },
+}, { expr: { $and: [
+  { $gt: ["$quantity", 0] },                                          // R101
+  { $or: [{ $eq: ["$method", "RECOVERY_METHOD.OFFSET_BY_REJUDGE"] }, missing("$offset_by_conversion_id")] }, // offsetByConversion 只有撤回的才有
+] } });
+db.leave_conversion_recoveries.createIndex({ entity_id: 1, is_current: 1 }, { unique: true, ...currentOnly() });
+db.leave_conversion_recoveries.createIndex({ tenant_id: 1, conversion_id: 1, is_current: 1 });
+db.leave_conversion_recoveries.createIndex({ tenant_id: 1, employment_id: 1, method: 1, is_current: 1 }); // 依方式查（未收回的名單）
+
 // NotifyLeaveReassessment（建議層，不可作廢，05_mapping D-08）：沒有修改或作廢的 API
 create("leave_reassessment_notices", "NotifyLeaveReassessment", ["tenant_id", "employment_id", "trigger_event_id", "root_event_id", "notified_at"], {
   ...tenantScoped, employment_id: ref, trigger_event_id: ref, root_event_id: ref,
@@ -169,9 +187,10 @@ create("leave_reassessment_notices", "NotifyLeaveReassessment", ["tenant_id", "e
   action_items: { bsonType: "array", items: { bsonType: "object", required: ["kind"], properties: {
     kind: { enum: ["NOTICE_ACTION.USED_ON_VOIDED", "NOTICE_ACTION.RENOTIFY", "NOTICE_ACTION.REDEFER", "NOTICE_ACTION.USED_OVER_QUANTITY",
                    "NOTICE_ACTION.BACKFILL_OVERLAP_OR_GAP", "NOTICE_ACTION.NOTICE_BEFORE_ACQUIRED", "NOTICE_ACTION.DEFERRAL_OVER_UNUSED",
-                   "NOTICE_ACTION.CONVERSION_DATES_CHANGED", "NOTICE_ACTION.PERIOD_CHANGED_WITH_USED"] },
-    entitlement_id: ref, detail: str } } },
-  notified_to: { bsonType: "array", items: { enum: ["HR", "EMPLOYER"] } }, notified_at: date,
+                   "NOTICE_ACTION.CONVERSION_DATES_CHANGED", "NOTICE_ACTION.PERIOD_CHANGED_WITH_USED", "NOTICE_ACTION.TOP_UP_BACKFILL",
+                   "NOTICE_ACTION.TOP_UP_ENDED_EMPLOYMENT", "NOTICE_ACTION.RECOVERY_CHANGED_TO_DEDUCTION", "NOTICE_ACTION.RECOVERY_ANNULLED", "NOTICE_ACTION.RECOVERY_OFFSET"] },
+    entitlement_id: ref, detail: str, suggested_quantity: qty } } },   // suggested_quantity：補登那一筆的建議天數（04 R100）
+  notified_to: { bsonType: "array", items: { enum: ["HR", "EMPLOYER", "EMPLOYEE"] } }   // EMPLOYEE：可休天數改變時（03_flows D-24）, notified_at: date,
 });
 db.leave_reassessment_notices.createIndex({ tenant_id: 1, root_event_id: 1 });
 db.leave_reassessment_notices.createIndex({ tenant_id: 1, employment_id: 1, notified_at: -1 });
@@ -183,16 +202,30 @@ create("leave_used_quantity_fixtures", "LeaveEntitlement.used_quantity [靜態�
 }, { expr: { $gte: ["$used_quantity", 0] } });
 db.leave_used_quantity_fixtures.createIndex({ entitlement_id: 1 }, { unique: true });
 
-// 契約約定的工資給付日與發給期限的做法（04 參數 wage_payment_day、wage_payment_lag_months、payment_deadline_rule，04 D-23）：
+// 契約約定的工資給付日（04 參數 wage_payment_day、wage_payment_lag_months，04 D-23）：
 // monthly-payroll 定義後取代；P2 C；平台維運載入，沒有 API；沒有登錄時用 rule_versions（R90）的值（05_mapping 3.2、D-21、D-31）
-create("employer_settings", "參數 wage_payment_day、wage_payment_lag_months、payment_deadline_rule [靜態替代]", ["tenant_id", "employer_id"], {
+// 2026-10-22：payment_deadline_rule 移到 contract_settings（05_mapping D-36）
+create("employer_settings", "參數 wage_payment_day、wage_payment_lag_months [靜態替代]", ["tenant_id", "employer_id"], {
   ...tenantScoped, employer_id: ref,
   wage_payment_day: period({ bsonType: "int", minimum: 1, maximum: 31 }),
   wage_payment_lag_months: period({ bsonType: "int", minimum: 0, maximum: 1 }),
-  // 存 04 分類值的完整代碼（05_mapping D-35）；用計算發給期限的錨點那一天查帶期間的值（05_mapping D-32）
-  payment_deadline_rule: period({ enum: ["PAYMENT_DEADLINE_RULE.CONTRACT_WAGE_PAYMENT_DAY", "PAYMENT_DEADLINE_RULE.DAYS_AFTER_YEAR_END"] }),
 });
 db.employer_settings.createIndex({ employer_id: 1 }, { unique: true });
+
+// 勞動契約約定的發給期限做法（04 參數 payment_deadline_rule，依勞動契約，04 D-33；05_mapping D-36）：
+// P2 B（每一段帶雙方簽字的日子與憑據，舊的不刪）；平台維運載入，沒有 API，載入記 LoadContractSettingsFixture；
+// value 為 null＝契約寫明沒有約定，用 rule_versions（R90）的預設；沒有這份契約的文件或那天沒有一段＝資料不足（04 R90、05_mapping D-42）
+// 存 04 分類值的完整代碼（05_mapping D-35）；用計算發給期限的錨點那一天查（05_mapping D-32）
+create("contract_settings", "參數 payment_deadline_rule（依勞動契約）[靜態替代]", ["tenant_id", "employment_contract_id"], {
+  ...tenantScoped, employment_contract_id: ref,
+  payment_deadline_rule: {
+    bsonType: "array",
+    items: { bsonType: "object", required: ["value", "from", "agreed_on"], properties: {
+      value: { enum: ["PAYMENT_DEADLINE_RULE.CONTRACT_WAGE_PAYMENT_DAY", "PAYMENT_DEADLINE_RULE.DAYS_AFTER_YEAR_END", null] },
+      from: date, to: date, agreed_on: date, basis_note: str } },
+  },
+});
+db.contract_settings.createIndex({ employment_contract_id: 1 }, { unique: true });
 
 // ---------- 平台表 [技術] ----------
 create("leave_locks", "[技術] 同一段僱傭關係（或同一雇主的公司規定）的同時寫入保護（05_mapping D-05、D-18）", ["tenant_id", "scope", "key_id"], {

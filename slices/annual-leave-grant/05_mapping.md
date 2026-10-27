@@ -5,9 +5,9 @@
 | 切片 | annual-leave-grant |
 | 步驟 | ⑤ 投影到實作 |
 | 狀態 | 已凍結 |
-| 版本 | annual-leave-grant/05-v3 |
+| 版本 | annual-leave-grant/05-v4 |
 | 產出者 | AI（Claude）＋ |
-| 讀取的輸入 | 02_entities.md @ annual-leave-grant/02-v1；03_flows.md、03_use_cases.md @ annual-leave-grant/03-v3（本步回頭修改 D-16，一起凍結）；04_rules.md @ annual-leave-grant/04-v2（本步回頭修改 D-22～D-25，一起凍結）；core/ @ b341be2；docs/03 平台架構約定（P4、P5、P10、P12 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31）；slices/hire-employee/05_mapping.md、api.yaml @ hire-employee/05-v5（共用的集合、`events`、更正與註銷、警告忽略的 API 與格式）；回頭修改（2026-10-21）：docs/02 ⑥「候選與不採用」、tools/lint.py 黃金案例檢查（工具包 @ 8b5f2bd）；回頭修改（2026-10-22）：06_evidence/signoff.md「實作時發現的設計問題」#1～#22（實作 @ af460ea）、docs/03 P4 時間欄位與時區、docs/02 參數格式（工具包 @ 8df026a） |
+| 讀取的輸入 | 02_entities.md @ annual-leave-grant/02-v2；03_flows.md、03_use_cases.md @ annual-leave-grant/03-v5（2026-10-21 本步回頭修改 D-16；2026-10-22 第二輪一起回頭修改、一起凍結）；04_rules.md @ annual-leave-grant/04-v4（2026-10-21 本步回頭修改 D-22～D-25；2026-10-22 第二輪同上）；core/ @ b341be2；docs/03 平台架構約定（P4、P5、P10、P12 照文件；P1、P2、P3、P6、P7、P8 與資料庫依 PLAN.md D-35；P11 依 PLAN.md D-31）；slices/hire-employee/05_mapping.md、api.yaml @ hire-employee/05-v5（共用的集合、`events`、更正與註銷、警告忽略的 API 與格式）；回頭修改（2026-10-21）：docs/02 ⑥「候選與不採用」、tools/lint.py 黃金案例檢查（工具包 @ 8b5f2bd）；回頭修改（2026-10-22）：06_evidence/signoff.md「實作時發現的設計問題」#1～#22（實作 @ af460ea）、docs/03 P4 時間欄位與時區、docs/02 參數格式（工具包 @ 8df026a）；第二輪回頭修改（2026-10-22）：02_entities.md D-19、D-20，03_flows.md D-19～D-21，04_rules.md D-33～D-36（同一輪回頭修改，一起凍結；依據 inputs/annual-leave-grant/特休_使用者自行查證_EQ-003_008_009.md）；2026-10-27 依挑錯（另開兩個子代理）與使用者的選擇修改：02_entities D-21、D-22，03_flows D-22、D-23，04_rules D-37～D-40；2026-10-27 EQ-008 範圍：inputs/annual-leave-grant/特休_法令修正補足的範圍_使用者整理.md、特休_曆年制實務_使用者整理.md（使用者整理，不是 HC 的答覆） |
 
 <!-- 資料庫為 MongoDB（PLAN.md D-35），本文件的「表」是集合（collection），「欄位」是文件的欄位。
      概念 ID 寫 core/ 的英文識別名稱；技術欄位標 [技術]（P8）。本步先只產出這份對照表，經人確認後才產生 schema.mongo.js 與 api.yaml。
@@ -27,14 +27,16 @@
 | LeaveEntitlement | `leave_entitlements` | 見 1.2 | 只新增（P2 A）：就地更正、告知日、狀態改變都新增一份版本文件 |
 | LeaveDeferralAgreement | `leave_deferral_agreements` | 見 1.2 | 只新增（P2 A）：修改（AmendLeaveDeferral）與打錯的更正都新增版本 |
 | LeaveConversion | `leave_conversions` | 見 1.2 | 只新增（P2 A）；已判定的內容不再改，差額另記一筆（02 D-06） |
+| LeaveConversionRecovery | `leave_conversion_recoveries` | 見 1.2 | 只新增（P2 A）：登錄後不改，改口是新的一筆（`replaces_recovery_id`）；打錯的回應日、憑據說明用 CorrectRecord 新增版本；註銷依 core AnnulEntry，`status` 標 Annulled（D-39） |
 | 年度終結的判定內容（CloseLeaveYear、RejudgeLeaveYearEnd） | `events` | `payload.year_end`：見 1.3 | 判定當時已知的已休等記在那次判定的事件上（03_flows D-15、04 自評第 7 條），不另立集合（D-07） |
 | NotifyLeaveReassessment（事件，建議層） | `leave_reassessment_notices` | 見 1.2 | 不可作廢：獨立集合，沒有作廢或修改的 API（03_flows 事件表；同 hire-employee 的 `significant_corrections`，D-08） |
 | 已休（`LeaveEntitlement.used_quantity`）[靜態替代] | `leave_used_quantity_fixtures` | `entitlement_id`、`used_quantity`、`recorded_by`、`recorded_at`、`reason` | 這版的固定資料（01_scope 範圍外但會用到；02 D-13）；改正要記誰、何時、理由（03_flows 更正方式「已休」），覆寫＋變更紀錄（P2 B）；annual-leave-request 定義請假事實後取代（D-10）。只有一個累計值、沒有日期：查詢帶 `on` 時已休與剩餘一律用目前的累計值，回應標 `used_quantity_basis`＝目前累計（[靜態替代] 的限制）；帶 `as_of` 時取 `recorded_at` 早於它的最後一筆 `LoadUsedQuantityFixture` 事件的 `payload.used_quantity`（事件記值；`change_log` 只記欄位名稱、不記值，還原不了，D-25）（X-09） |
-| 契約約定的工資給付日、發給期限的做法 [靜態替代] | `employer_settings` | `employer_id`、`wage_payment_day[]`、`wage_payment_lag_months[]`、`payment_deadline_rule[]`：各為 `value`、`from`、`to` | 04 參數 `wage_payment_day`、`wage_payment_lag_months`、`payment_deadline_rule`，依雇主（04 D-23）；這版由平台維運載入固定資料，沒有 API；沒有登錄 `payment_deadline_rule` 時用 `rule_versions`（R90）的預設；monthly-payroll 第 ④ 步定義後取代（D-10） |
+| 契約約定的工資給付日 [靜態替代] | `employer_settings` | `employer_id`、`wage_payment_day[]`、`wage_payment_lag_months[]`：各為 `value`、`from`、`to` | 04 參數 `wage_payment_day`、`wage_payment_lag_months`，依雇主（04 D-23）；這版由平台維運載入固定資料，沒有 API；monthly-payroll 第 ④ 步定義後取代（D-10）。〔2026-10-22〕`payment_deadline_rule` 移到 `contract_settings`（D-36） |
+| 勞動契約約定的發給期限做法 [靜態替代] | `contract_settings` | `employment_contract_id`（hire-employee 的 `employment_contracts`）、`payment_deadline_rule[]`：各為 `value`、`from`、`to`、`agreed_on`（雙方簽字的日子）、`basis_note`（契約條款或修改的憑據說明） | 04 參數 `payment_deadline_rule`，依勞動契約（04 D-33）；換做法是新增一段 `from` 起的值、前一段補上 `to`，舊的不刪；這版由平台維運載入固定資料，沒有 API；載入記固定資料事件 `LoadContractSettingsFixture`（查得到當時看到的值；`from` 早於 `agreed_on` 的追溯修改照載入，列在載入結果交給人確認）；`value` 空白＝契約上寫明沒有約定，用 `rule_versions`（R90）的預設；**這份契約沒有任何一段、或錨點那天沒有有效的契約**時資料不足（04 R90、04 D-40，D-42）；只看 `employment_contracts` 中沒有註銷的契約；正式的契約條款與修改流程由之後的切片定義後取代（D-36） |
 | 一般離職的結束日 [靜態替代] | `employments`（hire-employee 的集合） | `ended_on`、`end_reason`、`status` | 這版以固定資料提供（01_scope D-14）：用 `POST /v1/employments/{id}/ending-fixture` 寫一筆事件 `LoadEmploymentEndingFixture`，產生新版本的 `employments`，視同 resignation 的離職事件（03_flows EndLeaveEntitlementsWithEmployment 的觸發來源）；結束日不晚於今天時，同一交易 `status` 改為 Ended 並執行 EndLeaveEntitlementsWithEmployment；結束日在未來時只記 `ended_on`，`status` 維持 Active，到結束日那天由每日排程改為 Ended 並執行（D-33）；已有結束日的不能再載入，要改用更正；resignation 定義後拿掉（D-10） |
-| 所有有名字的事件（P1） | `events`（hire-employee 的集合） | 見 1.3 | 本切片的 20 個事件與 1 個固定資料事件寫在同一個集合 |
+| 所有有名字的事件（P1） | `events`（hire-employee 的集合） | 見 1.3 | 本切片的 22 個事件與固定資料事件寫在同一個集合 |
 | 規則與版本（P5） | `rule_versions`（hire-employee 的集合） | `rule_id`（R65…）、`version`、`revision`、`effective_from`、`effective_to`、`params`、`source_ref` | 全平台共用；04 參數表中「依什麼條件變化」為「—」的參數放在用到它的規則的 `params`（第三節 3.2） |
-| 分類值的多語名稱（P10） | `labels`（hire-employee 的集合） | `code`（例：`LEAVE_TYPE.ANNUAL_LEAVE_TW`）、`locale`、`label` | 26 個分類值的 zh-TW 名稱取自 04 分類值表 |
+| 分類值的多語名稱（P10） | `labels`（hire-employee 的集合） | `code`（例：`LEAVE_TYPE.ANNUAL_LEAVE_TW`）、`locale`、`label` | 04 分類值表每個代碼的 zh-TW 名稱（2026-10-22 起 38 個） |
 
 ### 1.2 業務欄位
 
@@ -78,9 +80,12 @@
 | LeaveConversion.reason、target、quantity | `leave_conversions` | `reason`、`target`（code）、`quantity`（decimal，差額可為負） | |
 | LeaveConversion.determined_on、wage_basis_date、payment_due_on | `leave_conversions` | `determined_on`、`wage_basis_date`、`payment_due_on`（date，後兩者可空） | 判定時算出、凍結（02 X-14）；失效、負數差額沒有發給期限（R90） |
 | LeaveConversion.basis_rule_versions、correction_cause | `leave_conversions` | `basis_rule_versions[]`（同上）、`correction_cause`（code，可空） | |
+| LeaveConversionRecovery.method、quantity、responded_on、evidence_note | `leave_conversion_recoveries` | `method`（code，04 RECOVERY_METHOD）、`quantity`（number，大於 0）、`responded_on`（date，P4）、`evidence_note`（string） | 04 R101；`OFFSET_BY_REJUDGE` 只由 RejudgeLeaveYearEnd 寫（`actor`＝system） |
+| recoversConversion、replacesRecovery、offsetByConversion | `leave_conversion_recoveries` | `conversion_id`（ref）、`replaces_recovery_id`（ref，可空）、`offset_by_conversion_id`（ref，可空） | 還有效的天數、未收回的天數不存，查詢時由 `quantity` 與取代它、沒有註銷的各筆算出（P3，D-39） |
+| LeaveConversionRecovery 的狀態 | `leave_conversion_recoveries` | `status`（Active／Annulled） | 只有註銷會改（core AnnulEntry），不是 03 的狀態機；被取代是推導的 |
 | convertsFrom、correctsConversion | `leave_conversions` | `entitlement_id`、`corrects_conversion_id`（ref，可空）、`corrects_judgment_event_id`（可空） | 差額指回被更正的那一次（03_flows D-06）：原判定有轉換時指那筆轉換；原判定沒有轉換（例：全部遞延、之後協商撤回）時指那次 CloseLeaveYear 或 RejudgeLeaveYearEnd 的事件。差額一律對「應轉換額度減已判定合計」算（R92），所以只指原判定那一次（X-09） |
 | LeaveConversion 的狀態 | `leave_conversions` | `status`（Provisional／Determined／Discarded）、`discarded_by_id`（ref，可空：取代它的那一筆） | P1；快取 |
-| NotifyLeaveReassessment 的內容 | `leave_reassessment_notices` | `employment_id`、`trigger_event_id`（哪一次重新判定或年度終結）、`root_event_id`（最初由人或排程做的那個動作，例：CorrectRecord；同一次動作連鎖產生的每一份通知都記同一個，X-06）、`changed[]`：`entitlement_id`、`before`、`after`（額度、期間、取得日、狀態）；`added_ids[]`、`voided_ids[]`；`conversion_ids[]`、`provisional_conversion_ids[]`；`action_items[]`：`kind`（code）、`entitlement_id`、`detail`；`notified_to[]`（人資、雇主（老闆））、`notified_at` | `action_items.kind`：作廢的那筆上有已休、要重新登錄告知日、要重新登錄遞延協商、已休大於額度、補登的那筆和依規則重算的期間重疊或有空檔、告知日早於取得日、協商遞延額度超過未休、就地更正後可休期間或取得日改變而上面有已休（`NOTICE_ACTION.PERIOD_CHANGED_WITH_USED`，D-24）、已判定轉換的工資計算基準日或發給期限改變（03_flows 事件表、R81、R86、R96）；用 `NOTICE_ACTION.*` 代碼（只在 ⑤ 用的畫面代碼，不是 04 的分類值，D-08） |
+| NotifyLeaveReassessment 的內容 | `leave_reassessment_notices` | `employment_id`、`trigger_event_id`（哪一次重新判定或年度終結）、`root_event_id`（最初由人或排程做的那個動作，例：CorrectRecord；同一次動作連鎖產生的每一份通知都記同一個，X-06）、`changed[]`：`entitlement_id`、`before`、`after`（額度、期間、取得日、狀態）；`added_ids[]`、`voided_ids[]`；`conversion_ids[]`、`provisional_conversion_ids[]`；`action_items[]`：`kind`（code）、`entitlement_id`、`detail`；`notified_to[]`（人資、雇主（老闆）；員工可以休的天數改變時加員工，03_flows D-24，D-44）、`notified_at` | `action_items.kind`：作廢的那筆上有已休、要重新登錄告知日、要重新登錄遞延協商、已休大於額度、補登的那筆和依規則重算的期間重疊或有空檔、告知日早於取得日、協商遞延額度超過未休、就地更正後可休期間或取得日改變而上面有已休（`NOTICE_ACTION.PERIOD_CHANGED_WITH_USED`，D-24）、已判定轉換的工資計算基準日或發給期限改變、法令修正補足時補登當期的那一筆依新版算出的天數比補登的多（`NOTICE_ACTION.TOP_UP_BACKFILL`，帶 `suggested_quantity`，人資確認後用 CorrectRecord 更正額度，D-38、D-43）、補足了已隨僱傭關係結束的那一筆（`NOTICE_ACTION.TOP_UP_ENDED_EMPLOYMENT`，交給 resignation）、收回紀錄改成從薪資扣回（`NOTICE_ACTION.RECOVERY_CHANGED_TO_DEDUCTION`）、收回紀錄被註銷（`NOTICE_ACTION.RECOVERY_ANNULLED`）、正數差額互抵了未收回的天數（`NOTICE_ACTION.RECOVERY_OFFSET`）（2026-10-27，D-39、D-40）（03_flows 事件表、R81、R86、R92、R96、R100、R103）；用 `NOTICE_ACTION.*` 代碼（只在 ⑤ 用的畫面代碼，不是 04 的分類值，D-08） |
 
 ### 1.3 事件紀錄（`events`，P1、P4）
 
@@ -88,9 +93,12 @@
 
 | 概念 | 表 | 欄位 | 備註 |
 |---|---|---|---|
-| 事件名稱 | `events` | `type` | 03_flows 事件表的 20 個事件；另加固定資料事件 `LoadEmploymentEndingFixture`、`LoadUsedQuantityFixture`、`LoadEmployerFixture`（[靜態替代]，D-10、X-21） |
+| 事件名稱 | `events` | `type` | 03_flows 事件表的 22 個事件（2026-10-22 加 TopUpLeaveEntitlements；2026-10-27 RecordRecoveryRefusal 改為 RecordConversionRecovery）；另加固定資料事件 `LoadEmploymentEndingFixture`、`LoadUsedQuantityFixture`、`LoadEmployerFixture`、`LoadContractSettingsFixture`（[靜態替代]，D-10、X-21、D-42） |
 | 有意義的時間 | `events` | `occurred_at`、`recorded_at`、`effective_from` | 依 03_flows 事件表；例：GrantLeaveEntitlement 的發生是取得日、生效是可休起日；CloseLeaveYear 的發生是年度終結日、得知是判定日；RecordLeaveDeferral 的發生是協商日，登錄時間（`recorded_at`）用來判斷 R84 |
 | 年度終結的判定內容 | `events` | `payload.year_end`：`entitlement_id`、`used_quantity_known`（判定當時已知的已休）、`unused_quantity`、`deferral_agreement_ref`（`id`、`version_event_id`：判定時依的那一版協商）、`deferred_in_quantity`、`deferred_in_entitlement_id`、`conversion_ids[]`、`late`（是否為補做的年度終結，R93）；`deferred_in_waiting`（`conversion_id`、`quantity`：等這筆負數差額確認才建立或增加的遞延進來額度，04 R92、D-27；只有 RejudgeLeaveYearEnd 會有） | CloseLeaveYear、RejudgeLeaveYearEnd 各記一筆；之後已休改正不會蓋掉（03_flows D-15） |
+| 收回紀錄 | `events` | `payload.recovery`：`conversion_id`、`recovery_id`、`replaces_recovery_id`（可空）、`deferral_entitlement_id`、`deferral_added_quantity`（這次因此建立或增加的遞延天數，0 以上） | RecordConversionRecovery；遞延天數的建立看 `leave_deferral_agreements` 在被取代那一筆登錄之後有沒有改過 `deferred_quantity`（04 R103，D-39） |
+| 互抵 | `events` | `payload.year_end.offsets[]`：`recovery_id`（新的「因重新判定撤回」那一筆）、`replaces_recovery_id`、`quantity` | RejudgeLeaveYearEnd 記正數差額時（04 R92，D-39） |
+| 法令修正補足 | `events` | `payload.top_up`：`rule_id`（R66）、`version`、`revision`（版本被修訂時加 1，D-41）、`effective_from`、`changed[]`（`entitlement_id`、`before`、`after`：額度、年資級別）、`added_ids[]`（新版才有的年資級別在生效日新增的那一筆，D-43）、`backfill_ids[]`（補登當期、依新版建議要補的那一筆） | TopUpLeaveEntitlements；每段僱傭關係、每個新版本一筆（D-38） |
 | 重新判定的對應結果 | `events` | `payload.reassessment`：`basis_before`、`basis_after`（被更正的依據）、`matched[]`（舊 → 新）、`voided_ids[]`、`added_ids[]`、`restored_ids[]` | ReassessLeaveEntitlements；R91 的對應過程要查得到（Q11） |
 | 依據的規則版本 | `events` | `rule_versions[]` | 給予、年度終結、重新判定都記；公司規定的版本記 `kind`＝COMPANY_POLICY |
 | 由日期觸發的事件 | `events` | `derived`（true） | GrantLeaveEntitlement、CloseLeaveYear 推導出來就是事實（03_flows「狀態怎麼來」），依據改了**不**標失效，由 ReassessLeaveEntitlements、RejudgeLeaveYearEnd 記改變；ActivateLeaveYearAgreement、ActivateCompanyPolicy、ExpireCompanyPolicy 照 hire-employee D-12：依據的日期被更正時標 `invalidated_by_event_id`，重新推導（D-03） |
@@ -120,9 +128,11 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 | RecordLeaveDeferral | `POST /v1/leave-deferral-agreements` | 人資；那一筆 `status`＝Active（產生 Agreed）或 YearEnded（產生 Applied），其他擋下（X-08）；R82 擋下；R83、R84 提醒；那一筆已 YearEnded 時同一交易 RejudgeLeaveYearEnd |
 | AmendLeaveDeferral | `POST /v1/leave-deferral-agreements/{id}/amend` | 人資；`status`＝Agreed 或 Applied；R82 擋下；R83、R84 提醒；Applied 的同一交易 RejudgeLeaveYearEnd |
 | WithdrawLeaveDeferral | `POST /v1/leave-deferral-agreements/{id}/withdraw` | 人資；`status`＝Agreed 或 Applied；R84 提醒；Applied 的同一交易 RejudgeLeaveYearEnd |
-| ConfirmLeaveConversion | `POST /v1/leave-conversions/{id}/confirm` | 人資；`status`＝Provisional（已被取代的回 409 Superseded，帶取代它的 `discarded_by_id`；重算後差額為 0、沒有取代它的那一筆時 `discarded_by_id` 為 null，D-23）；確認後寫 `outbox` 交給薪資（D-09）；等這筆負數差額確認的遞延進來那一筆同一交易建立或增加（04 R92） |
+| ConfirmLeaveConversion | `POST /v1/leave-conversions/{id}/confirm` | 人資；`status`＝Provisional（已被取代的回 409 Superseded，帶取代它的 `discarded_by_id`；重算後差額為 0、沒有取代它的那一筆時 `discarded_by_id` 為 null，D-23）；負數差額可以在同一個請求帶 `recoveries[]`（每筆同 `POST /recoveries` 的內容），先登錄再確認；還有效的收回紀錄天數合計不等於這一筆的天數時擋下（R101，`RECOVERY_NOT_COVERED`）；確認後寫 `outbox` 交給薪資：正數的帶 `payable_quantity`，負數的只送收回方式為 `PAYROLL_DEDUCTION` 的那幾筆（D-09、D-40）；等這筆負數差額確認的遞延進來那一筆同一交易建立或增加，扣掉 `DEFERRAL_DECLINED` 的天數（04 R92） |
+| RecordConversionRecovery | `POST /v1/leave-conversions/{id}/recoveries`；查詢 `GET /v1/leave-conversion-recoveries?employer_id=&employment_id=&method=&outstanding=` | 人資；轉換的 `quantity` 小於 0、`status` 不是 Discarded，否則擋下（`NOT_NEGATIVE_CONVERSION`、`INVALID_STATE`）；帶 `method`、`quantity`、`responded_on`、`evidence_note`、`replaces_recovery_id`（可空）；超過還沒有回應或被取代那一筆還有效的天數擋下（`RECOVERY_EXCEEDS_QUANTITY`）；`DEFERRAL_DECLINED` 超過等它的遞延天數擋下、`OFFSET_BY_REJUDGE` 一律擋下（R101）；結束日早於今天時登錄 `PAYROLL_DEDUCTION` 成立 R104 提醒；同一交易依 R103 建立或增加遞延進來那一筆；轉換已判定時 `PAYROLL_DEDUCTION` 寫 `outbox`（`LeaveConversionRecoveryRecorded`）交給薪資；取代 `REFUSED`、`DEFERRAL_DECLINED` 改成 `PAYROLL_DEDUCTION` 的產生 NotifyLeaveReassessment（通知人資與雇主）。查詢的 `outstanding=true` 列出拒絕返還與約定自行退回還有效的（系統外追討的名單，03_flows X-19）（D-40） |
 | GrantLeaveEntitlement、CloseLeaveYear | 無 API：每日排程（D-03） | 系統；`actor`＝system、`derived`＝true；「今天」依雇主所在地的當地日期（P4，D-28）。排程不靠「執行到哪一天」的游標，而是每次對每段僱傭關係找出「到今天應發生而還沒發生」的給予與年度終結（例：晚登錄的到職、更正到過去的可休迄日），補上；補做的年度終結依 R93 待確認（X-04） |
 | ActivateLeaveYearAgreement、ActivateCompanyPolicy、ExpireCompanyPolicy | 無 API：每日排程，也在登錄或更正它依據的日期的同一交易中立刻推導 | 系統；同上；日期被更正時舊的標失效、在同一交易重新推導（D-03） |
+| TopUpLeaveEntitlements | 無 API：每日排程 | 系統；`actor`＝system、`derived`＝true；每段僱傭關係找出「生效日不晚於今天、這段還沒有它（同一個 `version` 與 `revision`）的 TopUpLeaveEntitlements 事件」的 R66 新版本（平台維運載入 `rule_versions` 時生效日已過的，下一次排程就補），依 R100 補足（對象看週年期間的末日，由取得日與年資依 R69 週年制推出、不存，不看 `valid_to`；依規則給予的就地增加；新版才有的年資級別新增一筆；補登當期的只算建議天數、寫進通知，不改額度，D-43）；和給予、年度終結在同一段的同一個交易、先拿 `leave_locks`；已年度終結的同一交易 RejudgeLeaveYearEnd；有補足、有同期補登那一筆、或補足了隨僱傭關係結束的那一筆時產生 NotifyLeaveReassessment（D-38）。版本被修訂（`revision` 加 1，04 R105）時不是補足：平台維運載入修訂的同一個作業對受影響的每段僱傭關係執行 ReassessLeaveEntitlements（同公司規定修訂的分批做法，D-18、D-41） |
 | ReassessLeaveEntitlements、RejudgeLeaveYearEnd、EndLeaveEntitlementsWithEmployment | 無 API：由觸發它的動作在同一交易中執行（D-04） | 系統；觸發來源見下方「core 事件的連鎖」 |
 | NotifyLeaveReassessment | 系統產生；`GET /v1/leave-reassessment-notices?employer_id=&employment_id=&root_event_id=&since=`、`GET /v1/leave-reassessment-notices/{id}`；產生時寫 `outbox`（`LeaveReassessmentNotified`），由平台的通知送到人資與雇主（老闆） | 讀：人資、雇主（老闆）；沒有作廢或修改的 API（D-08）；`root_event_id` 查得到同一次動作連鎖產生的每一份（X-06） |
 | CorrectRecord、AnnulEntry、RevokeAnnulment（core） | hire-employee 的 `POST /v1/corrections`、`POST /v1/annulments`、`POST /v1/annulments/{id}/revoke` | 人資；本切片的集合可更正的欄位與可註銷的事件見 2.2（D-11） |
@@ -157,18 +167,18 @@ API 以 REST 描述（OpenAPI 3.1），路徑前綴 `/v1`；每支 API 標 `x-co
 
 | UC | 用到的 API |
 |---|---|
-| UC-01 週年制依年資給予特休 | `GET /employments/{id}/leave-forecast` → 排程給予 → `GET /employments/{id}/leave-entitlements` |
+| UC-01 週年制依年資給予特休 | `GET /employments/{id}/leave-forecast` → 排程給予 → `GET /employments/{id}/leave-entitlements`；法令修正：排程補足 → `GET /leave-reassessment-notices` |
 | UC-02 曆年制給予特休 | `POST /leave-year-agreements`（或公司規定的預設）→ 排程給予 → `GET /employments/{id}/leave-warnings` → `POST /warning-overrides` |
 | UC-03 公司規定多給特休 | `POST /company-policies` → `POST /company-policies/{id}/versions`、`POST /company-policies/{id}/repeal` → 排程給予 → `GET /employments/{id}/leave-entitlements` |
 | UC-04 告知員工排定特休 | `GET /employments/{id}/leave-entitlements` → `POST /leave-entitlements/{id}/notices` |
 | UC-05 年度終結：協商遞延，其餘轉為工資 | `POST /leave-deferral-agreements`（`/amend`、`/withdraw`）→ 排程年度終結 → `GET /leave-entitlements/{id}`、`GET /leave-conversions` |
 | UC-06 遞延進來的天數到次一年度終結仍沒休 | 排程年度終結 → `GET /leave-conversions` |
 | UC-07 補登系統開始管理前就到職的員工的特休 | `POST /leave-entitlements/backfill` |
-| UC-08 到職日更正後重新判定特休 | `POST /corrections` → `GET /leave-reassessment-notices` → `POST /leave-entitlements/{id}/used-quantity-fixture`、`POST /leave-entitlements/{id}/notices`、`POST /leave-deferral-agreements` → `POST /leave-conversions/{id}/confirm` |
+| UC-08 到職日更正後重新判定特休 | `POST /corrections` → `GET /leave-reassessment-notices` → `POST /leave-entitlements/{id}/used-quantity-fixture`、`POST /leave-entitlements/{id}/notices`、`POST /leave-deferral-agreements` → `POST /leave-conversions/{id}/recoveries` → `POST /leave-conversions/{id}/confirm` |
 | UC-09 還沒滿年資或年度終結前離職 | `POST /employments/{id}/early-departure`（hire-employee）或 `POST /employments/{id}/ending-fixture` → `GET /employments/{id}/leave-entitlements` |
 | UC-10 員工改用另一種特休年度 | `POST /company-policies/{id}/versions` 或 `POST /leave-year-agreements` → 排程開始適用 → `GET /employments/{id}/leave-year-basis`、`GET /employments/{id}/leave-warnings`；回到預設用 `POST /leave-year-agreements/{id}/end` |
 | UC-11 可能應合併年資的警告 | `POST /hires/{id}/start`（hire-employee）→ `GET /employments/{id}/leave-warnings` → `POST /warning-overrides` |
-| UC-12 年度終結之後才改變的資料 | `POST /leave-entitlements/{id}/used-quantity-fixture`、`POST /leave-deferral-agreements`（`/amend`、`/withdraw`）、`POST /corrections` → `GET /leave-reassessment-notices` → `POST /leave-conversions/{id}/confirm` |
+| UC-12 年度終結之後才改變的資料 | `POST /leave-entitlements/{id}/used-quantity-fixture`、`POST /leave-deferral-agreements`（`/amend`、`/withdraw`）、`POST /corrections` → `GET /leave-reassessment-notices` → `POST /leave-conversions/{id}/recoveries` → `POST /leave-conversions/{id}/confirm`；之後員工改口 `POST /leave-conversions/{id}/recoveries`（帶 `replaces_recovery_id`） |
 
 ### 2.2 本切片的集合：可更正的欄位與可註銷的事件（CorrectRecord、AnnulEntry）
 
@@ -181,8 +191,9 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | `leave_deferral_agreements` | `agreed_on`、`deferred_quantity`、`agreement_note` | 只限登錄時打錯；雙方重新談用 `/amend`（03_flows D-06）；R82 擋下 |
 | `company_policies` | `name`、`source_note`、`effective_from`、`effective_to` | R73、R98 擋下；生效日、廢止日觸發重新判定（03_flows D-14）。版本內容不能用更正，要新增修訂（`POST /company-policies/{id}/versions` 帶 `corrects_version`，只限人資；修訂的效果見 D-19） |
 | `leave_conversions` | （沒有） | 已判定的不能改，記差額（03_flows 更正方式） |
+| `leave_conversion_recoveries` | `responded_on`、`evidence_note` | 方式或天數登錯用註銷再登錄（03_flows 更正方式）；`OFFSET_BY_REJUDGE` 不能更正、不能註銷（由重新判定建立） |
 
-可註銷的事件（03_flows「本切片可以註銷的事件」）：RegisterExistingLeaveEntitlement、RecordLeaveNotice、RecordLeaveYearAgreement、EndLeaveYearAgreement、EstablishCompanyPolicy、RepealCompanyPolicy；固定資料事件 `LoadEmploymentEndingFixture` 也可以註銷（載入錯了）。其他事件 `POST /annulments` 擋下（core R47 的白名單加上這幾種）。
+可註銷的事件（03_flows「本切片可以註銷的事件」）：RegisterExistingLeaveEntitlement、RecordLeaveNotice、RecordLeaveYearAgreement、EndLeaveYearAgreement、EstablishCompanyPolicy、RepealCompanyPolicy；固定資料事件 `LoadEmploymentEndingFixture` 也可以註銷（載入錯了）；〔2026-10-27〕RecordConversionRecovery（方式或天數登錯，註銷後被它取代的那一筆恢復有效；轉換已判定的不改狀態，涵蓋不足時 R94 提醒；已交給薪資扣的寫 `outbox`（`LeaveConversionRecoveryAnnulled`）；產生 NotifyLeaveReassessment 通知人資與雇主，03_flows D-22）。其他事件 `POST /annulments` 擋下（core R47 的白名單加上這幾種）。
 
 ### 2.3 訊息代碼與其他自訂的值（D-30）
 
@@ -198,6 +209,9 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | DEFERRAL_OVER_REMAINING | R83 | 警告 | 協商遞延額度超過未休（登錄或修改時） |
 | DEFERRAL_RECORDED_AFTER_YEAR_END | R84 | 警告 | 年度終結後才登錄遞延協商 |
 | PROVISIONAL_CONVERSION_OVERDUE | R94 | 警告 | 待確認的轉換逾期 |
+| DEFERRAL_PARTLY_INEFFECTIVE | R102 | 警告 | 遞延協商因員工不換回而部分未生效 |
+| DEDUCTION_AFTER_EMPLOYMENT_ENDED | R104 | 警告 | 離職後登錄從薪資扣回 |
+| PAYMENT_DEADLINE_INSUFFICIENT_DATA | R90 | 警告 | 發給期限資料不足（契約的做法沒有登錄，或那天沒有有效的契約），轉換待確認 |
 | USED_OVER_QUANTITY | R96 | 警告 | 已休大於額度 |
 | USED_ON_VOIDED | R96 | 警告 | 作廢的那一筆上有已休 |
 | POSSIBLE_SENIORITY_MERGE | R99 | 警告 | 可能應合併年資 |
@@ -208,6 +222,9 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | DEFERRAL_EXISTS | R82 | 擋下 | 這一筆已有一筆沒有撤回、沒有失效的協商 |
 | DEFERRAL_QUANTITY | R82 | 擋下 | 遞延額度不大於 0 或超過額度 |
 | COMPANY_EXTRA_NOT_DEFERRABLE | R82 | 擋下 | 公司多給的那一筆，那一版不可以遞延 |
+| RECOVERY_NOT_COVERED | R101 | 擋下 | 確認負數差額時，收回紀錄還沒涵蓋整筆天數 |
+| RECOVERY_EXCEEDS_QUANTITY | R101、R103 | 擋下 | 收回紀錄的天數超過還沒有回應的天數，或超過被取代那一筆還有效的天數；不換回遞延天數超過等它的遞延天數 |
+| NOT_NEGATIVE_CONVERSION | R101 | 擋下 | 只有負數差額可以登錄收回紀錄 |
 | BACKFILL_INVALID | R97 | 擋下 | 補登的資料不符合條件 |
 | INSUFFICIENT_DATA | R97 | 擋下 | 判斷補登條件的資料不足（core R60） |
 | DATE_ORDER | R98 | 擋下 | 日期先後對不起來 |
@@ -229,18 +246,24 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 
 | 規則 | 落實位置 | 說明 |
 |---|---|---|
-| R65、R66、R69、R70、R77、R80、R87、R89、R90 | service | 計算；依 `rule_versions` 取當時的版本（R66 依取得日當天有效的天數表；R77 依取得日當天有效的公司規定版本），寫進請假權利或轉換並記版本（P5）。給予不重複：部分唯一索引 `tenant_id`＋`employment_id`＋`leave_type_code`＋`source`＋`policy_id`＋`period_sequence`，條件 `origin`＝依規則給予、`is_current`＝true、`voided`＝false（排程重跑或同時跑不會給兩筆） |
+| R65、R66、R69、R70、R77、R80、R87、R89、R90 | service | 計算；依 `rule_versions` 取當時的版本（R66 依取得日當天有效的天數表，與可休迄日以前又生效的新版本取天數最多的，04 D-35、D-36；R77 依取得日當天有效的公司規定版本），寫進請假權利或轉換並記版本（P5）。給予不重複：部分唯一索引 `tenant_id`＋`employment_id`＋`leave_type_code`＋`source`＋`policy_id`＋`period_sequence`，條件 `origin`＝依規則給予、`is_current`＝true、`voided`＝false（排程重跑或同時跑不會給兩筆） |
 | R67、R68、R75、R85、R88、R91、R95 | service | 判定；資料不足（core R60）時不給予、不判定，列在 `GET /leave-warnings` 的 `insufficient_data`，補登資料後由排程或重新判定補上 |
-| R79、R93 | service | 判定；結果「待確認」寫成 `status`＝Provisional 的轉換；R79 找不到版本、R93 的待確認由人資確認（ConfirmLeaveConversion） |
+| R79、R93 | service | 判定；結果「待確認」寫成 `status`＝Provisional 的轉換；R79 找不到版本、R93 的待確認由人資確認（ConfirmLeaveConversion），負數差額先由人資登錄收回紀錄（RecordConversionRecovery）涵蓋整筆 |
+| R100 | service | 排程（TopUpLeaveEntitlements，D-38）；就地增加是同一個 `entity_id` 的新版本，`event_id` 指到那次 TopUpLeaveEntitlements |
+| R101 | service | 擋下；`/recoveries` 與 `/confirm` 檢查轉換的正負、收回紀錄的天數與涵蓋（D-39） |
+| R102 | service | 提醒；查詢警告時推導（同其他法規警告） |
+| R103 | service | `/recoveries` 與 core 的 `/annulments` 在同一交易建立或增加遞延進來那一筆、寫 `outbox`、產生通知（D-39、D-40） |
+| R104 | service | 提醒；`/recoveries` 回應的 `warnings[]`（`DEDUCTION_AFTER_EMPLOYMENT_ENDED`） |
+| R105 | service | 平台維運載入修訂後的作業（D-41） |
 | R86、R92 | service | 計算；在同一交易中把還在待確認的轉換改為 Discarded，記 `discarded_by_id` |
 | R72、R73 | service | 跨文件的期間不重疊，擋下；R72 靠 `leave_locks`（僱傭關係）防同時送出；R73 用同一雇主的公司規定鎖（鍵 `tenant_id`＋`employer_id`，只有公司規定的動作用，D-05）。公司規定對各段僱傭關係的影響經 `leave_reassessment_queue`，不和排程搶（D-18） |
 | R74 | db constraint ＋ service | 驗證規則：`applied_year_agreement_id`、`applied_year_default_policy_id` 不能同時有值；指到的規定事項是特休年度預設由 service 檢查 |
 | R82 | service | 擋下；「同一筆同時最多一筆有效的協商」靠 `leave_locks` 與交易中的查詢；額度上限比較 |
 | R97 | db constraint ＋ service | 驗證規則：`valid_to` ≥ `valid_from`、`quantity` > 0、`pre_system_used_quantity` ≤ `quantity`、補登遞延的 `registered_original_year_end` < `valid_from`；和到職日、開始由系統管理的日子比較由 service 檢查 |
 | R98 | db constraint ＋ service | 同一文件內的（公司規定 `effective_to` ≥ `effective_from`）用驗證規則；和到職日、登錄當天比較由 service 檢查 |
-| R71、R76、R81、R83、R84、R94、R96、R99 | service | 法規警告與提醒，只提醒：查詢時現算（由日期到達才成立的 R81、R94 每次查詢依今天判定，今天依雇主所在地，P4、D-28），也在觸發它的動作回應的 `warnings[]`；可用 OverrideWarning 忽略（掛在 `employment_id`），忽略何時失效依 core R51 |
+| R71、R76、R81、R83、R84、R94、R96、R99、R102 | service | 法規警告與提醒，只提醒：查詢時現算（由日期到達才成立的 R81、R94 每次查詢依今天判定，今天依雇主所在地，P4、D-28），也在觸發它的動作回應的 `warnings[]`；可用 OverrideWarning 忽略（掛在 `employment_id`），忽略何時失效依 core R51 |
 | R78 | service | 提醒；掛在那條公司規定上（`GET /company-policies/{id}` 的 `warnings[]`），沒有對應的員工，不能用 OverrideWarning 忽略（04 R78；D-12） |
-| （所有判定與計數） | service | 被註銷、作廢、取代的不算：推導值只算 `status` 不是 Voided 的請假權利、`status`＝Determined 或 Provisional（正數與失效）的轉換（C01，04 D-14）；被註銷的事件依 D-17 重算後已不在文件裡，不另用 `annulled` 排除（作廢的請假權利仍要算它的轉換與負數差額，C01，X-18） |
+| （所有判定與計數） | service | 被註銷、作廢、取代的不算：推導值只算 `status` 不是 Voided 的請假權利、`status`＝Determined（負數差額扣掉 `leave_conversion_recoveries` 中 `DEFERRAL_DECLINED` 還有效的天數）或 Provisional（正數與失效）的轉換（C01，04 D-14、D-37）；收回紀錄只算 `status`＝Active 的；被註銷的事件依 D-17 重算後已不在文件裡，不另用 `annulled` 排除（作廢的請假權利仍要算它的轉換與負數差額，C01，X-18） |
 | C01、C02 | service ＋ P9 | 每次寫入請假權利或轉換後，在同一交易中檢查那一筆的 C01 與那次判定的 C02，不成立就中止交易（回 500 並記錄，是程式錯誤，不是使用者的錯）；P9 的自動測試另外對全部資料檢查 |
 
 ### 3.2 參數放在哪裡（P5）
@@ -261,7 +284,8 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | `company_extra_year_end_treatment`、`company_extra_deferrable` | `company_policy_versions.params`（事項為特休加給的版本） | `rule_versions`（R79）`params` | 那一版沒有寫時（04 R79 決策表「那一版沒有寫」）用 R79 的值；那一版的 `params` 不填預設值，看得出沒有寫 |
 | `company_default_leave_year` | `company_policy_versions.params`（事項為特休年度預設的版本） | 沒有（雇主沒有預設時 R68 用 `leave_year_basis_when_none`） | |
 | `fixed_start_year_method` | `company_policy_versions.params`（事項為特休年度預設的版本） | `rule_versions`（R70）`params` | 依公司規定（04 參數表）。依雇主預設給予的，用那一版的值；依個別約定給予的，用取得日當天雇主有效的特休年度預設那一版的值（04「個別約定沿用雇主預設的做法」）；雇主沒有預設或那一版沒有寫時用 R70 的 |
-| `payment_deadline_rule`、`wage_payment_day`、`wage_payment_lag_months` | `employer_settings`（[靜態替代]，依雇主、帶期間） | `rule_versions`（R90）`params` | 依雇主（04 D-23）；查哪一天的值見 D-32 |
+| `payment_deadline_rule` | `contract_settings`（[靜態替代]，依勞動契約、帶期間） | `rule_versions`（R90）`params` | 依勞動契約（04 D-33）：用錨點那一天（D-32）找這段僱傭關係那天有效的勞動契約（`employment_contracts` 的 `term_start`～`term_end`，同一天有兩份以上時取 `term_start` 較晚的；`status` 為已註銷的不算），再取那份契約那天有效的值；找不到契約或那份契約沒有任何一段時資料不足（D-36、D-42） |
+| `wage_payment_day`、`wage_payment_lag_months` | `employer_settings`（[靜態替代]，依雇主、帶期間） | `rule_versions`（R90）`params` | 依雇主（04 D-23）；查哪一天的值見 D-32 |
 
 ## 四、推導值與歷史需求 → 儲存
 <!-- 資料身分：事實／快取／凍結快照；保存方式：A／B／C／— -->
@@ -270,6 +294,7 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 |---|---|---|
 | LeaveEntitlement | 事實（依規則給予的推導出來之後就是事實，03_flows「狀態怎麼來」） | A：需要重建當時（03_flows，Q01、Q09、Q10、Q11），影響錢與法規 |
 | LeaveDeferralAgreement | 事實 | A：需要重建當時（Q05、Q06），雇主負舉證責任 |
+| LeaveConversionRecovery | 事實 | A：需要軌跡（Q08、Q11），只新增；註銷標 `status`＝Annulled，事件保留（D-39） |
 | LeaveConversion | 事實 | A：需要重建當時（Q05、Q08、Q11），交給薪資 |
 | CompanyPolicy | 事實 | A：需要重建當時（Q09、Q10） |
 | 公司規定的版本（`company_policy_versions`） | 事實（規則資料） | A：只新增修訂（P5） |
@@ -279,13 +304,14 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | 年度終結的判定內容（`events.payload.year_end`） | 事實 | A（`events` 只新增） |
 | 已休的固定資料（`leave_used_quantity_fixtures`）[靜態替代] | 事實 | B：改正要記誰、何時、理由（03_flows D-15） |
 | 工資給付日的固定資料（`employer_settings`）[靜態替代] | 事實 | C：已判定的發給期限凍結在轉換上，不需要回頭查當時的給付日；monthly-payroll 定義後依它的歷史需求重新決定 |
+| 契約約定的發給期限做法（`contract_settings`）[靜態替代] | 事實 | B：換做法要雙方簽字、留修改紀錄（04 D-33）：每一段值帶 `from`、`to`、`agreed_on`、`basis_note`，舊的不刪，改動另記 `change_log`（D-36） |
 | 各集合的 `status`、`voided`、`discarded_by_id` | 快取：依 `events`（排除被註銷、已失效的）重算 | —；P9 要求砍掉重算結果一致 |
 | 還可以休、已休、遞延出去、轉為工資、失效（`remaining_quantity` 等） | 推導值：不存，現算 | —（D-06） |
 | 告知期限（`notice_due_on`）、告知狀態 | 推導值：不存，現算 | — |
 | 某天適用哪一種特休年度 | 推導值：不存，現算；給予時的結果凍結在請假權利上 | — |
 | 之後各期的預估 | 推導值：不存，現算 | — |
 | 年資（`Employment.seniority`） | 推導值：不存，現算；給予時的結果凍結在 `basis_seniority` | — |
-| 法規警告（R71、R76、R78、R81、R83、R84、R94、R96、R99） | 推導值：不存，現算；被忽略的記在 WarningOverride | — |
+| 法規警告（R71、R76、R78、R81、R83、R84、R94、R96、R99、R102） | 推導值：不存，現算；被忽略的記在 WarningOverride | — |
 
 **A 只新增的做法**：同 hire-employee 05_mapping 第四節（`entity_id`、`revision`、`supersedes`、`is_current`、`recorded_at`、`event_id`）。就地更正（R91）是同一個 `entity_id` 的新版本，`event_id` 指到那次 ReassessLeaveEntitlements，所以「更正前給了什麼、誰在什麼時候改的」（Q11）由版本與事件查得到。
 
@@ -298,8 +324,11 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | 本切片上線時，已經在職的僱傭關係沒有任何請假權利 | `employments`（只讀）、`leave_entitlements`（新集合） | 不需要表示：取得日早於雇主開始由系統管理的日子的，由人補登（R67、R97）；之後到上線前已到的取得日，排程第一次執行時補上（D-03） | 系統（排程）補給予；補給予後可休迄日已過的，補做年度終結，轉換待確認（R93），人資確認；人資補登開始管理前的（RegisterExistingLeaveEntitlement） |
 | 雇主沒有登錄 `system_managed_from` 或 `labor_standards_act_applicable` | `employers`（org-setup [靜態替代]） | 欄位不存在＝未知；給予的判定為資料不足（R67 決策表、core R60），不當成否 | 由 org-setup 補登雇主資料（這版平台維運載入固定資料）；補上後依 core 事件的連鎖重新判定 |
 | 〔2026-10-22〕可選做法的參數改存 04 分類值代碼（`payment_deadline_rule` 的值由 `CONTRACT_WAGE_PAYMENT_DAY` 改為 `PAYMENT_DEADLINE_RULE.CONTRACT_WAGE_PAYMENT_DAY` 等，D-35）；`company_policy_versions.params` 可以有 `fixed_start_year_method`（D-31）；警告的版本改填 04 凍結版本（D-29） | `rule_versions`、`employer_settings`、`company_policy_versions`；已存的警告忽略紀錄 | `rule_versions` 是平台維運載入的參考資料，整批重新載入；`employer_settings` 的舊代碼由平台維運改寫（只有這版的固定資料）；`fixed_start_year_method` 欄位不存在＝那一版沒有寫，用 R70 的值（不是未知）；之前的忽略記的是 `annual-leave-grant/04-v1`，依 core R51 視為規則改版而失效 | 平台維運（載入與改寫）；人資重新確認仍要忽略的警告 |
+| 〔2026-10-22 第二輪〕`payment_deadline_rule` 從 `employer_settings` 移到 `contract_settings`（D-36） | `employer_settings`、`contract_settings`（新集合） | 〔2026-10-27〕`contract_settings` 沒有那份契約的資料＝未知（資料不足，轉換待確認，04 R90、D-42），不是「契約沒有約定」；`value` 空白才是契約寫明沒有約定；`employer_settings` 上舊的 `payment_deadline_rule` 不再讀 | 平台維運：開發資料由 seed 重新載入；之前依雇主設定算出的已判定發給期限凍結在轉換上，不重算 |
+| 〔2026-10-27〕新增 `leave_conversion_recoveries`；第二輪加在 `leave_conversions` 的 `recovery_method`、`recovery_note` 與狀態 RecoveryRefused 取消（D-39） | `leave_conversion_recoveries`（新集合）、`leave_conversions` | 已經是 Determined、沒有收回紀錄的負數差額＝員工的回應未知：不當成「可以從薪資扣」，R94 提醒補登回應 | 這版只有開發資料，由 seed 重建；正式上線前沒有已判定的負數差額。第二輪的欄位與狀態只在未提交的設計中出現過，程式還沒有實作 |
+| 〔2026-10-22 第二輪〕R66 改為取各版本中最多的（04 D-35） | `leave_entitlements` | 不需要表示：目前只有 v1（沒有下限），既有的每一筆算出來都一樣 | 不需要補值；下一版天數表載入時由排程補足（D-38） |
 
-其他：本切片新增的集合在 hire-employee 的開發資料庫中都還沒有資料；hire-employee 的集合沒有新增欄位。
+其他：本切片新增的集合在 hire-employee 的開發資料庫中都還沒有資料；hire-employee 的集合沒有新增欄位（`contract_settings` 是本切片的固定資料集合，只引用 `employment_contracts`）。
 
 ## 五、技術欄位與平台表
 
@@ -310,7 +339,7 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | `discarded_by_id`（`leave_conversions`） | [技術] 快取：取代它的那一筆，由 RejudgeLeaveYearEnd、ReassessLeaveEntitlements 的事件推出 |
 | `leave_locks` | [技術] 平台表：同一段僱傭關係（或同一雇主的公司規定）的同時寫入保護（D-05） |
 | `leave_reassessment_queue` | [技術] 平台表：雇主層級的改變要重新判定的僱傭關係，`employment_id`、`root_event_id`、`reason`、`processed_at`、`attempts`、`last_error`；任何寫入那一段的交易先清它的佇列（D-18） |
-| `outbox` | [技術] 平台表：確認或直接判定的轉換以 `LeaveConversionDetermined`（只帶 `conversion_id`、`employment_id`）發給薪資切片（D-09） |
+| `outbox` | [技術] 平台表：確認或直接判定的轉換以 `LeaveConversionDetermined`（帶 `conversion_id`、`employment_id`、`quantity`；正數的另帶 `payable_quantity`，扣掉互抵的天數）發給薪資切片；負數差額要扣的是 `LeaveConversionRecoveryRecorded`（只有 `PAYROLL_DEDUCTION`，帶 `recovery_id`、`conversion_id`、`quantity`），註銷時 `LeaveConversionRecoveryAnnulled`（D-09、D-40） |
 | 排程的執行紀錄（`job_runs`） | [技術] 平台表：每次執行的時間與處理了哪些僱傭關係，供維運查；排程不靠它決定要補哪幾天（X-04） |
 | `x-concept`（OpenAPI）、集合驗證規則的 `description` | [技術] P8：標出對應的概念 ID |
 
@@ -324,6 +353,7 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | UC-01 | 2 | （排程 GrantLeaveEntitlement） | — | 系統；依 `employments.start_date` 與 R65～R69 |
 | UC-01 | 3 | `GET /v1/employments/{id}/leave-entitlements?on=` | employment_id、on | employment_id：同第 1 步；on：使用者輸入或今天；回應每一筆的 `entitlement_id`、`notice_due_on`、`notice_status` 帶到 UC-04 |
 | UC-01 | 4、5 | 同第 2、3 步（每個週年）；年度終結見 UC-05 | — | — |
+| UC-01 | 例外 | （排程 TopUpLeaveEntitlements）→ `GET /v1/leave-reassessment-notices?employment_id=` | employment_id | 系統依 `rule_versions` 的 R66 新版本補足；通知的 `changed[]`、`action_items[]`（`NOTICE_ACTION.TOP_UP_BACKFILL`）；已年度終結的補發差額在 `conversion_ids` |
 | UC-02 | 1 | `POST /v1/leave-year-agreements` | employment_id、leave_type_code、leave_year_basis、year_start、effective_from、agreed_on、agreement_note | employment_id：同 UC-01；leave_type_code：查 `GET /v1/leave-types`（參考資料）；其餘使用者輸入；回應 `leave_year_agreement_id`、`status`、`warnings` |
 | UC-02 | 2 | （排程 ActivateLeaveYearAgreement、GrantLeaveEntitlement） | — | 系統 |
 | UC-02 | 3 | `GET /v1/employments/{id}/leave-warnings` | employment_id | 同第 1 步；R71 的警告帶 `rule_id`、`rule_version`、`rule_revision`、`subject`、`warned_value` |
@@ -338,7 +368,7 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | UC-05 | 1、2 | `POST /v1/leave-deferral-agreements` | entitlement_id、agreed_on、deferred_quantity、agreement_note | entitlement_id：UC-01 第 3 步回應的 `entitlement_id`；其餘使用者輸入；回應 `deferral_agreement_id`、`status`、`warnings` |
 | UC-05 | 3 | （排程 CloseLeaveYear） | — | 系統；產生遞延進來的一筆與轉換 |
 | UC-05 | 4 | `GET /v1/leave-entitlements/{id}` | entitlement_id | 回應的 `year_end_judgments[]`（`deferred_in_entitlement_id`、`conversion_ids`）、`conversions[]` |
-| UC-05 | 5 | `GET /v1/leave-conversions?status=Determined` | employment_id 或 payment_due_before | 薪資切片；回應 `conversion_id`、`quantity`、`wage_basis_date`、`payment_due_on`；也由 `outbox` 收到 |
+| UC-05 | 5 | `GET /v1/leave-conversions?status=Determined` | employment_id 或 payment_due_before | 薪資切片；回應 `conversion_id`、`quantity`、`payable_quantity`（正數扣掉互抵的）、`wage_basis_date`、`payment_due_on`、`recoveries[]`（負數差額的收回紀錄：`method`、`quantity`、`status`，只有 `PAYROLL_DEDUCTION` 的可以扣）；也由 `outbox` 收到（D-40） |
 | UC-05 | 例外 | `POST /v1/leave-deferral-agreements/{id}/amend`；`/withdraw` | deferral_agreement_id、agreed_on、deferred_quantity、reason | 第 1 步回應的 `deferral_agreement_id` |
 | UC-06 | 1 | （排程 CloseLeaveYear） | — | 系統；遞延進來的那一筆全部轉為工資，`wage_basis_date` 是原年度終結日 |
 | UC-06 | 2 | `GET /v1/leave-conversions?employment_id=` | employment_id | 同 UC-01 |
@@ -349,7 +379,7 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | UC-08 | 1、2 | hire-employee `POST /v1/corrections` | subject（`employments`、employment_id、`start_date`）、new_value、reason、evidence | employment_id：同 UC-01；其餘使用者輸入；同一交易執行重新判定，回應的 `event_id` 是 CorrectRecord |
 | UC-08 | 3 | `GET /v1/leave-reassessment-notices?root_event_id=` | root_event_id | 第 1 步回應的 `event_id`（hire-employee 的回應不變，所以用它查，D-04）；可能回好幾份（結束日改早時先停止特休、再重新判定）；每份回應 `notice_id`、`changed[]`、`provisional_conversion_ids[]`、`action_items[]` |
 | UC-08 | 4 | `POST /v1/leave-entitlements/{id}/used-quantity-fixture`；`POST /v1/leave-entitlements/{id}/notices`；`POST /v1/leave-deferral-agreements` | entitlement_id、used_quantity、reason；notified_on；agreed_on、deferred_quantity | entitlement_id：第 3 步回應的 `action_items[].entitlement_id`；其餘人資輸入 |
-| UC-08 | 5 | `POST /v1/leave-conversions/{id}/confirm` | conversion_id、reason | 第 3 步回應的 `provisional_conversion_ids`（或第 4 步回應的 `reassessment_notice_ids` 對應的新通知；被取代的回 409 並給 `discarded_by_id`） |
+| UC-08 | 5 | `POST /v1/leave-conversions/{id}/confirm`（負數差額帶 `recoveries[]`，或先 `POST /v1/leave-conversions/{id}/recoveries`） | conversion_id、reason；負數差額另帶 recoveries[]（method、quantity、responded_on、evidence_note） | recoveries[]：人資依員工對每一天的回應（書面同意書、退回約定或紀錄、拒絕的溝通紀錄）輸入；conversion_id：第 3 步回應的 `provisional_conversion_ids`（或第 4 步回應的 `reassessment_notice_ids` 對應的新通知；被取代的回 409 並給 `discarded_by_id`） |
 | UC-09 | 1 | hire-employee `POST /v1/employments/{id}/early-departure`，或 `POST /v1/employments/{id}/ending-fixture` | employment_id、ended_on、end_reason | employment_id：同 UC-01；其餘使用者輸入；同一交易 EndLeaveEntitlementsWithEmployment |
 | UC-09 | 2 | `GET /v1/employments/{id}/leave-entitlements` | employment_id | 回應每一筆的 `status`（EndedWithEmployment、Voided） |
 | UC-09 | 例外 | `GET /v1/leave-reassessment-notices?employment_id=` → `POST /v1/leave-conversions/{id}/confirm` | conversion_id | 通知的 `provisional_conversion_ids`；結束被註銷：hire-employee `POST /v1/annulments`（target_event_id＝第 1 步回應的 `event_id`） |
@@ -362,7 +392,8 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | UC-11 | 3 | hire-employee `POST /v1/warning-overrides` | rule_ref、subject_ref、warned_value、employment_id、reason | 第 2 步回應的 `warnings[]` |
 | UC-12 | 1 | `POST /v1/leave-entitlements/{id}/used-quantity-fixture`、`POST /v1/leave-deferral-agreements`（`/amend`、`/withdraw`）、hire-employee `POST /v1/corrections` | entitlement_id 或 deferral_agreement_id；改正的值 | entitlement_id：UC-01 第 3 步回應；deferral_agreement_id：UC-05 第 1 步回應；回應 `reassessment_notice_ids`、`warnings`（R84） |
 | UC-12 | 2 | `GET /v1/leave-reassessment-notices/{id}` 或 `?root_event_id=` | notice_id 或 root_event_id | 第 1 步回應的 `reassessment_notice_ids`（corrections 用回應的 `event_id` 當 root_event_id 查） |
-| UC-12 | 3 | `POST /v1/leave-conversions/{id}/confirm` | conversion_id | 第 2 步回應的 `provisional_conversion_ids`；回應的 `deferred_in_entitlement_id`（年度終結後才登錄或加大遞延時，確認後建立或增加的那一筆，04 R92） |
+| UC-12 | 3 | `POST /v1/leave-conversions/{id}/confirm` | conversion_id、reason、recoveries[] | conversion_id：第 2 步回應的 `provisional_conversion_ids`；recoveries[]：人資依員工對每一天的回應輸入（可以部分同意、部分拒絕或不換回遞延天數）；回應的 `deferred_in_entitlement_id`（年度終結後才登錄或加大遞延時，確認後建立或增加的那一筆，04 R92） |
+| UC-12 | 例外 | 員工改口：`POST /v1/leave-conversions/{id}/recoveries`（帶 `replaces_recovery_id`）→ `GET /v1/employments/{id}/leave-warnings` | conversion_id、method、quantity、responded_on、evidence_note、replaces_recovery_id；employment_id | conversion_id、replaces_recovery_id：第 3 步回應的 `recoveries[].recovery_id`；回應的 `deferral_added_quantity`、`warnings`（R102 消失、R104）；之後重新協商用 `POST /v1/leave-deferral-agreements/{id}/amend`；系統外追討的名單用 `GET /v1/leave-conversion-recoveries?outstanding=true` |
 
 ## 決定與理由
 
@@ -403,6 +434,15 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | D-33 | 〔回頭修改，2026-10-22，⑥ signoff #19〕一般離職的結束日（ending-fixture）在未來時，載入時只記 `ended_on`，`status` 維持 Active；到結束日那天由每日排程改為 Ended 並執行 EndLeaveEntitlementsWithEmployment；結束日不晚於今天的照舊在同一交易執行 | 載入時就改為 Ended 並停止特休（實作暫時的做法） | 載入時就停止，員工離職前剩下的日子都不能休特休，那幾筆會提早交給契約終止；hire-employee 的 RecordEarlyDeparture 是事後登錄，結束日不會在未來，沒有可以沿用的做法 | ⑥ signoff #19；03_flows EndLeaveEntitlementsWithEmployment | AI／JiHungLin（2026-10-22） |
 | D-34 | 〔回頭修改，2026-10-22，⑥ signoff #22〕D-18「受影響的僱傭關係」：雇主的每一段都上鎖；只有已有取得日不早於新規定（或被更正、修訂的那一版）生效日的請假權利的那幾段排入佇列，其他的之後給予時自然套用 | 每一段都排入佇列 | 沒有在那段期間取得過特休的，重新判定也不會有變化；排入佇列只是多跑。全部上鎖是為了擋住快照隔離下用舊規定判定（X-11） | ⑥ signoff #22；D-18；X-11 | AI／JiHungLin（2026-10-22） |
 | D-35 | 〔回頭修改，2026-10-22，⑥ signoff #2〕schema 與 `rule_versions`、`employer_settings` 存 04 分類值的完整代碼（例：`PAYMENT_DEADLINE_RULE.DAYS_AFTER_YEAR_END`），不存去掉前綴的（原 schema 的 `DAYS_AFTER_YEAR_END`） | 維持原 schema 的短代碼 | 04 改成新格式後代碼有前綴，`labels` 也用完整代碼查名稱（P10）；兩種寫法並存容易對錯 | ⑥ signoff #2；04 D-31；P10 | AI／JiHungLin（2026-10-22） |
+| D-36 | 〔回頭修改，2026-10-22，04 D-33〕發給期限的做法改放新的固定資料集合 `contract_settings`（依勞動契約、帶期間，每一段記雙方簽字的日子與憑據，舊的不刪，P2 B）；工資給付日留在 `employer_settings`。查法：錨點那一天這段僱傭關係有效的勞動契約，同一天有兩份以上時取起日較晚的〔2026-10-27：沒有登錄、找不到有效契約、已註銷的契約見 D-42〕 | 加在 hire-employee 的 `employment_contracts`；留在 `employer_settings` | 加在 `employment_contracts` 要改 hire-employee 的集合與 API，契約條款怎麼登錄、修改還沒有切片定義；使用者 2026-10-22 選以依契約的參數、靜態替代處理。兩份契約同一天有效時取起日較晚的，通常是續約的新約〔2026-10-27，X-22：原本寫「只會發生在續約交接」沒有根據——core 的 `term_end` 只記契約上寫的，提前終止或定期轉不定期時重疊可能持續好幾個月，取起日較晚的仍是較新的約定〕 | 04 D-33、D-32；inputs/annual-leave-grant/特休_使用者自行查證_EQ-003_008_009.md EQ-003 | AI／JiHungLin（2026-10-27） |
+| D-37 | [已取消: 02_entities X-20，改為 D-39，2026-10-27] 〔回頭修改，2026-10-22，03_flows D-19、04 R101〕負數差額的收回：`POST /leave-conversions/{id}/confirm` 對負數差額要帶 `recovery_method`（書面同意扣回或已退回）與 `recovery_note`；新增 `POST /leave-conversions/{id}/refusal`（RecordRecoveryRefusal），寫 RecoveryRefused、不寫 `outbox`；沒有生效的遞延額度記在拒絕的事件上（`payload.recovery_refusal`），R92 重算時只扣「協商在拒絕之後沒有再修改或更正」的那幾筆 | 拒絕也用 `/confirm` 帶 `REFUSED`；沒有生效的額度記在協商上 | 拒絕和確認的結果相反（一個交給薪資、一個不交），同一支 API 容易誤送；記在協商上要改協商的版本，但協商本身沒變（03_flows D-21） | 03_flows D-19、D-21；04 R92、R101 | AI／JiHungLin（2026-10-27） |
+| D-38 | 〔回頭修改，2026-10-22，03_flows D-20、04 R100〕TopUpLeaveEntitlements 放進每日排程：每段僱傭關係找「生效日不晚於今天、這段還沒有它的補足事件」的 R66 新版本，和給予、年度終結同一個交易；每段每個新版本一筆事件（沒有要補的也記，避免每天重算）；同期的補登那一筆用新的通知代碼 `NOTICE_ACTION.TOP_UP_BACKFILL` 列出 | 平台維運載入新版本時一次跑全部；用 `leave_reassessment_queue` 分批 | 法令修正影響全平台每一段在職的僱傭關係，一次跑會是一個很大的交易；排程本來就逐段找「到今天應發生而還沒發生」的事（D-03），補足照同一個做法，晚載入的版本下一次排程就補上 | 03_flows D-20；04 R100；D-03 | AI／JiHungLin（2026-10-27） |
+| D-39 | 〔回頭修改，2026-10-27，02_entities D-21、03_flows D-22〕收回紀錄放新集合 `leave_conversion_recoveries`（只新增，P2 A；註銷標 Annulled）；登錄用 `POST /leave-conversions/{id}/recoveries`，`/confirm` 也可以帶 `recoveries[]` 一次登錄再確認；`/refusal`、`leave_conversions.recovery_method`、RecoveryRefused 取消；還有效的天數、未收回的天數不存，查詢時算 | ① 收回紀錄放在 `leave_conversions` 的陣列；② 只能先 `/recoveries` 再 `/confirm` | ① 改口、註銷都要改轉換的版本，但轉換本身沒變；② 最常見的「員工全部同意」要呼叫兩次。拒絕和同意不再分兩支 API：差別在收回方式，交給薪資的只有 `PAYROLL_DEDUCTION`（D-40），不會因為呼叫錯 API 誤送 | 02_entities D-21；03_flows D-22；04 R101、R103 | AI／JiHungLin（2026-10-27） |
+| D-40 | 〔回頭修改，2026-10-27，X-23〕交給薪資的內容分開：正數轉換的 `LeaveConversionDetermined` 帶 `payable_quantity`（扣掉互抵）；負數差額不直接交給薪資扣，只送收回方式為 `PAYROLL_DEDUCTION` 的收回紀錄（`LeaveConversionRecoveryRecorded`，註銷時 `...Annulled`）；`GET /leave-conversions` 的回應帶 `payable_quantity` 與 `recoveries[]` | 照第二輪：負數差額確認後都送 `LeaveConversionDetermined`，由薪資切片看 `recovery_method` | 已退回的負數差額也送進 outbox、回應又沒有收回方式，薪資切片照 −1 會再扣一次（X-23）；只送可以扣的那幾筆，薪資切片不需要懂其他方式 | X-23；04 R92、R101、R103 | AI／JiHungLin（2026-10-27） |
+| D-41 | 〔回頭修改，2026-10-27，03_flows D-23〕法定天數表版本的修訂：`rule_versions` 的同一個 `version` 加 `revision`；平台維運載入修訂的同一個作業對受影響的每段僱傭關係執行 ReassessLeaveEntitlements（分批，同 D-18 公司規定的修訂）；補足排程看 `version` 與 `revision` 判斷有沒有做過 | 修訂當成新版本，交給補足排程 | 補足排程只補不減，修訂要可以減（04 R105）；排程原本只看「有沒有這個版本的補足事件」，修訂後不會重跑（03_flows X-18） | 03_flows D-23、X-18；04 R105；D-18、D-38 | AI／JiHungLin（2026-10-27） |
+| D-42 | 〔回頭修改，2026-10-27，X-22〕`contract_settings`：那份契約沒有任何一段、或錨點那天找不到有效的契約時資料不足（04 D-40），`value` 空白才是「契約寫明沒有約定」用預設；只看沒有註銷的 `employment_contracts`；載入記固定資料事件 `LoadContractSettingsFixture`，追溯修改（`from` 早於 `agreed_on`）照載入、列在載入結果 | 沒有登錄＝沒有約定、用預設（第二輪的寫法）；追溯修改擋下 | 平台沒替續約的新契約載入時，用預設會算錯期限、R94 誤報逾期；續約空檔、被註銷的契約都可能被選中（X-22）。追溯修改在實務上會發生（雙方補簽），擋下會讓資料進不來，列出來交給人 | X-22；04 R90、D-40；core R60 | AI／JiHungLin（2026-10-27） |
+| D-43 | 〔回頭修改，2026-10-27，02_entities D-19、04 D-41〕補足排程依來歷處理：依規則給予的就地增加；新版才有的年資級別在同一交易新增一筆（`leave_entitlements` 新文件，`payload.top_up.added_ids`）；補登當期的不改額度，通知的 `action_items` 帶 `suggested_quantity`，人資用既有的 `POST /corrections` 更正 | 另做一支「接受建議」的 API | 更正補登額度本來就有（03_flows 更正方式「補登的特休」一列），會接著重新判定與記差額；另做一支 API 是同一件事兩條路 | 02_entities D-19；04 R100、D-41 | AI／JiHungLin（2026-10-27） |
+| D-44 | 〔回頭修改，2026-10-27，03_flows D-24〕`notified_to` 加 `EMPLOYEE`：通知內容有 `changed[]`（額度或期間改變）、`added_ids[]`、`voided_ids[]`，或建立、增加遞延進來那一筆時加員工；送達由平台的通知（同 `outbox` 的 `LeaveReassessmentNotified`），本切片不做員工的畫面 | 另立一種只給員工的通知 | 同一次重新判定只有一份通知，誰收到用 `notified_to` 表示，查詢與追溯都在同一個集合；員工能看什麼由平台的權限決定 | 03_flows D-24；06_evidence GC16 | AI／JiHungLin（2026-10-27） |
 
 ### 反例處理
 
@@ -429,6 +469,8 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 | X-19 | 登錄告知只接受 Active、YearEnded：離職後才登錄離職前的告知會被擋；RecordLeaveNotice 不改變狀態，套「從」欄規則會整個擋掉 | AI 挑錯 | 接受，已修改 | 狀態前提只用在會改變狀態的動作；登錄告知改為不是 Voided 就收 |
 | X-20 | 待處理清單的「近期通知中仍成立」做不到：沒有期限會越積越多，有期限會默默消失；看資料判斷不出處理完的事永遠掛著 | AI 挑錯 | 接受，已修改 | 待處理清單只列看資料判斷得出、可以忽略的提醒；其他只在通知上（D-08） |
 | X-21 | org-setup 的雇主資料載入沒有事件，佇列的 `root_event_id` 是空的，也繞過 P1 | AI 挑錯 | 接受，已修改 | 新增固定資料事件 `LoadEmployerFixture` |
+| X-22 | 查契約的方法撐不住續約、空檔與註銷：續約是新的一份契約，平台沒替新約載入 `contract_settings` 時，依「沒有登錄時用預設」悄悄改用 30 日內，GC14 應該是 04-05 算成 03-31，接著 R94 誤報逾期，和 core R60 的資料不足相反；定期契約 2026-12-31 到期、新約 2027-01-05 才開始，年度終結日 2027-01-02 落在空檔；查法沒看 `employment_contracts.status`；D-36「兩份同一天有效只會發生在續約交接」沒有根據；載入沒有事件，也查不到當時看到的值 | AI 挑錯（實作者） | 接受，已修改 | 沒有登錄、找不到有效契約時資料不足、轉換待確認（04 R90、D-40，本檔 D-42）；排除已註銷的契約；D-36 那句改寫；新增固定資料事件 `LoadContractSettingsFixture` |
+| X-23 | 已退回的負數差額也送進 outbox：`LeaveConversionDetermined` 只帶 `conversion_id`、`employment_id`，`REPAID` 和 `PAYROLL_DEDUCTION` 都是 Determined；UC-05 的查詢回應沒有扣回方式。員工 2026-04-08 已匯回 1 日、人資登錄已退回並確認，薪資切片照 −1 在 5 月又扣一次；P12 說舊的負數差額「當成未知、不能扣」，outbox 和查詢都沒有把這個限制傳出去 | AI 挑錯（隱私與濫用） | 接受，已修改 | 負數差額只送「書面同意從薪資扣回」的收回紀錄；正數帶 `payable_quantity`；查詢回應帶 `recoveries[]`（D-40） |
 
 <!-- 來源：AI 挑錯／審查者／專家／其他切片。處理：接受，已修改／拒絕（理由必填）／轉問專家（填 EQ 編號） -->
 
@@ -440,15 +482,15 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 
 | 完成標準 | 類 | AI 自評 |
 |---|---|---|
-| 每個 Entity 都有對應的表，或寫明「不落地」「由靜態參數產生」與理由 | 修正線索 | ✓ 6 個新增 Entity 都有集合（1.1），引用的 core Entity 用 hire-employee 的集合；02 的 45 個屬性都對到欄位或寫明不落地（推導值 6 個），由 AI 用程式比對 02 詞彙表與第一節 |
-| 每張業務表、每支 API、每個業務欄位都指得回概念，沒有「多出來、說不出代表什麼」的表；主鍵、建立時間等技術欄位與平台需要的表，標明「技術」即可（平台 P8） | 修正線索 | ✓ 1.2 每個欄位列出對應的概念；`company_policy_versions` 指 02「不是 Entity」的公司規定版本（規則資料）；3 個 [靜態替代] 集合與事件寫明替代哪個切片的什麼；`NOTICE_ACTION.*` 寫明只在 ⑤ 使用；技術欄位與平台表在第五節（AI 比對）。schema.mongo.js 的 description 與 api.yaml 的 x-concept 等對照表確認後產生 |
-| ② 標為推導值的東西，都已依平台 P3 決定身分 | 品質檢查 | ✓ 第四節：剩餘、已休、遞延出去、轉為工資、失效、告知期限與狀態、某天的特休年度、預估、年資、法規警告都是「不存，現算」；狀態等為快取（AI 比對 02「不是 Entity」與標 [推導] 的屬性） |
-| ③ 標出的歷史需求，都已依平台 P2 決定保存方式 | 關鍵決定 | ✓ 第四節逐項：03 的 6 個狀態機中需要重建當時的 4 個（LeaveEntitlement、LeaveDeferralAgreement、CompanyPolicy、LeaveConversion）為 A；需要軌跡的 LeaveYearAgreement 為 B；只需現況的 LeaveType 為 C；另 2 個 [靜態替代] 集合為 B、C（AI 比對 03 狀態機的歷史需求） |
-| ③ 的每個動作與狀態變更都有對應的 API，且符合平台 P1 | 修正線索 | ✓ 03 事件表 20 個事件都在第二節（AI 用程式比對）：人觸發的 11 個各有 API；時間觸發的 5 個由排程產生；其他單位個體觸發的 3 個在觸發它的動作同一交易執行；建議層 1 個有查詢 API。狀態只由事件改變，`status` 不在可更正的欄位（2.2）。〔2026-10-22 回頭修改〕✓ ConfirmLeaveConversion 同一交易建立或增加遞延進來的那一筆，回應加 `deferred_in_entitlement_id`；未來的結束日由每日排程執行（D-33） |
-| ④ 的每條規則都已決定落實位置（平台 P6） | 修正線索 | ✓ 第三節 3.1 涵蓋 R65～R99 共 35 條與守恆式 C01、C02（AI 用程式比對；第一次比對漏 R75，已補）；db constraint ＋ service 3 條，其餘 service；沒有「人工」：要人處理的都是規則算出待確認後交給人（R79、R93）。17 個參數的存放位置在 3.2 |
-| 每個正式 Use Case 都已在對照表走一遍：每一步的輸入都拿得到；來自前一步回應的，`api.yaml` 該回應有這個欄位 | 品質檢查 | ✓ 第六區 UC-01～UC-12 逐步寫出 API 與輸入來源（AI 用程式確認 12 個都有）；第六區提到的回應欄位都在 api.yaml 該 API 的回應格式中（AI 用程式比對 api.yaml 所有 properties；hire-employee 的回應欄位對照它的 api.yaml）。UC-06 例外改寫為 409 Blocked。〔2026-10-22 回頭修改〕✓ UC-12 第 3 步補上確認後的 `deferred_in_entitlement_id`（api.yaml ConfirmConversionOut 有這個欄位） |
-| `api.yaml` 每支 API 的請求與回應都寫到欄位層級，業務欄位對得回對照表第一區；說明（summary）提到的欄位都在格式裡 | 修正線索 | ✓ 26 個操作的請求與回應都是具名 schema（56 個），有 required、巢狀物件的欄位、additionalProperties: false；沒有只寫 type: object 的（AI 用程式檢查，只有 before、after、warned_value 刻意不限）；所有 $ref 都有定義、每個 schema 都有被用到。業務欄位與第一區一致（AI 比對）；summary 提到的告知狀態、期限、推導的數量都在格式中。沒有 OpenAPI 驗證工具可用（openapi_spec_validator 未安裝），結構只由上述程式檢查。〔2026-10-22 回頭修改〕✓ api.yaml 0.2.0：Superseded 的 `discarded_by_id` 可為 null（D-23）、ActionItem 加 PERIOD_CHANGED_WITH_USED（D-24）、`on` 的篩選寫明（D-27）、公司規定版本加 `fixed_start_year_method`（D-31）、`used_quantity_basis` 列出值（D-30） |
-| 已做紙上驗證：每筆黃金案例依設計推演的結果與人工預期一致；不一致的已回頭修改 | 關鍵決定 | 部分：已推演 GC01、GC04、GC06（JiHungLin 挑選並填預期結果）。GC04 第一次不一致，回頭修改（04 D-25、本檔 D-22）後一致；GC06 一致（推演時發現的告知警告已回頭修改，04 D-24）；GC01 只剩 ② 預期結果那一行的日期待計算者改正（計算過程已是 2025-10-02），③ 依使用者決定情境改回預設 30 日內後一致（由 AI 比對 06_evidence/golden_cases.md）。2026-10-21：沒挑的 GC02、GC03、GC05 依 docs/02 ⑥「候選與不採用」，「紙上判定」「判定」由 [未執行] 改為「不採用」，推演結果不變。〔2026-10-22 回頭修改〕部分：新增 GC07～GC09（⑥ signoff #12、#15、#16），紙上推演已寫，預期結果待 JiHungLin 填寫，紙上判定 [未執行] |
+| 每個 Entity 都有對應的表，或寫明「不落地」「由靜態參數產生」與理由 | 修正線索 | ✓ 6 個新增 Entity 都有集合（1.1），引用的 core Entity 用 hire-employee 的集合；02 的 45 個屬性都對到欄位或寫明不落地（推導值 6 個），由 AI 用程式比對 02 詞彙表與第一節〔2026-10-22 第二輪回頭修改〕✓ 新屬性 `recovery_method` 對到 `leave_conversions.recovery_method`；發給期限的做法改放新的固定資料集合 `contract_settings`（D-36）〔2026-10-27〕✓ 新 Entity LeaveConversionRecovery 對到新集合 `leave_conversion_recoveries`（1.1、1.2）；`leave_conversions.recovery_method`、`recovery_note` 取消（D-39） |
+| 每張業務表、每支 API、每個業務欄位都指得回概念，沒有「多出來、說不出代表什麼」的表；主鍵、建立時間等技術欄位與平台需要的表，標明「技術」即可（平台 P8） | 修正線索 | ✓ 1.2 每個欄位列出對應的概念；`company_policy_versions` 指 02「不是 Entity」的公司規定版本（規則資料）；3 個 [靜態替代] 集合與事件寫明替代哪個切片的什麼；`NOTICE_ACTION.*` 寫明只在 ⑤ 使用；技術欄位與平台表在第五節（AI 比對）。schema.mongo.js 的 description 與 api.yaml 的 x-concept 等對照表確認後產生〔2026-10-27〕✓ `leave_conversion_recoveries` 的欄位對回 02 LeaveConversionRecovery；`/recoveries` 與查詢對回 RecordConversionRecovery；`/refusal` 取消 |
+| ② 標為推導值的東西，都已依平台 P3 決定身分 | 品質檢查 | ✓ 第四節：剩餘、已休、遞延出去、轉為工資、失效、告知期限與狀態、某天的特休年度、預估、年資、法規警告都是「不存，現算」；狀態等為快取（AI 比對 02「不是 Entity」與標 [推導] 的屬性）〔2026-10-27〕✓ 收回紀錄還有效的天數、未收回的天數、`payable_quantity` 不存，查詢與送出時算（P3，D-39、D-40） |
+| ③ 標出的歷史需求，都已依平台 P2 決定保存方式 | 關鍵決定 | ✓ 第四節逐項：03 的 6 個狀態機中需要重建當時的 4 個（LeaveEntitlement、LeaveDeferralAgreement、CompanyPolicy、LeaveConversion）為 A；需要軌跡的 LeaveYearAgreement 為 B；只需現況的 LeaveType 為 C；另 2 個 [靜態替代] 集合為 B、C（AI 比對 03 狀態機的歷史需求）〔2026-10-22 第二輪回頭修改〕✓ `contract_settings` 為 B（換做法要留修改紀錄，04 D-33）；LeaveConversion 仍為 A，新增的狀態與欄位都是新版本文件〔2026-10-27〕✓ LeaveConversionRecovery 需要軌跡 → A（只新增，註銷標 Annulled）；`contract_settings` 仍為 B，加固定資料事件（D-42） |
+| ③ 的每個動作與狀態變更都有對應的 API，且符合平台 P1 | 修正線索 | ✓ 03 事件表 20 個事件都在第二節（AI 用程式比對）：人觸發的 11 個各有 API；時間觸發的 5 個由排程產生；其他單位個體觸發的 3 個在觸發它的動作同一交易執行；建議層 1 個有查詢 API。狀態只由事件改變，`status` 不在可更正的欄位（2.2）。〔2026-10-22 回頭修改〕✓ ConfirmLeaveConversion 同一交易建立或增加遞延進來的那一筆，回應加 `deferred_in_entitlement_id`；未來的結束日由每日排程執行（D-33）〔2026-10-22 第二輪回頭修改〕✓ 03 事件表 22 個事件：RecordRecoveryRefusal 有 API（`POST /leave-conversions/{id}/refusal`），TopUpLeaveEntitlements 由每日排程產生（D-38）〔2026-10-27〕✓ 03 事件表 22 個事件：RecordConversionRecovery 有 API（`POST /leave-conversions/{id}/recoveries`），RecordRecoveryRefusal 與 `/refusal` 取消；天數表版本的修訂由載入作業觸發 ReassessLeaveEntitlements（D-41） |
+| ④ 的每條規則都已決定落實位置（平台 P6） | 修正線索 | ✓ 第三節 3.1 涵蓋 R65～R99 共 35 條與守恆式 C01、C02（AI 用程式比對；第一次比對漏 R75，已補）；db constraint ＋ service 3 條，其餘 service；沒有「人工」：要人處理的都是規則算出待確認後交給人（R79、R93）。17 個參數的存放位置在 3.2〔2026-10-22 第二輪回頭修改〕✓ R100、R101 加進 3.1，R102 併入法規警告那一列〔2026-10-27〕✓ R102～R105 加進 3.1；R101 改為檢查收回紀錄的涵蓋 |
+| 每個正式 Use Case 都已在對照表走一遍：每一步的輸入都拿得到；來自前一步回應的，`api.yaml` 該回應有這個欄位 | 品質檢查 | ✓ 第六區 UC-01～UC-12 逐步寫出 API 與輸入來源（AI 用程式確認 12 個都有）；第六區提到的回應欄位都在 api.yaml 該 API 的回應格式中（AI 用程式比對 api.yaml 所有 properties；hire-employee 的回應欄位對照它的 api.yaml）。UC-06 例外改寫為 409 Blocked。〔2026-10-22 回頭修改〕✓ UC-12 第 3 步補上確認後的 `deferred_in_entitlement_id`（api.yaml ConfirmConversionOut 有這個欄位）〔2026-10-22 第二輪回頭修改〕✓ UC-01 加例外列（排程補足）、UC-08 第 5 步與 UC-12 第 3 步加扣回方式、UC-12 加拒絕的例外列；api.yaml 的 RecoveryRefusalOut 有 `ineffective_deferral_quantity`、`warnings`〔2026-10-27〕✓ UC-08 第 5 步、UC-12 第 3 步改帶 `recoveries[]`；UC-12 例外改為員工改口；UC-05 回應加 `payable_quantity`、`recoveries[]`；api.yaml 的回應有這些欄位 |
+| `api.yaml` 每支 API 的請求與回應都寫到欄位層級，業務欄位對得回對照表第一區；說明（summary）提到的欄位都在格式裡 | 修正線索 | ✓ 26 個操作的請求與回應都是具名 schema（56 個），有 required、巢狀物件的欄位、additionalProperties: false；沒有只寫 type: object 的（AI 用程式檢查，只有 before、after、warned_value 刻意不限）；所有 $ref 都有定義、每個 schema 都有被用到。業務欄位與第一區一致（AI 比對）；summary 提到的告知狀態、期限、推導的數量都在格式中。沒有 OpenAPI 驗證工具可用（openapi_spec_validator 未安裝），結構只由上述程式檢查。〔2026-10-22 回頭修改〕✓ api.yaml 0.2.0：Superseded 的 `discarded_by_id` 可為 null（D-23）、ActionItem 加 PERIOD_CHANGED_WITH_USED（D-24）、`on` 的篩選寫明（D-27）、公司規定版本加 `fixed_start_year_method`（D-31）、`used_quantity_basis` 列出值（D-30）〔2026-10-22 第二輪回頭修改〕✓ 0.3.0：新增 recordRecoveryRefusal（RecoveryRefusalIn／Out），ConfirmConversionIn 加 `recovery_method`、`recovery_note`，轉換的 `status` 加 RecoveryRefused；YAML 解析通過〔2026-10-27〕✓ 0.4.0：新增 recordConversionRecovery、listConversionRecoveries（RecoveryIn／RecoveryView），ConfirmConversionIn 改帶 `recoveries[]`，轉換加 `payable_quantity`、`recoveries[]`；refusal 取消；YAML 解析通過 |
+| 已做紙上驗證：每筆黃金案例依設計推演的結果與人工預期一致；不一致的已回頭修改 | 關鍵決定 | 部分：已推演 GC01、GC04、GC06（JiHungLin 挑選並填預期結果）。GC04 第一次不一致，回頭修改（04 D-25、本檔 D-22）後一致；GC06 一致（推演時發現的告知警告已回頭修改，04 D-24）；GC01 只剩 ② 預期結果那一行的日期待計算者改正（計算過程已是 2025-10-02），③ 依使用者決定情境改回預設 30 日內後一致（由 AI 比對 06_evidence/golden_cases.md）。2026-10-21：沒挑的 GC02、GC03、GC05 依 docs/02 ⑥「候選與不採用」，「紙上判定」「判定」由 [未執行] 改為「不採用」，推演結果不變。〔2026-10-22 回頭修改〕部分：新增 GC07～GC09（⑥ signoff #12、#15、#16），紙上推演已寫，預期結果待 JiHungLin 填寫，紙上判定 [未執行]〔2026-10-22 第二輪回頭修改〕部分：GC10～GC14 已寫紙上推演，預期結果待你填，紙上判定 [未執行]；GC08、GC09 只改確認的寫法，推演結果不變〔2026-10-27〕部分：GC08～GC11 的紙上推演改用收回紀錄；新增 GC15～GC18 的紙上推演；GC10～GC18 的預期結果待你填，紙上判定 [未執行] |
 
 ### 審查重點（人）
 
@@ -505,4 +547,28 @@ hire-employee 05_mapping 2.2 的規定同樣適用（狀態、`tenant_id`、誰�
 
 - 審查者（非產出者）： JiHungLin
 - 日期： 20261022
+- 結論：通過
+
+### 審查重點（2026-10-22 回頭修改，第二輪）
+
+依你自行查證的 EQ-003、EQ-008、EQ-009（inputs/annual-leave-grant/特休_使用者自行查證_EQ-003_008_009.md，不是 HC 的答覆）回頭修改；只看這次的差異。②③④⑤ 一起審查、一起凍結。EQ 在 questions.md 維持「待問」，改到的地方仍標待專家確認。
+
+〔2026-10-27〕依挑錯（X-22、X-23、02_entities X-20、03_flows X-18、X-19）與你選的做法修改：第 1 列補上沒有登錄時資料不足，第 2 列的 D-37 取消、改成 D-39，第 4、5 列改寫，新增第 6～8 列；之後依你整理的法令修正補足範圍新增第 9 列；GC16 紙上驗證後新增第 10 列。這張表原本還沒有確認。
+
+| # | 要看的 | 在哪裡 | 審查者確認 |
+|---|---|---|---|
+| 1 | D-36（問題）＋ D-42（問題）：發給期限的做法放新的固定資料集合 `contract_settings`，依勞動契約、帶期間與雙方簽字日。同一天有兩份契約有效時取哪一份？設計的答案：起日較晚的（通常是續約的新約；原本「只會發生在續約交接」沒有根據，已改寫）。**D-42**：那份契約沒有登錄、或那天找不到有效的契約時怎麼辦？設計的答案：資料不足、轉換待確認，不悄悄用預設；已註銷的契約不算；載入記固定資料事件 | 1.1 兩列、1.3 事件名稱、3.2、第四節、P12；schema.mongo.js `contract_settings`；D-36、D-42；X-22 | ✓，兩個都同意設計答案 |
+| 2 | D-39（問題）：收回紀錄放新集合 `leave_conversion_recoveries`，用 `POST /leave-conversions/{id}/recoveries` 登錄，`/confirm` 也可以帶 `recoveries[]` 一次登錄再確認，可以嗎？設計的答案：可以；最常見的「員工全部同意」只要一次呼叫；拒絕和同意不再分兩支 API，因為交給薪資的只有「書面同意從薪資扣回」（D-40），不會誤送。D-37 的 `/refusal` 取消 | 1.1、1.2、1.3 新增列；第二節 ConfirmLeaveConversion、RecordConversionRecovery 兩列；2.2、2.3；api.yaml 0.4.0；D-37、D-39 | ✓，同意，設計答案符合預期 |
+| 3 | D-38（問題）：法令修正補足放在每日排程逐段處理，還是平台載入新版本時一次全部跑？設計的答案：每日排程逐段；影響全平台每一段在職的僱傭關係，一次跑會是很大的交易；晚載入的版本下一次排程就補上 | 第二節排程列、3.1 R100；D-38 | ✓，同意，設計答案符合預期 |
+| 4 | 〔關鍵決定〕歷史需求的保存方式：`leave_conversion_recoveries` 為 A（只新增，註銷標 Annulled）；`contract_settings` 為 B；既有資料（P12）——`contract_settings` 沒有那份契約＝未知（資料不足），已判定、沒有收回紀錄的負數差額＝回應未知（不能扣），第二輪的 `recovery_method` 取消（程式還沒實作） | 第四節、「既有資料（P12）」最後三列 | ✓ |
+| 5 | 〔關鍵決定〕紙上驗證：你 2026-10-27 決定這一輪只採用 GC15、GC16、GC21，請填這 3 個的預期結果、計算過程、計算者（GC10～GC14、GC17～GC20 已標「不採用」）；GC08、GC09 只把「員工簽書面同意後人資登錄確認」改成「登錄收回紀錄後確認」，預期結果是你原本填的，請確認還成立 | 06_evidence/golden_cases.md |  ✓ |
+| 6 | D-40（問題）：交給薪資的內容分開——正數帶 `payable_quantity`（扣掉互抵的），負數差額只送「書面同意從薪資扣回」的收回紀錄，可以嗎？設計的答案：可以；已退回的也送出去，薪資切片會再扣一次（X-23） | 第五節 `outbox`；第六區 UC-05；D-40；X-23 | ✓，同意設計答案 |
+| 7 | D-41（問題）：法定天數表版本的修訂用 `revision` 標，平台維運載入修訂的作業直接對受影響的每段僱傭關係重新判定，不交給補足排程，可以嗎？設計的答案：可以；補足排程只補不減，修訂要可以減 | 1.3 `payload.top_up`；第二節 TopUpLeaveEntitlements 列；3.1 R105；D-41 | ✓，同意設計答案 |
+| 8 | 依方式查收回紀錄的 API（`GET /leave-conversion-recoveries?outstanding=true`）給系統外追討用（03_flows X-19） | 第二節 RecordConversionRecovery 列；第六區 UC-12 例外 | ✓ |
+| 9 | D-43（問題）：補足的範圍改寫後（你 2026-10-27 整理），補登當期那一筆只在通知裡給建議天數，人資用既有的更正 API 補，不另做「接受建議」的 API，可以嗎？設計的答案：可以；更正補登額度本來就會接著重新判定與記差額，另做一支是同一件事兩條路 | 第二節 TopUpLeaveEntitlements 列；1.2 通知內容；1.3 `payload.top_up`；api.yaml ActionItem；D-43 | ✓，同意，設計答案符合預期 |
+| 10 | D-44（問題）：通知的 `notified_to` 加員工，同一次重新判定仍只有一份通知、用 `notified_to` 表示誰收到，不另立給員工的通知，可以嗎？設計的答案：可以；查詢與追溯都在同一個集合，員工能看什麼由平台的權限決定（來自 GC16，03_flows D-24） | 1.2 通知內容；api.yaml、schema.mongo.js 的 `notified_to`；D-44 | ✓，同意設計方式 |
+| 抽查 | （審查者自選 1～2 條 AI 自評 ✓ 的完成標準，寫出是哪幾條與結果） | ③ 標出的歷史需求，都已依平台 P2 決定保存方式。 已做紙上驗證：每筆黃金案例依設計推演的結果與人工預期一致；不一致的已回頭修改 | ✓ |
+
+- 審查者（非產出者）： JiHungLin
+- 日期： 20261027
 - 結論：通過

@@ -61,3 +61,6 @@
 | LeaveEntitlement | appliedYearDefault（依公司預設的特休年度） | CompanyPolicy | 0..1 | 無 | 員工沒有個別約定、套用雇主預設時才有，看得出是套用預設（01_scope D-12）；只能指到事項為「特休年度預設」的規定（第 ④ 步規則）；兩者都沒有時怎麼辦是第 ④ 步的規則（EQ-002） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
 | LeaveConversion | convertsFrom（從哪一筆轉換） | LeaveEntitlement | 1 | 無 | 每次轉換都來自一筆請假權利；一筆可以有多次轉換（年度終結、更正差額、契約終止） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
 | LeaveConversion | correctsConversion（更正哪一次轉換） | LeaveConversion | 0..1 | 無 | 更正差額才有，指回被更正的那一次；原判定沒有（D-06） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v1） | |
+| LeaveConversionRecovery | recoversConversion（收回哪一筆轉換） | LeaveConversion | 1 | 無 | 每筆收回紀錄都針對一筆負數差額；同意書要對上是哪一次判定、幾天，那一筆被重算取代時要重新請員工回應（X-20、③ X-16） | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v2） | （無） |
+| LeaveConversionRecovery | replacesRecovery（取代哪一筆收回紀錄） | LeaveConversionRecovery | 0..1 | 無 | 員工改口、約定的退回實際收到、重新判定撤回時才有；一筆只取代一筆，取代的天數不超過那一筆還有效的天數，所以只改一部分也不用把舊的拆開 | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v2） | （無） |
+| LeaveConversionRecovery | offsetByConversion（由哪一筆補發抵銷） | LeaveConversion | 0..1 | 無 | 收回方式為因重新判定撤回的才有，指到抵銷它的那一筆正數差額（④ R92）；其他方式沒有 | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v2） | （無） |

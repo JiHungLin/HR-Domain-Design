@@ -12,6 +12,20 @@
 - 同意者：
 -->
 
+### 2026-10-27　SKETCH　annual-leave-grant 第 ② 步凍結：LeaveConversionRecovery 改為已定義
+- 改了什麼：LeaveConversionRecovery 的狀態 草圖 → 已定義，「一句意思」改為「見 core/entities.md」
+- 依據：slices/annual-leave-grant/02_entities.md @ annual-leave-grant/02-v2；core/entities.md
+- 舊 → 新：已定義的名詞 +1；名詞總數不變（50）
+- 影響：monthly-payroll、resignation 引用 core/ 的正式定義
+- 同意者：JiHungLin（2026-10-27，/domain-freeze 2,3,4,5；下面那一筆的 D-22 依 ② 審查重點第 5 列同意）
+
+### 2026-10-27　SKETCH　annual-leave-grant 第 ② 步回頭修改：新增 LeaveConversionRecovery
+- 改了什麼：新增 LeaveConversionRecovery（轉換收回紀錄），由 annual-leave-grant 定義；LeaveConversion 列的主要關係補上「負數差額被 LeaveConversionRecovery 指到」；「不確定的地方」加一條：隨僱傭關係結束的那一筆，法令修正補足後的差額由 resignation 承接；（同日追加）「不確定的地方」再加一條：離職那一年的特休改用週年制試算，由 resignation 承接（依據 inputs/shared/範圍釐清_特休離職回歸週年制.md、research/特別休假.md #05，使用者 2026-10-27 要求先加）
+- 依據：slices/annual-leave-grant/02_entities.md D-21、D-22；X-20、X-22（2026-10-27 另開子代理挑錯）；inputs/annual-leave-grant/特休_使用者自行查證_EQ-003_008_009.md（EQ-009，使用者自行查證，不是 HC 的答覆）
+- 舊 → 新：名詞 49 → 50；統計 現場 26、公開 20、推想 3 → 現場 27、公開 20、推想 3；引用推想草稿的仍是 15 個
+- 影響：monthly-payroll 定義 PayItem 時，負數差額依 LeaveConversionRecovery 的「書面同意從薪資扣回」才扣，拒絕返還的不扣；resignation 第 ② 步要處理隨離職結束那一筆補足後的差額
+- 同意者：待確認（annual-leave-grant ②～⑤ 審查時一起確認，02_entities D-22）
+
 ### 2026-10-21　PLAN　annual-leave-grant 設計完成（待驗證）
 - 改了什麼：PLAN 切片列 annual-leave-grant 的狀態：進行中 → 設計完成（待驗證）
 - 依據：annual-leave-grant/05-v1 凍結（同時凍結 03-v3、04-v2）

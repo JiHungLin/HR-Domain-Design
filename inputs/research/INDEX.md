@@ -9,7 +9,7 @@
 | 勞動契約與年資 | 勞動契約與年資.md | TW | 人資／人事、人資／請假、人資／薪資、人資／跨國任用 | 11 | 0 | 0 | 全國法規資料庫 | 2026-10-06 | hire-employee、resignation、monthly-payroll、annual-leave-grant、cross-border-transfer |
 | 工資與最低工資 | 工資與最低工資.md | TW | 人資／薪資 | 7 | 0 | 0 | 全國法規資料庫、勞動部 | 2026-10-05 | monthly-payroll、hourly-payroll、social-insurance、hire-employee |
 | 工時加班與休假日 | 工時加班與休假日.md | TW | 人資／出勤、人資／請假、人資／薪資 | 8 | 0 | 0 | 全國法規資料庫 | 2026-10-05 | overtime、monthly-payroll、shift-attendance、annual-leave-request |
-| 特別休假 | 特別休假.md | TW | 人資／人事、人資／請假 | 4 | 0 | 0 | 全國法規資料庫 | 2026-10-05 | resignation、annual-leave-grant、annual-leave-request |
+| 特別休假 | 特別休假.md | TW | 人資／人事、人資／請假 | 6 | 0 | 0 | 全國法規資料庫、勞動部 | 2026-10-27 | resignation、annual-leave-grant、annual-leave-request |
 | 請假 | 請假.md | TW | 人資／請假、人資／薪資 | 16 | 0 | 0 | 全國法規資料庫 | 2026-10-05 | unpaid-leave-deduction、monthly-payroll、annual-leave-request、annual-leave-grant |
 | 離職與資遣 | 離職與資遣.md | TW | 人資／人事、人資／出勤 | 7 | 0 | 0 | 全國法規資料庫 | 2026-10-05 | resignation、shift-attendance |
 | 勞保就保職保 | 勞保就保職保.md | TW | 人資／人事、人資／薪資 | 25 | 0 | 0 | 全國法規資料庫、勞動部勞工保險局、勞動部 | 2026-10-14 | hire-employee、resignation、social-insurance |

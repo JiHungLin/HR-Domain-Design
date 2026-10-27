@@ -2,9 +2,9 @@
 openapi: 3.1.0
 info:
   title: annual-leave-grant API
-  version: 0.2.0
+  version: 0.4.0
   description: 依 slices/annual-leave-grant/05_mapping.md 產生的設計文件，不是實作。請求與回應寫到欄位層級；每支 API 標 x-concept（概念，P8）、x-roles（誰可以做）、x-rules（檢查的規則）。所有寫入在一個多文件交易中寫入 events 與受影響的集合，先更新 leave_locks、先處理那段僱傭關係的重新判定佇列（05_mapping
-    D-05、D-18），並檢查每個引用屬於呼叫者的客戶、存在且為目前版本（hire-employee 05_mapping D-06）。更正、註銷、警告忽略沿用 hire-employee 的 /v1/corrections、/v1/annulments、/v1/warning-overrides（05_mapping D-11）。給予、年度終結、開始適用與廢止生效由每日排程產生，沒有 API（05_mapping
+    D-05、D-18），並檢查每個引用屬於呼叫者的客戶、存在且為目前版本（hire-employee 05_mapping D-06）。更正、註銷、警告忽略沿用 hire-employee 的 /v1/corrections、/v1/annulments、/v1/warning-overrides（05_mapping D-11）。給予、年度終結、開始適用與廢止生效、法令修正補足由每日排程產生，沒有 API（05_mapping
     D-03）。
 servers:
 - url: https://{host}
@@ -429,6 +429,8 @@ paths:
       - R87
       - R92
       - R94
+      - R101
+      - R103
       parameters:
       - name: id
         in: path
@@ -454,13 +456,96 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          description: 狀態不是待確認；已被取代時回 Superseded（給 discarded_by_id；重算後差額為 0、沒有取代它的那一筆時為 null，05_mapping D-23）
+          description: 狀態不是待確認；負數差額的收回紀錄沒有涵蓋整筆（RECOVERY_NOT_COVERED，R101）；已被取代時回 Superseded（給 discarded_by_id；重算後差額為 0、沒有取代它的那一筆時為 null，05_mapping D-23）
           content:
             application/json:
               schema:
                 oneOf:
                 - $ref: '#/components/schemas/Blocked'
                 - $ref: '#/components/schemas/Superseded'
+  /v1/leave-conversions/{id}/recoveries:
+    post:
+      operationId: recordConversionRecovery
+      summary: 依員工的回應登錄負數差額某幾天怎麼收回；可以取代先前一筆（員工改口、約定的退回實際收到）（03_flows D-22）
+      x-concept: RecordConversionRecovery
+      x-roles:
+      - HR
+      x-rules:
+      - R87
+      - R101
+      - R103
+      - R104
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoveryIn'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryOut'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 不是負數差額（NOT_NEGATIVE_CONVERSION）、已被取代（INVALID_STATE）、天數超過（RECOVERY_EXCEEDS_QUANTITY）、方式不能由人登錄（OFFSET_BY_REJUDGE）（R101、R103）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blocked'
+  /v1/leave-conversion-recoveries:
+    get:
+      operationId: listConversionRecoveries
+      summary: 收回紀錄清單；outstanding=true 列出拒絕返還與約定自行退回還有效的（系統外追討的名單）
+      x-concept: LeaveConversionRecovery
+      x-roles:
+      - HR
+      - EMPLOYER
+      parameters:
+      - name: employer_id
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      - name: employment_id
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+      - name: method
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^RECOVERY_METHOD\.[A-Z_]+$
+      - name: outstanding
+        in: query
+        required: false
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryList'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /v1/leave-entitlements/{id}/used-quantity-fixture:
     post:
       operationId: loadUsedQuantityFixture
@@ -1515,12 +1600,148 @@ components:
         reason:
           type: string
           description: 人資處理過的事（已休、遞延協商、告知日）
+        recoveries:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecoveryIn'
+          description: 負數差額可以在確認時一起登錄的收回紀錄（同 POST /recoveries）；還有效的合計要等於這一筆的天數（R101，RECOVERY_NOT_COVERED）；正數、失效的不能帶
         evidence:
           type: array
           items:
             $ref: '#/components/schemas/EvidenceIn'
       required:
       - reason
+    RecoveryIn:
+      type: object
+      additionalProperties: false
+      properties:
+        method:
+          type: string
+          enum:
+          - RECOVERY_METHOD.PAYROLL_DEDUCTION
+          - RECOVERY_METHOD.REPAYMENT_AGREED
+          - RECOVERY_METHOD.REPAID
+          - RECOVERY_METHOD.REFUSED
+          - RECOVERY_METHOD.DEFERRAL_DECLINED
+          description: 收回方式（04 RECOVERY_METHOD）；OFFSET_BY_REJUDGE 只由重新判定建立，不能登錄
+        quantity:
+          type: string
+          pattern: ^\d+(\.\d+)?$
+          description: 這筆回應涵蓋的天數（大於 0）
+        responded_on:
+          type: string
+          format: date
+          description: 員工簽書面同意、約定、退回或表示拒絕的日子
+        evidence_note:
+          type: string
+          description: 同意書、退回約定、匯款或收據、溝通紀錄的說明（同意的天數與簽署日要相符）
+        replaces_recovery_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+          description: 取代先前的哪一筆（員工改口、約定的退回實際收到、系統外追回）
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceIn'
+      required:
+      - method
+      - quantity
+      - responded_on
+      - evidence_note
+    RecoveryOut:
+      type: object
+      additionalProperties: false
+      properties:
+        event_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        recovery_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        conversion_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        deferral_added_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 這次因此建立或增加的遞延天數（04 R103）；沒有時為 0
+        deferred_in_entitlement_id:
+          type:
+          - string
+          - 'null'
+          pattern: ^[0-9a-f]{24}$
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+        reassessment_notice_ids:
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9a-f]{24}$
+          description: 改成從薪資扣回時通知人資與雇主的那一份（04 R103）
+      required:
+      - event_id
+      - recovery_id
+      - conversion_id
+      - deferral_added_quantity
+      - warnings
+    RecoveryView:
+      type: object
+      additionalProperties: false
+      properties:
+        recovery_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        conversion_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        employment_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        method:
+          type: string
+          pattern: ^RECOVERY_METHOD\.[A-Z_]+$
+        quantity:
+          type: string
+          pattern: ^\d+(\.\d+)?$
+        active_quantity:
+          type: string
+          pattern: ^\d+(\.\d+)?$
+          description: 還有效的天數（推導：天數減去取代它、沒有註銷的各筆）
+        responded_on:
+          type: string
+          format: date
+        evidence_note:
+          type: string
+        replaces_recovery_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        offset_by_conversion_id:
+          type: string
+          pattern: ^[0-9a-f]{24}$
+        status:
+          type: string
+          enum:
+          - Active
+          - Annulled
+      required:
+      - recovery_id
+      - conversion_id
+      - method
+      - quantity
+      - active_quantity
+      - status
+    RecoveryList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecoveryView'
+      required:
+      - items
     ConfirmConversionOut:
       type: object
       additionalProperties: false
@@ -1888,6 +2109,15 @@ components:
         correction_cause:
           type: string
           pattern: ^[A-Z][A-Z0-9_]*\.[A-Z0-9_]+$
+        payable_quantity:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          description: 正數轉換實際要發的天數（扣掉和未收回天數互抵的，04 R92）；負數、失效的不給
+        recoveries:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecoveryView'
+          description: 負數差額的收回紀錄；薪資切片只扣 RECOVERY_METHOD.PAYROLL_DEDUCTION 還有效的那幾筆（05_mapping D-40）
         wage_basis_date:
           type: string
           format: date
@@ -2191,6 +2421,15 @@ components:
           - NOTICE_ACTION.DEFERRAL_OVER_UNUSED
           - NOTICE_ACTION.CONVERSION_DATES_CHANGED
           - NOTICE_ACTION.PERIOD_CHANGED_WITH_USED
+          - NOTICE_ACTION.TOP_UP_BACKFILL
+          - NOTICE_ACTION.TOP_UP_ENDED_EMPLOYMENT
+          - NOTICE_ACTION.RECOVERY_CHANGED_TO_DEDUCTION
+          - NOTICE_ACTION.RECOVERY_ANNULLED
+          - NOTICE_ACTION.RECOVERY_OFFSET
+        suggested_quantity:
+          type: string
+          pattern: ^\d+(\.\d+)?$
+          description: 法令修正補足時，補登當期那一筆依新版算出的建議天數（NOTICE_ACTION.TOP_UP_BACKFILL，04 R100 ③）；人資確認後用 CorrectRecord 更正
         entitlement_id:
           type: string
           pattern: ^[0-9a-f]{24}$
@@ -2260,6 +2499,7 @@ components:
             enum:
             - HR
             - EMPLOYER
+            - EMPLOYEE
         notified_at:
           type: string
           format: date-time

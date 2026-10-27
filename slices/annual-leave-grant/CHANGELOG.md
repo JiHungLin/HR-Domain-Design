@@ -14,6 +14,69 @@
 - 產出者：；審查者：
 -->
 
+## 2026-10-27　annual-leave-grant/02-v2、annual-leave-grant/03-v5、annual-leave-grant/04-v4、annual-leave-grant/05-v4　②③④⑤　凍結
+- 改了什麼（相對 02-v1、03-v4、04-v3、05-v3）：
+  - 負數差額（多發的特休工資）雇主不能單方扣：新增 Entity LeaveConversionRecovery（轉換收回紀錄）與事件 RecordConversionRecovery，收回紀錄涵蓋整筆才能確認；拒絕返還的記為未收回，之後的正數差額先互抵；不換回的遞延天數不建立，員工改口再建立；交給薪資扣的只有書面同意從薪資扣回的那幾天
+  - 發給期限的做法依勞動契約（`contract_settings`）；沒有登錄或沒有有效契約時資料不足
+  - 法定天數表修正補足：週年期間跨過生效日的法定特休依新版補足（只補不減），新級別在生效日新增一筆，補登的由人資確認，遞延進來的不補；天數表版本登錄錯誤的修訂是依據更正、可以減；給予時只看已經生效的版本
+  - 員工可以休的天數改變時，重新判定的通知也送給員工
+  - ⑤ 新集合 `leave_conversion_recoveries`、`contract_settings`，API 0.4.0；黃金案例新增 GC10～GC21，採用 GC15、GC16、GC21（GC10～GC14、GC17～GC20 不採用）
+- 依據：inputs/annual-leave-grant/特休_使用者自行查證_EQ-003_008_009.md、特休_法令修正補足的範圍_使用者整理.md、特休_曆年制實務_使用者整理.md、特休_週年制是法定基準_使用者結論.md；inputs/shared/範圍釐清_特休離職回歸週年制.md；inputs/research/特別休假.md #05、#06（都不是 HC 的答覆；EQ-002、EQ-003、EQ-008、EQ-009、EQ-016 維持待問）；過程見下面三筆（未凍結）紀錄
+- 反例處理：2026-10-27 另開兩個子代理挑錯，19 個反例併成 14 件：② X-20～X-23、③ X-16～X-19、④ X-32～X-35、⑤ X-22、X-23，全部接受並修改（其中 ② X-22 的範圍部分拒絕、③ X-19 部分轉問 EQ-016、EQ-002）
+- 依審查重點登記同意：② D-20 依第 2 列、D-22 依第 5 列；③ D-20 依第 3 列、D-21 依第 1 列；④ D-36 依第 4 列、D-38 依第 5 列、D-40 依第 1 列；⑤ D-36、D-42 依第 1 列，D-37、D-39 依第 2 列，D-38 依第 3 列，D-40 依第 6 列，D-41 依第 7 列，D-43 依第 9 列，D-44 依第 10 列（審查日期 2026-10-27）
+- 紙上驗證：GC08、GC09、GC15、GC16、GC21 一致（GC16 第一次比對不一致，回到 ③ 加 D-24 後一致）
+- 影響與回歸：core/ 合併見 core/CHANGELOG.md 同日一筆；程式還沒改，要從 design/main 開 impl 分支，依 02-v2、03-v5、04-v4、05-v4 修改並重跑 pytest（GC08、GC09 斷言改寫法，GC15、GC16、GC21 新增）
+- 產出者：AI（Claude）；審查者：JiHungLin
+
+## 2026-10-27　（未凍結）　②③④⑤　回頭修改（第 0 級）：法令修正補足的範圍（使用者整理 EQ-008）
+- 改了什麼：
+  - ② 02_entities.md：D-19 範圍改寫——可休期間跨過生效日的法定特休都補（依那一筆自己的特休年度）；新版才有的年資級別在生效日新增一筆；補登當期的由系統算建議、人資確認後更正；遞延進來、補登遞延的不補；新版較少時已取得的保留原天數；補足的天數不另外告知，可以通知員工。X-23 的處理改寫；審查重點第 6 列改寫
+  - ③ 03_flows.md：LeaveEntitlement 新增（無）→ Active 的 TopUpLeaveEntitlements 一列；事件表 TopUpLeaveEntitlements 改寫；D-20 加註。03_use_cases.md UC-01 例外改寫
+  - ④ 04_rules.md：R100 改寫（依來歷分四種）；R66 加「新版較少時保留原天數」；R96 補登的建議天數；新增 D-41
+  - ⑤ 05_mapping.md：補足排程依來歷處理、通知帶 `suggested_quantity`、`payload.top_up.added_ids`；新增 D-43。api.yaml ActionItem 加 `suggested_quantity`；schema.mongo.js 同步
+  - ⑥ golden_cases.md：新增 GC19（新級別）、GC20（補登的那一筆），預期結果待 JiHungLin 填
+  - questions.md：EQ-008、EQ-016 的「影響」補上新的位置，狀態維持「待問」
+- 依據：inputs/annual-leave-grant/特休_法令修正補足的範圍_使用者整理.md、特休_曆年制實務_使用者整理.md（使用者 2026-10-27 在對話中整理，不是 HC 的答覆）；使用者 2026-10-27 選：新級別「生效日給，休到這一期迄日」、補登「系統算建議、人資確認後補」，同意已年度終結的只補可休期間跨過生效日的那一期
+- 舊 → 新：補足的對象：依規則給予、已取得、還沒年度終結的 → 可休期間跨過生效日的法定特休（依規則給予、新級別、補登當期）；遞延進來的仍不補
+- 影響與回歸：③ 狀態機多一列；④ R100 改寫；⑤ 排程與通知。曆年制依比例換算、預設要簽字才算協商（EQ-002 的使用者整理）留到下一輪從 ① 處理
+- 同日追加：使用者結論「特休的法定基準是週年制，公司的年度只是折算方式」（inputs/annual-leave-grant/特休_週年制是法定基準_使用者結論.md）→ 補足的範圍改看週年期間跨過生效日，不看公司約定曆年制延長的可休期間（② D-19、③ TopUpLeaveEntitlements 各列、④ R66、R100、D-41、⑤ 排程）；新增 GC21。AI 原本提的「依那一筆自己的特休年度」不採用
+- 同日追加：⑤ 紙上驗證，使用者只採用 GC15、GC16、GC21（GC10～GC14、GC17～GC20 不採用），GC15、GC16 改寫成不引用其他案例；GC16 第一次比對不一致（預期通知員工），使用者選「可休天數變了就通知員工」→ ③ D-24、④ R100 最後一句、⑤ D-44（`notified_to` 加員工）；③④ 已審查通過，各加一列審查重點（③ 第 8 列、④ 第 9 列）請重新確認
+- 產出者：AI（Claude）；審查者：（待審查）
+
+## 2026-10-27　（未凍結）　②③④⑤　回頭修改（第 0 級）：第二輪差異補跑挑錯
+- 改了什麼：
+  - ② 02_entities.md：新增 Entity LeaveConversionRecovery（轉換收回紀錄）與 3 條關係（recoversConversion、replacesRecovery、offsetByConversion）（D-21）；D-20 取消，LeaveConversion 拿掉 `recovery_method`；D-19 理由改寫，寫明「只補已取得、還沒年度終結的」是使用者的選擇不是原文（X-23）；D-22 更新全局名詞草圖；X-20～X-23
+  - ③ 03_flows.md：事件 RecordRecoveryRefusal 改為 RecordConversionRecovery，LeaveConversion 的終態 RecoveryRefused 取消；負數差額要收回紀錄涵蓋整筆才能確認；新增 LeaveEntitlement 的 RecordConversionRecovery 兩列（員工改口後建立遞延）；收回紀錄的更正方式兩列（註銷與改成扣回都通知雇主）；D-21 取消，新增 D-22（收回紀錄、互抵）、D-23（法定天數表版本的修訂是依據更正，可以減）；X-16～X-19。03_use_cases.md：UC-01、UC-08、UC-12 跟著改
+  - ④ 04_rules.md：R66 只看生效日不晚於判定那天的版本（D-38）；R90 沒有登錄或沒有有效契約時資料不足、解讀改標 [解讀]（D-40、X-34）；R92 加互抵；R101、R102 改寫成收回紀錄；新增 R103（取代與通知）、R104（離職後登錄從薪資扣回的提醒）、R105（天數表版本修訂）；C01、C02 改寫；分類值 RECOVERY_METHOD 改為 6 個；D-34 加註，新增 D-37～D-40；X-32～X-35
+  - ⑤ 05_mapping.md：新集合 `leave_conversion_recoveries`；`/refusal` 取消，新增 `POST /leave-conversions/{id}/recoveries` 與 `GET /leave-conversion-recoveries`；`/confirm` 可帶 `recoveries[]`；outbox 只送從薪資扣回的收回紀錄、正數帶 `payable_quantity`；`contract_settings` 沒有登錄時資料不足、加固定資料事件；天數表版本的修訂由載入作業重新判定；D-37 取消，新增 D-39～D-42；X-22、X-23。api.yaml 0.4.0；schema.mongo.js 跟著改
+  - ⑥ golden_cases.md：GC08～GC11 改用收回紀錄的寫法（GC08、GC09 預期結果沒有改）；新增 GC15～GC18（預期結果待 JiHungLin 填）
+  - questions.md：新增 EQ-016（補足後要不要重新告知）；EQ-002、EQ-003、EQ-008、EQ-009 的「影響」補上新的位置，狀態維持「待問」
+  - slices/ENTITY_SKETCH.md：新增 LeaveConversionRecovery，「不確定的地方」加一條（記入 slices/CHANGELOG.md）
+- 依據：另開兩個子代理挑錯（只給檔案；一個看 ②③、一個看 ④⑤ 的 2026-10-22 第二輪差異），共 19 個反例，合併後 14 件；使用者 2026-10-27 在對話中選：拒絕返還「記成未收回，之後互抵」、收回方式「新增收回紀錄名詞」、天數表登錄錯誤「當作登錄錯誤，可以減」；不加核准是依 inputs/shared/範圍釐清_更正不需核准.md（使用者 2026-10-07）
+- 舊 → 新：
+  - 負數差額的收回：轉換上一個 `recovery_method`、拒絕是終態 → 一筆負數差額可以有好幾筆收回紀錄，改口是新的一筆取代舊的
+  - 拒絕返還後又改回原本的資料：再發一次 → 先和未收回的天數互抵，只發超過的部分
+  - 天數表版本登錄錯誤：只補不減、無法修正 → 依據更正，可以減
+  - 發給期限的契約資料沒有登錄：用預設 → 資料不足、待確認
+- 影響與回歸：② 新增 1 個名詞、3 條關係（凍結時進 core 為候選）；③ 事件數不變（22）；④ 規則 R103～R105；⑤ 新集合、API 0.4.0。②③④⑤ 這次的差異一起審查、一起凍結。程式還沒改：凍結後開 impl 分支，GC08～GC18 的斷言要跟著新做法
+- 產出者：AI（Claude）；審查者：（待審查）
+
+## 2026-10-22　（未凍結）　②③④⑤　回頭修改（第 0 級）：使用者自行查證的 EQ-003 ③、EQ-008、EQ-009
+- 改了什麼：
+  - ② 02_entities.md：D-19 法定天數表修正時，已取得、還沒年度終結的法定特休依新版補足（D-03 的例外，D-03 結尾加註）；D-20 轉換新增屬性 `recovery_method`（員工書面同意從薪資扣回／已退回／拒絕返還）；`correction_cause` 加「法令修正補足」；LeaveEntitlement `quantity`、LeaveConversion `quantity` 的說明改寫；詞彙對照表加 1 列
+  - ③ 03_flows.md：D-19 負數差額的 ConfirmLeaveConversion 改為「員工已書面同意從薪資扣回或已退回」，新增事件 RecordRecoveryRefusal 與 LeaveConversion 新終態 RecoveryRefused；D-20 新增時間觸發事件 TopUpLeaveEntitlements（LeaveEntitlement 三列）；D-21 拒絕之後的處理；決策流程 5、推導的法規警告、更正方式（新增 1 列）、可註銷事件、詞彙對照表（3 列）跟著改。03_use_cases.md：UC-01 加法令修正補足的例外；UC-08、UC-12 加扣回方式與拒絕
+  - ④ 04_rules.md：新增 R100（法令修正補足）、R101（負數差額的收回）、R102（協商有部分未生效）；R66 改為取天數最多的版本；R90 與參數 `payment_deadline_rule` 改為依勞動契約；R92、R93 決策表、R94、R96、C01、C02 改寫；分類值新增 4 個；D-33～D-36，D-23 加註
+  - ⑤ 05_mapping.md：D-36 新的固定資料集合 `contract_settings`（`employer_settings` 拿掉 `payment_deadline_rule`）；D-37 `leave_conversions` 加 `recovery_method`、`recovery_note`，狀態加 RecoveryRefused，新增 `POST /leave-conversions/{id}/refusal`，`/confirm` 對負數差額要帶扣回方式；D-38 TopUpLeaveEntitlements 放每日排程；2.3 新增 3 個訊息代碼、通知代碼 `NOTICE_ACTION.TOP_UP_BACKFILL`；P12 新增 3 列；api.yaml 0.2.0 → 0.3.0；schema.mongo.js 跟著改
+  - ⑥ golden_cases.md：GC08、GC09 的確認改寫成「員工簽書面同意後人資登錄確認」（預期結果沒有改）；新增 GC10～GC14（情境、輸入、要回答、紙上推演；預期結果待 JiHungLin 填）
+  - questions.md：EQ-003、EQ-008、EQ-009 的「影響」補上新的位置；狀態維持「待問」（使用者指示）
+- 依據：inputs/annual-leave-grant/特休_使用者自行查證_EQ-003_008_009.md（使用者 2026-10-22 以 Google 自行查證整理，不是 HC 的答覆）；做法由使用者 2026-10-22 在對話中選定：EQ-009 分兩種原因處理、EQ-003 ③ 依勞動契約的參數（靜態替代）、EQ-008 只補不減且只補已取得未終結的、②③④⑤ 一起改。EQ-003 ①（公司預設自動遞延）是新需求，使用者決定擴充本切片、回 ① 另開一輪
+- 舊 → 新：
+  - 負數差額：人資確認就交給薪資扣 → 要員工書面同意扣回或已退回才確認；拒絕 → 員工拒絕返還（不扣，事後遞延的那部分不換回）
+  - 發給期限的做法：依雇主、全公司統一（04 D-23）→ 依勞動契約約定，換做法要改契約、雙方簽字
+  - 法定天數表改版：不影響已給予的（02 D-03）→ 已取得、還沒年度終結的依新版補足，只補不減
+- 影響與回歸：② 只改決定與 LeaveConversion 一個屬性，沒有新增名詞、關係；③ 事件 20 → 22；④ 規則 R100～R102；⑤ API、集合、排程。依 docs/01 0.9 回歸範圍，②③④⑤ 這次的差異一起審查、一起凍結；⑥ 凍結後要改程式（新 impl 分支）並重跑測試，GC08～GC14 要依你填的預期結果斷言。core/ 在凍結時更新：entities（LeaveConversion、LeaveEntitlement）、flows（LeaveEntitlement、LeaveConversion 狀態機與 3 個事件）、rules（R66、R90、R92～R94、R96、R100～R102、C01、C02、分類值）、glossary。這輪沒有另開挑錯 session，沒有新的 X-nn。questions.md 狀態不變
+- 產出者：AI（Claude）；審查者：（待審查）
+
 ## 2026-10-22　annual-leave-grant/05-v3（凍結後補填）　⑥　回頭修改（第 0 級）：GC09 計算過程
 - 改了什麼：06_evidence/golden_cases.md GC09 補上「計算過程」（計算者 JiHungLin 填寫）；預期結果、設計都沒有改
 - 依據：計算者補填；預期結果與 03_flows D-17、04_rules D-27 一致（扣回確認前沒有遞延進來的特休可以休）

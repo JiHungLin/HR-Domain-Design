@@ -8,8 +8,8 @@
 | 項目 | 內容 |
 |---|---|
 | 狀態 | 已同意（JiHungLin，2026-10-05） |
-| 最後更新 | 2026-10-20 |
-| 依據 | 名詞 49 個：現場資料 26、公開來源 20、推想 3。統計按每列最高一級的依據計（見 PLAN.md D-14）；49 個中有 15 個引用了推想草稿 |
+| 最後更新 | 2026-10-27 |
+| 依據 | 名詞 50 個：現場資料 27、公開來源 20、推想 3。統計按每列最高一級的依據計（見 PLAN.md D-14）；49 個中有 15 個引用了推想草稿 |
 
 ## 名詞
 
@@ -39,7 +39,8 @@
 | LeaveEntitlement（請假權利） | 見 core/entities.md | domain | 屬於 Employment；屬於 LeaveType；來源是法令或 CompanyPolicy；給予時依 LeaveYearAgreement 或 CompanyPolicy 的預設年度；遞延進來的一筆連回原來那一筆與 LeaveDeferralAgreement；額度有單位（日、小時）；被 LeaveOccurrence 扣用；年度終結或離職時轉為工資（或公司規定的部分失效）記成 LeaveConversion | annual-leave-grant、annual-leave-request、monthly-payroll、unpaid-leave-deduction、resignation、second-country-hire、assignment-leave、cross-border-transfer、seniority-recognition、leave-of-absence、event-leave | annual-leave-grant | inputs/shared/範圍釐清_P-15_P-16.md（D-15）；research/特別休假.md、聯邦與紐約.md（按工時累積的病假） | 已定義 |
 | LeaveYearAgreement（特休年度約定） | 見 core/entities.md | domain | 屬於 Employment；屬於 LeaveType；沒有約定時套用 CompanyPolicy 的預設；LeaveEntitlement 給予時依據它 | annual-leave-grant、annual-leave-request | annual-leave-grant | inputs/annual-leave-grant/範圍釐清_原文對照修正.md（A）；research/特別休假.md（#02 細則 §24 第 2 項） | 已定義 |
 | LeaveDeferralAgreement（遞延協商） | 見 core/entities.md | domain | 屬於 Employment；針對一筆 LeaveEntitlement；遞延進來的 LeaveEntitlement 依據它 | annual-leave-grant、annual-leave-request、resignation | annual-leave-grant | inputs/annual-leave-grant/範圍釐清_第一次.md（第 3 點）；research/特別休假.md（#01 §38 第 4 項、#03 細則 §24-1） | 已定義 |
-| LeaveConversion（請假權利轉換） | 見 core/entities.md | domain | 來自 LeaveEntitlement；更正差額指回被更正的那一次；被 PayItem 引用 | annual-leave-grant、monthly-payroll、resignation、cross-border-transfer | annual-leave-grant | inputs/annual-leave-grant/範圍釐清_第一次.md（第 3 點）；research/特別休假.md（#01 §38 第 4 項、#03 細則 §24-1） | 已定義 |
+| LeaveConversion（請假權利轉換） | 見 core/entities.md | domain | 來自 LeaveEntitlement；更正差額指回被更正的那一次；被 PayItem 引用；負數差額被 LeaveConversionRecovery 指到 | annual-leave-grant、monthly-payroll、resignation、cross-border-transfer | annual-leave-grant | inputs/annual-leave-grant/範圍釐清_第一次.md（第 3 點）；research/特別休假.md（#01 §38 第 4 項、#03 細則 §24-1） | 已定義 |
+| LeaveConversionRecovery（轉換收回紀錄） | 見 core/entities.md | domain | 針對 LeaveConversion 的負數差額；之後的回應取代先前一筆；撤回的指到抵銷它的正數差額；monthly-payroll 只依「書面同意從薪資扣回」的那幾筆扣，拒絕返還的不能成為 PayItem | annual-leave-grant、monthly-payroll、resignation | annual-leave-grant | inputs/annual-leave-grant/特休_使用者自行查證_EQ-003_008_009.md（EQ-009，使用者自行查證） | 已定義 |
 | LeaveRequest（請假申請） | 員工提出的請假申請 | domain | 由 Person 為某段 Employment 提出；指定 LeaveType；經過 Approval；可以附 Evidence | annual-leave-request、unpaid-leave-deduction、internal-transfer、assignment-leave、event-leave | annual-leave-request | inputs/research/請假.md（請假規則 §10）；drafts/一般請假與簽核流程.md | 草圖 |
 | LeaveOccurrence（請假事實） | 實際請假的時段，會扣用請假權利 | domain | 源自 LeaveRequest；扣用 LeaveEntitlement；對應 ShiftAssignment；影響 AttendanceRecord 與 PayItem | annual-leave-request、shift-attendance、monthly-payroll、unpaid-leave-deduction、assignment-leave、event-leave | annual-leave-request | inputs/drafts/一般請假與簽核流程.md | 草圖 |
 | Position（職位） | 組織中的一個職位，包含主管職；用來找出核准人 | shared | 屬於 OrgUnit；由 Employment 擔任 | annual-leave-request、overtime、unpaid-leave-deduction、internal-transfer | annual-leave-request | inputs/drafts/一般組織與法人結構.md | 草圖 |
@@ -111,6 +112,8 @@ hire-employee 正式定義這些名詞時，要能支撐下列需求；做不到
 - **以小時請以日計的假**：LeaveEntitlement 的額度有單位，衍生的量沿用它的單位；請假事實以小時記時，一日幾小時（因人因時不同）凍結在哪裡，由 annual-leave-request 第 ② 步決定（annual-leave-grant X-19）。
 - **因事件才有的假（PLAN.md D-39）**：婚假、喪假、產假、陪產檢及陪產假等因結婚、親屬過世、分娩才有，天數依事件或親屬關係而定（請假#02、#03、#13）`[未核對]`。LeaveEntitlement 的形狀是特休「每期給一筆、有可休起訖日」；按事件給的假要不要先給一筆請假權利（例：結婚登記後給一筆、限期內請完），還是請假時才檢查上限，由 event-leave 第 ② 步決定。喪假要知道過世的是員工的哪位親屬，親屬不一定是系統裡的 Person，DependentRelation 目前只指健保眷屬，也由 event-leave 第 ② 步決定怎麼表示。
 - **兩種假共用一個額度**：例如某些假別併入事假的日數計算 `[未核對]`，LeaveEntitlement 目前一筆只屬於一個 LeaveType；由 unpaid-leave-deduction 第 ② 步決定怎麼表示。
+- **隨僱傭關係結束的那一筆，法令修正補足後的差額（annual-leave-grant 04 R100）**：法定天數表新版本晚載入時，已隨離職結束（EndedWithEmployment）的那一筆會就地增加，但契約終止的轉換由 resignation 判定；resignation 第 ② 步要確認 LeaveConversion（原因：契約終止）能記這種差額，並有接手的待辦（annual-leave-grant 這一階段只列在重新判定的通知）。
+- **離職那一年的特休改用週年制試算（inputs/shared/範圍釐清_特休離職回歸週年制.md；research/特別休假.md #05）**：公司可以約定曆年制、學年制或自行約定年度，但勞工在約定的年度中終止契約時，終止那一年的特休日數要改用週年制試算，不足的補給（天數或工資）。annual-leave-grant 把年度中途離職的那一筆交給 resignation（EndedWithEmployment）；resignation 第 ② 步要確認 LeaveEntitlement 與 LeaveConversion（原因：契約終止）撐得起「依週年制重算、補差額」。
 - **轉任或改組留用時，未休特休由新的僱傭關係承接（annual-leave-grant EQ-010）**：LeaveEntitlement 屬於一段 Employment，LeaveConversion 這一階段只有「轉為工資」「失效」；如果實務上由新雇主承接，由 seniority-recognition 或 cross-border-transfer 加上轉入另一筆的方式。
 - assignment-payroll 的幣別換算可能需要「匯率」這個名詞；目前不列，到該切片第 ① 步再看。
 - 同一段 Employment 有多個工作地點（例：一半遠距），目前不列，到 second-country-hire 第 ① 步再看。

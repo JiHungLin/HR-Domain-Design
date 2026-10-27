@@ -312,5 +312,15 @@
 | RejudgeLeaveYearEnd | 事件 | 年度終結判定用到的資料改變後重新判定並記差額 | 重新判定年度終結 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
 | ReassessLeaveEntitlements | 事件 | 給予特休的依據被更正後重新判定 | 依據更正後重新判定特休 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
 | EndLeaveEntitlementsWithEmployment | 事件 | 系統得知僱傭關係結束時停止特休 | 僱傭關係結束，停止特休 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
-| ConfirmLeaveConversion | 事件 | 人資確認待確認的轉換，之後交給薪資 | 確認待確認的轉換 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| ConfirmLeaveConversion | 事件 | 人資確認待確認的轉換，之後交給薪資；負數差額要收回紀錄涵蓋整筆 | 確認待確認的轉換 |  | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v5） |
 | NotifyLeaveReassessment | 事件 | 通知重新判定的結果與要人處理的事 | 通知特休重新判定結果 | | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v1） |
+| LeaveConversionRecovery | Entity | 一筆負數差額中某幾天員工怎麼回應（同意扣回、退回、拒絕等） | 轉換收回紀錄 | 雇主不能單方扣，記員工的回應 | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v2） |
+| LeaveConversionRecovery.method | 屬性 | 收回方式 | 收回方式 |  | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v2） |
+| LeaveConversionRecovery.quantity | 屬性 | 這筆回應涵蓋的天數 | 涵蓋天數 | 正數 | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v2） |
+| LeaveConversionRecovery.responded_on | 屬性 | 員工簽同意、約定、退回或表示拒絕的日子 | 回應日 |  | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v2） |
+| LeaveConversionRecovery.evidence_note | 屬性 | 同意書、退回、溝通紀錄等憑據的說明 | 憑據說明 |  | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v2） |
+| recoversConversion | 關係 | 收回紀錄針對哪一筆負數差額 | 收回哪一筆轉換 |  | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v2） |
+| replacesRecovery | 關係 | 之後的收回紀錄取代先前一筆的一部分或全部 | 取代收回紀錄 |  | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v2） |
+| offsetByConversion | 關係 | 因重新判定撤回的收回紀錄由哪一筆正數差額抵銷 | 由補發抵銷 |  | [候選] | annual-leave-grant（② @ annual-leave-grant/02-v2） |
+| RecordConversionRecovery | 事件 | 人資依員工的回應登錄負數差額某幾天怎麼收回 | 登錄轉換的收回 | 員工改口是新的一筆 | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v5） |
+| TopUpLeaveEntitlements | 事件 | 法定天數表修正生效時，補足已取得、還沒年度終結的特休 | 法令修正補足特休 |  | [候選] | annual-leave-grant（③ @ annual-leave-grant/03-v5） |

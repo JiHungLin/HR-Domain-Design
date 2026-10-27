@@ -2,6 +2,11 @@
 
 <!-- 只新增，最新的在最上面。記錄：切片項目以 [候選] 合併、升為 [已驗證]、套用變更提案、平行切片撞號重編。格式同切片 CHANGELOG.md -->
 
+## 2026-10-27　annual-leave-grant/02-v2、annual-leave-grant/03-v5、annual-leave-grant/04-v4　②③④　凍結（回頭修改）
+- 改了什麼：entities.md 新增 LeaveConversionRecovery（轉換收回紀錄）[候選]，LeaveEntitlement 的 `quantity`、LeaveConversion 的 `quantity`、`correction_cause` 改寫，出處改 02-v2；relations.md 新增 recoversConversion、replacesRecovery、offsetByConversion 3 列；glossary.md 新增 10 列（LeaveConversionRecovery 與 4 個屬性、3 條關係、事件 RecordConversionRecovery、TopUpLeaveEntitlements），ConfirmLeaveConversion 的定義改寫；flows.md 狀態機 LeaveEntitlement、LeaveDeferralAgreement、LeaveConversion 改寫，新增 LeaveConversionRecovery（不設狀態機的說明），「狀態怎麼來」與推導的狀態（法規警告）改寫，事件新增 2 列、改寫 4 列，更正方式新增 2 列；rules.md R66、R90、R92、R94、R96、C01、C02 改寫，新增 R100～R105 與分類值 7 列（CORRECTION_CAUSE.STATUTORY_TOP_UP、RECOVERY_METHOD 6 個），皆 [候選]
+- 依據：slices/annual-leave-grant/02_entities.md D-19～D-22 @ annual-leave-grant/02-v2；03_flows.md D-19～D-24 @ annual-leave-grant/03-v5；04_rules.md D-33～D-41 @ annual-leave-grant/04-v4（使用者自行查證的 EQ-003 ③、EQ-008、EQ-009，2026-10-27 補跑挑錯與使用者的整理；都不是 HC 的答覆）
+- 產出者：AI（Claude）；審查者：JiHungLin；核心負責人：待審閱
+
 ## 2026-10-22　annual-leave-grant/03-v4、annual-leave-grant/04-v3　③④　凍結（回頭修改）
 - 改了什麼：flows.md LeaveEntitlement 狀態機（無）→ Active（RejudgeLeaveYearEnd）前提加「不用扣回」，新增（無）→ Active、Active → Active（ConfirmLeaveConversion）兩列；LeaveConversion Provisional → Determined 改寫；事件 RejudgeLeaveYearEnd、ConfirmLeaveConversion、NotifyLeaveReassessment 改寫；兩個狀態機與三個事件的出處改 03-v4。rules.md R66、R76、R83、R86、R87、R92、R97、C01、C02 改寫，出處改 04-v3；分類值新增 8 列（ACQUISITION_DAY_RULE 2、FIXED_START_YEAR_METHOD 2、PAYMENT_DEADLINE_RULE 2、COMPANY_POLICY_VERSION_AT_YEAR_END 2），[候選]。沒有刪除項目，既有項目狀態仍是 [候選]
 - 依據：slices/annual-leave-grant/03_flows.md D-17、D-18 @ annual-leave-grant/03-v4；04_rules.md D-26～D-32 @ annual-leave-grant/04-v3（⑥ signoff #1～#22）
